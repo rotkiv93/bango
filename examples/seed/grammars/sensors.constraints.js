@@ -54,9 +54,6 @@ const constraints = {
     }
 
     sensor.dimensions.forEach(d => {
-      if (d.$type === 'CategoricalDimension' && factTable && !property(factTable, d.field)) {
-        accept('error', `categorical field '${d.field}' is not a property of fact table '${factTable.name}'`, { node: d, property: 'field' });
-      }
       // a spatial dimension is a chain of entities that locate the sensor entity
       if (d.$type === 'SpatialDimension' && entity) {
         d.entities.forEach((ref, i) => {

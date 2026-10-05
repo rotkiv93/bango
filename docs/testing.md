@@ -20,6 +20,7 @@ These do not know any metamodel by name. They take what ships in `examples/seed`
 | `incremental.test.ts` | the incremental engine says exactly what a full rebuild says, after every step of random edits, broken texts, removals and undos |
 | `watchdog.test.ts` | an engine that stops answering is replaced, the culprit script is quarantined, the rest comes back (with a fake worker that goes silent; the real loop is in `e2e/`) |
 | `limits.test.ts` | instances and grammars over the size limits, text nested too deeply, a long line, many tiny entities, CRLF |
+| `scope.test.ts` | scope scripts: a reference sees only what is visible where it is written (completion, definition, rename, find references, form candidates, new nodes start resolved), scripts that fail or lie, and the same provider in plain Langium services |
 | `new-metamodels.test.ts` | the chains that stress composition: a type three metamodels contribute to, a diamond of imports, recursion, a slot another metamodel fills, in every composition order |
 
 ## What it costs

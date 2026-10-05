@@ -158,6 +158,8 @@ export interface FieldSchema {
   sample?: string;
   /** ref fields: AST type of the possible targets (may live in another metamodel) */
   refType?: string;
+  /** ref fields: a scope script decides what is visible here, so ask `getRefCandidates` with a context instead of listing every node of `refType` */
+  scoped?: boolean;
   /** child fields: concrete node types that can be created here */
   childTypes?: string[];
   /** enum fields: the keyword choices */
@@ -188,6 +190,13 @@ export type EditOp =
   | { kind: 'add'; path: PathStep[]; feature: string; type?: string; value?: string }
   /** remove a node (path points at it), or one item of a list feature when `feature`+`index` are given */
   | { kind: 'remove'; path: PathStep[]; feature?: string; index?: number };
+
+/** Where a reference is written: the node (by path in the instance) and the reference feature of it. */
+export interface RefContext {
+  metamodel: string;
+  path: PathStep[];
+  feature: string;
+}
 
 export interface RefCandidate {
   name: string;
@@ -354,7 +363,11 @@ export interface EngineApi {
   toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined>;
   /** the project's JSON: every instance's spec merged into one document, or one entry per metamodel */
   toProjectJson(options?: JsonSpecOptions): Promise<JsonValue>;
-  getRefCandidates(refType: string): Promise<RefCandidate[]>;
+  /**
+   * The nodes a reference of `refType` could point to. Without a `context`: every one in the project. With one (the node that holds the
+   * reference, and the feature), what is *visible there*: the same answer the editor's completion gives, so a form only offers what resolves.
+   */
+  getRefCandidates(refType: string, context?: RefContext): Promise<RefCandidate[]>;
   /**
    * Turn a project's JSON back into instances: each metamodel with an import mapping builds its own instance from the whole document.
    * Changes nothing: apply `texts` with `setInstances` to use them.
@@ -388,6 +401,8 @@ export interface BangoApi extends EngineApi {
   setSpec(metamodel: string, code: string): Promise<void>;
   /** the import mapping of a metamodel (`<metamodel>.import.js`): the inverse of its JSON mapping */
   setImport(metamodel: string, code: string): Promise<void>;
+  /** which nodes each reference of a grammar can point at (`<grammar>.scope.js`): narrows a reference to what is visible from where it is written */
+  setScope(metamodel: string, code: string): Promise<void>;
   /** compose the selected metamodels and load the result into the engine, keeping instance texts */
   compose(selection?: string[]): Promise<CompositionInfo>;
   /** self-contained `.langium` text of one composed metamodel */

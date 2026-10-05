@@ -5,7 +5,7 @@ import type { BangoApi, EngineEvent, Unsubscribe } from './types.js';
 export { EngineRestartedError, ScriptTimeoutError, type ConnectOptions, type RestartInfo, type ScriptKind, type ScriptRef, type WorkerHandle } from './managed-client.js';
 
 const METHODS = [
-  'setGrammar', 'removeGrammar', 'setConstraints', 'setSpec', 'setImport', 'compose', 'bundleText', 'getGrammarAst', 'listMetamodels', 'checkSelection', 'getTypings', 'runCases',
+  'setGrammar', 'removeGrammar', 'setConstraints', 'setSpec', 'setImport', 'setScope', 'compose', 'bundleText', 'getGrammarAst', 'listMetamodels', 'checkSelection', 'getTypings', 'runCases',
   'getInstance', 'getInstances', 'getComposition', 'setText', 'setInstances', 'createInstance', 'removeInstance', 'applyEdit',
   'getFormSchema', 'toJson', 'toProjectJson', 'getRefCandidates', 'importJson', 'complete', 'hover', 'definition', 'references', 'symbols', 'rename', 'quickFixes', 'applyQuickFix', 'undo', 'redo', 'build'
 ] as const;

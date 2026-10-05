@@ -55,7 +55,7 @@ describe('typings for scripts', () => {
     }
   });
 
-  it('every shipped constraint file, JSON mapping and import mapping type-checks against the typings of its metamodel', async () => {
+  it('every shipped constraint file, JSON mapping, import mapping and scope type-checks against the typings of its metamodel', async () => {
     const { composer, seed } = composerWith();
     for (const [name, code] of Object.entries(seed.constraints)) {
       expect(check(await composer.typings(name), code), `${name}.constraints.js`).toBe('');
@@ -66,7 +66,21 @@ describe('typings for scripts', () => {
     for (const [name, code] of Object.entries(seed.imports)) {
       expect(check(await composer.typings(name), code), `${name}.import.js`).toBe('');
     }
+    for (const [name, code] of Object.entries(seed.scopes)) {
+      expect(check(await composer.typings(name), code), `${name}.scope.js`).toBe('');
+    }
   }, 120_000);
+
+  it('a scope is typed by the reference features of the grammar: a misspelled feature or a wrong node is an error', async () => {
+    const { composer } = composerWith();
+    const dts = await composer.typings('forms');
+    const ok = check(dts, `/** @type {Scope} */\nconst s = { FormField: { property: f => f.$container?.$type === 'FormDef' ? [] : undefined } };\nreturn s;`);
+    expect(ok).toBe('');
+    expect(check(dts, `/** @type {Scope} */\nconst s = { FormField: { propertee: f => [] } };\nreturn s;`)).toMatch(/propertee/);
+    expect(check(dts, `/** @type {Scope} */\nconst s = { FormDef: { entity: form => [form.nope] } };\nreturn s;`)).toMatch(/nope/);
+    // only references can be scoped: `label` is text
+    expect(check(dts, `/** @type {Scope} */\nconst s = { FormField: { label: f => [] } };\nreturn s;`)).toMatch(/label/);
+  });
 
   it('a misspelled property is an error, and a typed node completes to the right shape', async () => {
     const { composer } = composerWith();

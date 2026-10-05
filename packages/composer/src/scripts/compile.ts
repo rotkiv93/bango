@@ -1,4 +1,4 @@
-import type { ConstraintModule, ConstraintSet, ImportFn, ScriptHelpers, SpecFn, ValidationCategory } from '../model/types.js';
+import type { ConstraintModule, ConstraintSet, ImportFn, ScopeFn, ScopeSet, ScriptHelpers, SpecFn, ValidationCategory } from '../model/types.js';
 
 /** The name a reference points at: the target's name, or the text as written when it does not resolve. */
 const refName = (ref: unknown): string | undefined => {
@@ -105,4 +105,27 @@ export function compileImport(code: string, helpers: ScriptHelpers = DEFAULT_HEL
   const result = run(code, helpers);
   if (typeof result !== 'function') throw new Error('an import mapping must `return function (json, { n }) { return n(\'Type\', { ... }) }`');
   return json => result(json, frozen(helpers));
+}
+
+/**
+ * `<metamodel>.scope.js` holds a function body that returns which nodes each reference can point at, the way Langium's `ScopeProvider`
+ * decides it: `{ FormField: { property(node) { return node.$container.entity?.ref?.fields ?? []; } } }`: for the reference feature
+ * `property` of a `FormField`, the nodes that are visible there. Return `undefined` to leave the choice to the default scope.
+ * Throws with a readable message when the code is invalid.
+ */
+export function compileScope(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): ScopeSet {
+  const result = run(code, helpers);
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    throw new Error('a scope must `return { TypeName: { feature(node) { return [...nodes]; } } }`');
+  }
+  const scopes: ScopeSet = {};
+  for (const [type, features] of Object.entries(result as Record<string, unknown>)) {
+    if (!features || typeof features !== 'object' || Array.isArray(features)) throw new Error(`scope '${type}' must be an object with a function per reference feature`);
+    scopes[type] = {};
+    for (const [feature, fn] of Object.entries(features as Record<string, unknown>)) {
+      if (typeof fn !== 'function') throw new Error(`scope '${type}.${feature}' is not a function`);
+      scopes[type][feature] = fn as ScopeFn;
+    }
+  }
+  return scopes;
 }

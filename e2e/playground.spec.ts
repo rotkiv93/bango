@@ -180,6 +180,33 @@ test.describe('editing across metamodels', () => {
     expect(errors).toEqual([]);
   });
 
+  test('a field is offered only from its own entity, and renaming it renames its uses in other instances', async ({ page }) => {
+    const errors = await start(page);
+    await openProject(page, 'office');
+
+    // the form of Customer offers the fields of Customer
+    await tab(page, 'forms').click();
+    await view(page, 'Form');
+    const fieldBox = page.locator('.bango-form .bango-node', { has: page.locator(':scope > legend b:text-is("FormField")') }).first();
+    await expect(fieldBox.locator('select option', { hasText: 'email' })).toHaveCount(1);
+    await expect(fieldBox.locator('select option', { hasText: 'total' })).toHaveCount(0);
+
+    // renaming a property of Invoice reaches the list that shows it
+    await tab(page, 'datamodel').click();
+    await view(page, 'Text');
+    await page.locator('.view-lines .view-line:has-text("property total") span >> text=total').first().dblclick();
+    await page.keyboard.press('F2');
+    await page.waitForTimeout(800);
+    await page.keyboard.type('amount');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => editorText(page)).toContain('property amount');
+    await tab(page, 'lists').click();
+    await view(page, 'Text');
+    await expect.poll(() => editorText(page)).toContain('column amount');
+    await expect(page.locator('.workspace .toolbar .status.ok')).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+
   test('a reference to something that does not exist offers to create it where it belongs', async ({ page }) => {
     await start(page);
     await openProject(page, 'city');

@@ -169,12 +169,12 @@ describe('forms and lists', () => {
   });
 
   const cases: [string, 'forms' | 'lists', string, string, RegExp][] = [
-    ['a form with a field the entity does not have', 'forms', '  field price\n', '  field cost\n', /entity 'Product' has no field 'cost'/],
+    ['a form with a field the entity does not have', 'forms', '  field price\n', '  field cost\n', /Could not resolve reference to Field named 'cost'/],
     ['a field listed twice', 'forms', '  field price\n', '  field price\n  field price\n', /field 'price' is listed twice/],
     ['a form defined twice', 'forms', 'form CategoryForm entity Category', 'form ProductForm entity Category', /duplicate form 'ProductForm'/],
     ['a form of an entity that does not exist', 'forms', 'form CategoryForm entity Category', 'form CategoryForm entity Nothing', /Entity named 'Nothing'/],
-    ['a column the entity does not have', 'lists', '  column price label', '  column cost label', /entity 'Product' has no field 'cost'/],
-    ['a list sorted by something the entity does not have', 'lists', 'sortBy name {', 'sortBy rank {', /cannot sort by 'rank'/],
+    ['a column the entity does not have', 'lists', '  column price label', '  column cost label', /Could not resolve reference to Field named 'cost'/],
+    ['a list sorted by something the entity does not have', 'lists', 'sortBy name {', 'sortBy rank {', /Could not resolve reference to Field named 'rank'/],
     ['a page size of zero', 'lists', 'pageSize 20', 'pageSize 0', /pageSize must be at least 1/],
     ['a list defined twice', 'lists', 'list Categories entity', 'list Products entity', /duplicate list 'Products'/]
   ];

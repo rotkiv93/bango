@@ -26,7 +26,7 @@ One tab per metamodel of the project, plus an **Overview**.
 
 ### Metamodels
 
-The grammars shared by every project. Pick one and edit it as *Grammar*, *Constraints*, *JSON mapping*, *JSON import* (the last three know the types of the grammar: completion on `entity.`, errors for a misspelled property), or *Tests* (sample instances and what they must report, rerun as you edit), or see it as *Composed* (the grammar with every import inlined, as the composer builds it) or *AST*. Projects that use it revalidate as you type; a grammar with errors keeps serving its last good version and its instances are marked *stale*. **+ New metamodel** starts from a minimal grammar.
+The grammars shared by every project. Pick one and edit it as *Grammar*, *Constraints*, *Scope*, *JSON mapping*, *JSON import* (the last four know the types of the grammar: completion on `entity.`, errors for a misspelled property), or *Tests* (sample instances and what they must report, rerun as you edit), or see it as *Composed* (the grammar with every import inlined, as the composer builds it) or *AST*. Projects that use it revalidate as you type; a grammar with errors keeps serving its last good version and its instances are marked *stale*. **+ New metamodel** starts from a minimal grammar.
 
 Also: light and dark themes, and **Reset examples** to restore what ships with the repository.
 

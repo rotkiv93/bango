@@ -4,5 +4,5 @@ export { WorkspaceController, type Outcome, type ScriptKind, type SelectionResul
 export { MemoryStorage, emptyWorkspace, migrateWorkspace, type ProjectData, type WorkspaceData, type WorkspaceStorage } from './data.js';
 export { KeyedDebouncer } from './debounce.js';
 export { parseSeed, workspaceFromSeed, type Seed, type SeedProject } from './seed.js';
-export { CONSTRAINTS_TEMPLATE, IMPORT_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
+export { CONSTRAINTS_TEMPLATE, IMPORT_TEMPLATE, SCOPE_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
 export { validateMetamodelName, validateProjectName } from './validation.js';

@@ -40,7 +40,7 @@ function Quarantine() {
   const quarantined = useWorkspace(s => s.quarantined);
   const reenable = useWorkspace(s => s.reenableScript);
   if (!quarantined.length) return null;
-  const names = { constraints: 'constraints', spec: 'JSON mapping', import: 'import mapping' } as const;
+  const names = { constraints: 'constraints', spec: 'JSON mapping', import: 'import mapping', scope: 'scope' } as const;
   return (
     <div className="quarantine">
       <Banner tone="err">

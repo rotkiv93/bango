@@ -9,5 +9,5 @@ entry FormModel: 'forms' (forms+=FormDef)*;
 FormDef: 'form' name=ID ('label' label=STRING)? 'entity' entity=[Entity:ID]
   ('{' (fields+=FormField)* '}')?;
 
-// `property` is a field of the entity (checked by a constraint: it has to exist there)
-FormField: 'field' property=ID ('label' label=STRING)? (readOnly?='readOnly')?;
+// `property` is a field of the form's entity: forms.scope.js says which ones are visible there
+FormField: 'field' property=[Field:ID] ('label' label=STRING)? (readOnly?='readOnly')?;

@@ -1,6 +1,7 @@
 import { EmptyFileSystem, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type LangiumServices, type LangiumSharedServices } from 'langium/lsp';
 import type { ComposedMetamodel, Composition } from '@bango/composer';
+import { MetamodelScopeProvider } from './scope.js';
 
 export interface Language {
   metamodel: ComposedMetamodel;
@@ -29,7 +30,9 @@ export function createLanguages(composition: Composition): LanguageSet {
         languageId: metamodel.extension,
         mode: 'development' as const
       }),
-      parser: { ParserConfig: () => ({ skipValidations: false }) }
+      parser: { ParserConfig: () => ({ skipValidations: false }) },
+      // what a reference can point at: the metamodel's scope scripts first, Langium's default scope for what they leave open
+      references: { ScopeProvider: services => new MetamodelScopeProvider(services, metamodel.scopes) }
     });
     shared.ServiceRegistry.register(services);
     // Langium's own registration: checks keyed by AST type name, the validator they run on, and when they run

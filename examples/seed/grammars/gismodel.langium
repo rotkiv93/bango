@@ -17,8 +17,8 @@ Layer: TileLayer | GeoJsonLayer | WMSLayer;
 
 TileLayer: 'tilelayer' name=ID ('label' label=STRING)? 'url' url=STRING;
 
-// Draws one spatial field (`geometry` unless `field` says otherwise) of a data-model entity
-GeoJsonLayer: 'geojsonlayer' name=ID ('label' label=STRING)? 'entity' entity=[Entity:ID] ('field' field=ID)? (editable?='editable')?
+// Draws one spatial field (`geometry` unless `field` says otherwise) of a data-model entity: gismodel.scope.js limits `field` to the entity's properties
+GeoJsonLayer: 'geojsonlayer' name=ID ('label' label=STRING)? 'entity' entity=[Entity:ID] ('field' field=[PropertyField:ID])? (editable?='editable')?
   'defaultStyle' defaultStyle=[Style:ID]
   'availableStyles' availableStyles+=[Style:ID] (',' availableStyles+=[Style:ID])*;
 

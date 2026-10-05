@@ -39,7 +39,7 @@ Everything depends on `core`; beyond that each only depends on the one before it
 
 ### Engine: one shared index
 
-`ModelEngine.use(composition)` creates **one Langium container** for all languages of the composition: one set of documents, one index, one merged type reflection. This is what makes cross-metamodel references work with no special code: Langium's default scope provider resolves `[Entity:ID]` against everything of type `Entity` in the shared index, and the `Entity` nodes come from the `.datamodel` instance.
+`ModelEngine.use(composition)` creates **one Langium container** for all languages of the composition: one set of documents, one index, one merged type reflection. This is what makes cross-metamodel references work with no special code: Langium's default scope provider resolves `[Entity:ID]` against everything of type `Entity` in the shared index, and the `Entity` nodes come from the `.datamodel` instance. What is not top-level (a field of an entity) is not in that index, so a metamodel narrows and extends it with a **scope script** (`<name>.scope.js`): the engine installs a `ScopeProvider` (`MetamodelScopeProvider`, a `DefaultScopeProvider`) that asks the script for the nodes visible from a reference and falls back to the default for what the script leaves open. Completion, rename and find-references go through the same scope, and so do the form drop-downs (`getRefCandidates` with a context).
 
 The engine keeps **one document per metamodel**, named `memory:/<metamodel>.<extension>`. Every change re-creates all instance documents so each one is re-linked against fresh content; instances are small, and it keeps relinking trivially correct.
 

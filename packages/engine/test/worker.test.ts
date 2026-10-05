@@ -5,7 +5,7 @@ import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mj
 import type { EngineEvent } from '../src/index.js';
 import { connectBango } from '@bango/core/client';
 import { serveBango } from '../src/worker/index.js';
-import { errors } from '../../../test-support/harness.js';
+import { errors, feedSeed } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 /**
@@ -24,8 +24,7 @@ describe('worker boundary', () => {
     const { client, close } = connect();
     const seed = loadSeed();
     const city = seed.projects.city;
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
-    for (const [n, c] of Object.entries(seed.constraints)) await client.setConstraints(n, c);
+    await feedSeed(client, seed);
 
     const info = await client.compose(city.metamodels);
     expect(info.problems).toEqual([]);
@@ -53,8 +52,7 @@ describe('worker boundary', () => {
   it('typings and metamodel cases cross the boundary', async () => {
     const { client, close } = connect();
     const seed = loadSeed();
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
-    for (const [n, c] of Object.entries(seed.constraints)) await client.setConstraints(n, c);
+    await feedSeed(client, seed);
     expect(await client.getTypings('datamodel')).toContain('interface Entity extends AstNode');
     const results = await client.runCases('datamodel', seed.cases.datamodel);
     expect(results.map(r => r.ok)).toEqual(seed.cases.datamodel.map(() => true));
@@ -64,9 +62,7 @@ describe('worker boundary', () => {
   it('imports a project from its JSON through the boundary', async () => {
     const { client, close } = connect();
     const seed = loadSeed();
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
-    for (const [n, c] of Object.entries(seed.specs)) await client.setSpec(n, c);
-    for (const [n, c] of Object.entries(seed.imports)) await client.setImport(n, c);
+    await feedSeed(client, seed);
     await client.compose(seed.projects.gresint.metamodels);
     const result = await client.importJson(seed.expected.gresint as never);
     expect(result.errors).toEqual([]);
@@ -78,7 +74,7 @@ describe('worker boundary', () => {
   it('delivers events to a callback across the boundary and stops after unsubscribe', async () => {
     const { client, close } = connect();
     const seed = loadSeed();
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
+    await feedSeed(client, seed);
     await client.compose(['datamodel']);
 
     const seen: EngineEvent[] = [];
@@ -98,7 +94,7 @@ describe('worker boundary', () => {
   it('errors thrown inside the worker reject on the caller side with their message', async () => {
     const { client, close } = connect();
     const seed = loadSeed();
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
+    await feedSeed(client, seed);
     await client.compose(['datamodel']);
     await client.setText('datamodel', 'datamodel a\nentity A {\n property x: String pk\n}');
     await expect(client.applyEdit('datamodel', { kind: 'remove', path: [] })).rejects.toThrow(/root/);
@@ -108,7 +104,7 @@ describe('worker boundary', () => {
   it('returns only plain data (nothing Langium leaks across)', async () => {
     const { client, close } = connect();
     const seed = loadSeed();
-    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
+    await feedSeed(client, seed);
     const info = await client.compose();
     expect(JSON.parse(JSON.stringify(info))).toEqual(info);
     close();

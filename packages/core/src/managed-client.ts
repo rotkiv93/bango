@@ -1,7 +1,7 @@
 import * as Comlink from 'comlink';
 import type { BangoApi, EngineEvent, InstanceState, JsonValue, Unsubscribe } from './types.js';
 
-export type ScriptKind = 'constraints' | 'spec' | 'import';
+export type ScriptKind = 'constraints' | 'spec' | 'import' | 'scope';
 
 /** One of the scripts a metamodel owns, besides its grammar. */
 export interface ScriptRef {
@@ -57,7 +57,7 @@ interface Flight {
 
 class Stalled extends Error {}
 
-const SCRIPT_SETTERS = { setConstraints: 'constraints', setSpec: 'spec', setImport: 'import' } as const;
+const SCRIPT_SETTERS = { setConstraints: 'constraints', setSpec: 'spec', setImport: 'import', setScope: 'scope' } as const;
 const keyOf = (ref: ScriptRef) => `${ref.kind}:${ref.metamodel}`;
 
 /**

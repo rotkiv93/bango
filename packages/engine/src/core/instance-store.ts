@@ -1,15 +1,16 @@
-import type { LangiumDocument } from 'langium';
+import type { AstNode, LangiumDocument, Reference } from 'langium';
 import type { LangiumSharedServices } from 'langium/lsp';
 import { documentUri, nameOfPath, toAstDto, toProblem, wholeFile, type Composition } from '@bango/composer';
 import type { InstanceState, RefCandidate } from '@bango/core';
 import { History } from './history.js';
 import { createLanguages, type Language } from './languages.js';
+import { MetamodelScopeProvider } from './scope.js';
 
 /** Why a text could not be read, in words: a parser that ran out of stack says "Maximum call stack size exceeded", which is a text nested too deeply. */
 const reasonOf = (e: unknown) => (e instanceof RangeError ? 'it is nested too deeply' : (e as Error)?.message ?? String(e));
 
 /** How big an instance may be (characters). Every keystroke parses it again, so beyond this it is reported instead of read. */
-export const DEFAULT_MAX_INSTANCE_CHARS = 2_000_000;
+const DEFAULT_MAX_INSTANCE_CHARS = 2_000_000;
 
 /**
  * The instances of one composition: their texts, one Langium document per metamodel in one shared index (so references can
@@ -133,6 +134,28 @@ export class InstanceStore {
     const index = this.shared?.workspace.IndexManager;
     if (!index) return [];
     return index.allElements(refType).toArray().map(d => ({ name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path) }));
+  }
+
+  /** Whether a scope script has a say about this reference feature of this node type, in the metamodel. */
+  scopeDecides(metamodel: string, type: string, feature: string): boolean {
+    const provider = this.languages.get(metamodel)?.services.references.ScopeProvider;
+    return provider instanceof MetamodelScopeProvider && provider.decides(type, feature);
+  }
+
+  /**
+   * The nodes a reference of `refType` can point to *from where it is written*: the node that holds it, and the feature. What the scope
+   * scripts of the metamodel say, when they decide; every node of the type otherwise. (`node` may be one that is only about to be
+   * created: a `$type` and the `$container` it will be in are enough for a scope script that looks at its surroundings.)
+   */
+  candidatesAt(metamodel: string, node: { $type: string; $container?: unknown; $containerProperty?: string }, feature: string, refType: string): RefCandidate[] {
+    const provider = this.languages.get(metamodel)?.services.references.ScopeProvider;
+    if (!(provider instanceof MetamodelScopeProvider) || !provider.decides(node.$type, feature)) return this.candidates(refType);
+    try {
+      const scope = provider.getScope({ container: node as AstNode, property: feature, reference: { $refText: '' } as Reference });
+      return scope.getAllElements().toArray().map(d => ({ name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path) }));
+    } catch {
+      return []; // a scope script that fails offers nothing: the problem shows when the instance is checked
+    }
   }
 
   /**

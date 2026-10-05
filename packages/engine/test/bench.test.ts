@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
 import { generateProject } from '../../../test-support/generate.js';
-import { errors } from '../../../test-support/harness.js';
+import { errors, feedSeed } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 /**
@@ -25,9 +25,7 @@ async function load(entities: number, incremental = true) {
   const seed = loadSeed();
   const project = generateProject({ entities });
   const bango = new Bango({ incremental });
-  for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
-  for (const [n, c] of Object.entries(seed.constraints)) await bango.setConstraints(n, c);
-  for (const [n, c] of Object.entries(seed.specs)) await bango.setSpec(n, c);
+  await feedSeed(bango, seed);
   return { bango, project };
 }
 

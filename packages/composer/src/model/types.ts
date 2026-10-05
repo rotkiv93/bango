@@ -57,6 +57,24 @@ export interface ConstraintModule {
   category?: ValidationCategory;
 }
 
+/** What a scope function is told besides the node whose reference is being resolved. */
+export interface ScopeInfo {
+  /** the name of the reference feature (`property` in `FormField`) */
+  property: string;
+  /** which item of a list feature, when it is one */
+  index?: number;
+}
+
+/**
+ * Which nodes a reference can point at, there: the function gets the node that holds the reference (`FormField`, for its `property`)
+ * and returns the nodes that are visible from it. `undefined` means "no opinion": Langium's default scope (every exported node of the
+ * right type, across the project) is used. Written in `<metamodel>.scope.js`.
+ */
+export type ScopeFn = (node: any, info: ScopeInfo) => unknown[] | undefined;
+
+/** The scope functions of one `scope.js`: node type name -> reference feature -> function. */
+export type ScopeSet = Record<string, Record<string, ScopeFn>>;
+
 /** A metamodel compiled for use: its own grammar with every import inlined. */
 export interface ComposedMetamodel {
   name: string;
@@ -71,6 +89,8 @@ export interface ComposedMetamodel {
   stale: boolean;
   /** compiled constraint files of every source */
   constraints: ConstraintModule[];
+  /** compiled scope scripts of every source: which nodes each reference feature can point at */
+  scopes: ScopeSet[];
   /** the metamodel's own JSON mapping, when it has one */
   spec?: SpecFn;
   /** the inverse of the JSON mapping, when it has one */

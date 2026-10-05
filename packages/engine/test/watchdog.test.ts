@@ -5,7 +5,7 @@ import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mj
 import { EngineRestartedError, ScriptTimeoutError, connectBango, type BangoConnection, type RestartInfo } from '@bango/core/client';
 import { serveBango } from '../src/worker/index.js';
 import { WorkspaceController, workspaceFromSeed } from '../src/workspace/index.js';
-import { errors } from '../../../test-support/harness.js';
+import { errors, feedSeed } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 /**
@@ -42,7 +42,7 @@ class FakeWorker {
   private inspect(message: { type?: string; path?: string[]; argumentList?: { value?: unknown }[] }): boolean {
     const method = message?.path?.[0];
     const args = (message?.argumentList ?? []).map(a => a.value);
-    if (method && /^set(Constraints|Spec|Import)$/.test(method)) {
+    if (method && /^set(Constraints|Spec|Import|Scope)$/.test(method)) {
       const key = `${method}:${args[0]}`;
       if (String(args[1]).includes('HANG')) this.bad.add(key); else this.bad.delete(key);
     }
@@ -71,9 +71,7 @@ function connect(options: { timeoutMs?: number } = {}) {
 /** The city project, with every shipped script, loaded through the client. */
 async function loadCity(client: BangoConnection) {
   const seed = loadSeed();
-  for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
-  for (const [n, c] of Object.entries(seed.constraints)) await client.setConstraints(n, c);
-  for (const [n, c] of Object.entries(seed.specs)) await client.setSpec(n, c);
+  await feedSeed(client, seed);
   await client.compose(seed.projects.city.metamodels);
   await client.setInstances(seed.projects.city.instances);
   return seed;
@@ -122,6 +120,19 @@ describe('a connection made from a function that makes the worker', () => {
     expect(errors((await client.setText('gismodel', gis)).problems).join()).toMatch(/defaultStyle 'thin' must be one of availableStyles/);
     const dup = seed.projects.city.instances.datamodel.replace('property lanes: Integer', 'property name: String');
     expect(errors((await client.setText('datamodel', dup)).problems).join()).not.toMatch(/duplicate field/);
+  });
+
+  it('a scope script that loops while a reference is resolved is switched off too, and the reference falls back to the default scope', async () => {
+    const { client, restarts } = connect();
+    const seed = await loadCity(client);
+    await client.setScope('gismodel', 'return { GeoJsonLayer: { entity() { while (true) {} } } }; // HANG');
+    const failure = await client.compose(seed.projects.city.metamodels).catch(e => e);
+    expect(failure).toBeInstanceOf(ScriptTimeoutError);
+    expect(restarts).toEqual([{ call: 'compose', quarantined: [{ kind: 'scope', metamodel: 'gismodel' }] }]);
+    expect(client.quarantined()).toEqual([{ kind: 'scope', metamodel: 'gismodel' }]);
+    // the engine is back, with its instances, and the entity of the layer resolves the ordinary way
+    for (const s of await client.getInstances()) expect(errors(s.problems), s.metamodel).toEqual([]);
+    expect((await client.getInstance('gismodel')).ast).toBeDefined();
   });
 
   it('sending the script again, fixed, takes it out of quarantine, and its rules apply again', async () => {

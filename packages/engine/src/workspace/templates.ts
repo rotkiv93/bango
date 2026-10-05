@@ -37,6 +37,17 @@ const importer = function (json, { n }) {
 return importer;
 `;
 
+export const SCOPE_TEMPLATE = `// Which nodes a reference can point at, from where it is written (Langium's ScopeProvider, as a script).
+// { NodeType: { referenceFeature(node) { return [...nodes visible there]; } } }
+// \`node\` is the node that holds the reference: look around it with node.$container, follow other references with .ref.
+// Return undefined to leave the choice to the default scope (every node of the right type in the project).
+/** @type {Scope} */
+const scope = {
+};
+
+return scope;
+`;
+
 /** A minimal metamodel: imports the shared terminals, has one entry rule, and describes itself in the first comment. */
 export const grammarTemplate = (name: string) => {
   const pascal = name.charAt(0).toUpperCase() + name.slice(1);

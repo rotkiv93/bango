@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
+import { feedSeed } from '../../../test-support/harness.js';
 import { random, randomOp } from '../../../test-support/random-edits.js';
 import { EXAMPLE_PROJECTS, loadSeed } from '../../../test-support/seed.js';
 
@@ -13,9 +14,7 @@ async function pair(project: string) {
   const def = seed.projects[project];
   const make = async (incremental: boolean) => {
     const bango = new Bango({ incremental });
-    for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
-    for (const [n, c] of Object.entries(seed.constraints)) await bango.setConstraints(n, c);
-    for (const [n, c] of Object.entries(seed.specs)) await bango.setSpec(n, c);
+    await feedSeed(bango, seed);
     await bango.compose(def.metamodels);
     await bango.setInstances(def.instances);
     return bango;

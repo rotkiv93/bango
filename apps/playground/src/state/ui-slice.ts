@@ -57,7 +57,7 @@ export const createUiSlice: StateCreator<State, [], [], UiSlice> = (set, get) =>
 
     setMetamodelView(view) {
       const { activeGrammar } = get();
-      if (activeGrammar && (view === 'constraints' || view === 'spec' || view === 'import')) get().ensureScript(view, activeGrammar);
+      if (activeGrammar && (view === 'constraints' || view === 'scope' || view === 'spec' || view === 'import')) get().ensureScript(view, activeGrammar);
       set({ metamodelView: view });
     }
   };

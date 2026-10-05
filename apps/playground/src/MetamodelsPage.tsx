@@ -98,6 +98,7 @@ export function MetamodelsPage() {
                     items={[
                       { value: 'grammar', label: 'Grammar', title: 'The Langium grammar' },
                       { value: 'constraints', label: 'Constraints', title: 'Validation the grammar cannot express' },
+                      { value: 'scope', label: 'Scope', title: 'Which nodes each reference can point at, from where it is written' },
                       { value: 'spec', label: 'JSON mapping', title: 'The piece of the JSON specification this metamodel owns' },
                       { value: 'import', label: 'JSON import', title: 'How the project JSON becomes an instance of this metamodel: the inverse of the JSON mapping' },
                       { value: 'tests', label: `Tests${(s.workspace.cases[s.activeGrammar]?.length ?? 0) ? ` (${s.workspace.cases[s.activeGrammar].length})` : ''}`, title: 'Sample instances and what they must report' },
@@ -113,6 +114,9 @@ export function MetamodelsPage() {
                 )}
                 {view === 'constraints' && (
                   <ScriptEditorView id={`constraints/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.constraints[s.activeGrammar] ?? ''} onChange={t => s.editConstraints(s.activeGrammar!, t)} />
+                )}
+                {view === 'scope' && (
+                  <ScriptEditorView id={`scope/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.scopes[s.activeGrammar] ?? ''} onChange={t => s.editScope(s.activeGrammar!, t)} />
                 )}
                 {view === 'spec' && (
                   <ScriptEditorView id={`spec/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.specs[s.activeGrammar] ?? ''} onChange={t => s.editSpec(s.activeGrammar!, t)} />

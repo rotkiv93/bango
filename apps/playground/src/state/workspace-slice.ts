@@ -88,6 +88,7 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
     editConstraints: (metamodel, text) => controller.editScript('constraints', metamodel, text),
     editSpec: (metamodel, text) => controller.editScript('spec', metamodel, text),
     editImport: (metamodel, text) => controller.editScript('import', metamodel, text),
+    editScope: (metamodel, text) => controller.editScript('scope', metamodel, text),
     ensureScript: (kind, metamodel) => controller.ensureScript(kind, metamodel),
     reenableScript: (kind, metamodel) => controller.reenableScript(kind, metamodel),
     setCases: (metamodel, cases) => controller.setCases(metamodel, cases),

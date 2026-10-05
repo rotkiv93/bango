@@ -18,7 +18,7 @@
     "text": "lists\nlist Products entity Product sortBy colour\n",
     "expect": {
       "errors": [
-        "cannot sort by 'colour'"
+        "Could not resolve reference to Field named 'colour'"
       ]
     }
   },

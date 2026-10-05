@@ -22,6 +22,7 @@ import type {
   RenameResult,
   SymbolDto,
   RefCandidate,
+  RefContext,
   Unsubscribe
 } from '@bango/core';
 
@@ -63,6 +64,10 @@ export class Bango implements BangoApi {
 
   setImport(metamodel: string, code: string): Promise<void> {
     return this.run(() => { this.composer.setImport(metamodel, code); });
+  }
+
+  setScope(metamodel: string, code: string): Promise<void> {
+    return this.run(() => { this.composer.setScope(metamodel, code); });
   }
 
   setConstraints(metamodel: string, code: string): Promise<void> {
@@ -116,7 +121,7 @@ export class Bango implements BangoApi {
   getFormSchema(metamodel: string): Promise<FormSchema | undefined> { return this.run(() => this.engine.getFormSchema(metamodel)); }
   toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined> { return this.run(() => this.engine.toJson(metamodel, options)); }
   toProjectJson(options?: JsonSpecOptions): Promise<JsonValue> { return this.run(() => this.engine.toProjectJson(options)); }
-  getRefCandidates(refType: string): Promise<RefCandidate[]> { return this.run(() => this.engine.getRefCandidates(refType)); }
+  getRefCandidates(refType: string, context?: RefContext): Promise<RefCandidate[]> { return this.run(() => this.engine.getRefCandidates(refType, context)); }
   importJson(json: JsonValue): Promise<ImportResult> { return this.run(() => this.engine.importJson(json)); }
   complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]> { return this.run(() => this.engine.complete(metamodel, text, line, column)); }
   hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined> { return this.run(() => this.engine.hover(metamodel, text, line, column)); }

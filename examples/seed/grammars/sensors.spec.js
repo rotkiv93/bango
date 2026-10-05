@@ -4,7 +4,7 @@
 const spec = function (model, { refName }) {
   const dimension = d => {
     if (d.$type === 'SpatialDimension') return { id: d.name, type: 'SPATIAL', entities: d.entities.map(refName) };
-    return { id: d.name, type: 'CATEGORICAL', field: d.field };
+    return { id: d.name, type: 'CATEGORICAL', field: refName(d.field) };
   };
 
   const measurement = m => {

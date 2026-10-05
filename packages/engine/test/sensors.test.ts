@@ -51,7 +51,7 @@ describe('sensors metamodel', () => {
       ['a measurement that is not in the fact table', '    quality Integer', '    temperature Double', /measurement 'temperature' is not a property of fact table 'StationObservationMeasurement'/],
       ['a measurement of another type than its column', 'quality Integer', 'quality String', /measurement 'quality' is String, but 'StationObservationMeasurement.quality' is Integer/],
       ['a fact table that does not point at the sensor entity', 'factTable StationObservationMeasurement', 'factTable StationObservationEntity', /fact table 'StationObservationEntity' has no relationship to 'StationObservationEntity'/],
-      ['a categorical field that is not in the fact table', 'field sensorType', 'field kind', /categorical field 'kind' is not a property of fact table/],
+      ['a categorical field that is not in the fact table', 'field sensorType', 'field kind', /Could not resolve reference to PropertyField named 'kind'/],
       ['a duplicated measurement', '    quality Integer', '    quality Integer\n    quality Integer', /measurement 'quality' is declared twice/],
       ['a duplicated dimension', '  categorical SensorType field sensorType', '  categorical SensorType field sensorType\n  categorical SensorType field sensorType', /dimension 'SensorType' is declared twice/],
       ['a sensor repeated', 'sensor StationObservation time 10', 'sensorGroup StationObservation (StationObservation)\nsensor StationObservation time 10', /duplicate sensor or group 'StationObservation'/]
@@ -136,7 +136,7 @@ describe('data model constraints', () => {
 
 describe('map viewer constraints', () => {
   const cases: [string, string, string, RegExp][] = [
-    ['a layer that draws a field the entity does not have', 'entity ZoneDimension\n', 'entity ZoneDimension field outline\n', /entity 'ZoneDimension' has no property 'outline' to draw/],
+    ['a layer that draws a field the entity does not have', 'entity ZoneDimension\n', 'entity ZoneDimension field outline\n', /Could not resolve reference to PropertyField named 'outline'/],
     ['a layer that draws a field that is not a geometry', 'entity ZoneDimension\n', 'entity ZoneDimension field name\n', /'ZoneDimension.name' is a String, not a geometry/],
     ['a default style that is not available', 'defaultStyle grayPolygon\n', 'defaultStyle redPolygon\n', /defaultStyle 'redPolygon' must be one of availableStyles/],
     ['a layer on a map without a style', 'use ZoneDimension style grayPolygon order 2', 'use ZoneDimension order 2', /layer 'ZoneDimension' draws data: choose a style for it/],

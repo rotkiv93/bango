@@ -215,6 +215,23 @@ describe('form view', () => {
     expect(options).toEqual(expect.arrayContaining(['Road', 'Parcel']));
   });
 
+  it('offers a field only what is visible from the form it is in: the fields of that form\'s entity', async () => {
+    const { el, bango } = await show('office', 'forms', 'form');
+    const forms = [...el.querySelectorAll('.bango-node')].filter(n => n.querySelector(':scope > legend b')?.textContent === 'FormDef') as HTMLElement[];
+    const fieldSelects = (form: HTMLElement) =>
+      [...form.querySelectorAll('.bango-node')].filter(n => n.querySelector(':scope > legend b')?.textContent === 'FormField').map(n => n.querySelector('select') as HTMLSelectElement);
+    const options = (form: HTMLElement) => [...fieldSelects(form)[0].querySelectorAll('option')].map(o => o.textContent!).filter(t => t && t !== 'choose…');
+    // CustomerForm lists the fields of Customer, never those of Invoice
+    expect(options(forms[0])).toEqual(expect.arrayContaining(['name', 'email', 'invoices']));
+    expect(options(forms[0])).not.toContain('total');
+
+    // and picking one is an ordinary edit
+    const select = fieldSelects(forms[0])[0];
+    select.value = 'invoices';
+    select.dispatchEvent(new Event('change'));
+    await vi.waitFor(async () => expect((await bango.getInstance('forms')).text).toContain('field invoices'));
+  });
+
   it('editing a value rewrites the text through the engine', async () => {
     const { el, bango } = await show('city', 'gismodel', 'form');
     const layer = [...el.querySelectorAll('.bango-node')].find(n => n.querySelector('legend')?.textContent?.includes('GeoJsonLayer')) as HTMLElement;

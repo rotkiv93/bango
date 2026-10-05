@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ModelComposer } from '@bango/composer';
 import { Bango } from '../src/index.js';
-import { composerWith, errors } from '../../../test-support/harness.js';
+import { composerWith, errors, feedSeed } from '../../../test-support/harness.js';
 import { METAMODELS, loadSeed } from '../../../test-support/seed.js';
 
 /** The imports of every grammar, read from the grammar text itself: an oracle that does not use the composer. */
@@ -102,9 +102,7 @@ describe('the order of a selection never matters', () => {
     const results: string[] = [];
     for (const order of [project.metamodels, [...project.metamodels].reverse(), shuffled(project.metamodels, 1), shuffled(project.metamodels, 7)]) {
       const bango = new Bango();
-      for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
-      for (const [n, c] of Object.entries(seed.constraints)) await bango.setConstraints(n, c);
-      for (const [n, c] of Object.entries(seed.specs)) await bango.setSpec(n, c);
+      await feedSeed(bango, seed);
       await bango.compose(order);
       // instances arrive in the order of the selection as well
       await bango.setInstances(Object.fromEntries(order.map(m => [m, project.instances[m]])));

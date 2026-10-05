@@ -18,7 +18,7 @@
     "text": "forms\nform ProductForm entity Product {\n  field colour\n}\n",
     "expect": {
       "errors": [
-        "has no field 'colour'"
+        "Could not resolve reference to Field named 'colour'"
       ]
     }
   },

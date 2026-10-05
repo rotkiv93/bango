@@ -19,25 +19,28 @@ export interface WorkspaceData {
   specs: Record<string, string>;
   /** metamodel name -> import mapping code: the inverse of its JSON mapping */
   imports: Record<string, string>;
+  /** grammar name -> scope code: which nodes each reference of the grammar can point at */
+  scopes: Record<string, string>;
   /** metamodel name -> its test cases: sample instances and what they must report */
   cases: Record<string, MetamodelCase[]>;
   projects: Record<string, ProjectData>;
 }
 
-export const emptyWorkspace = (): WorkspaceData => ({ grammars: {}, constraints: {}, specs: {}, imports: {}, cases: {}, projects: {} });
+export const emptyWorkspace = (): WorkspaceData => ({ grammars: {}, constraints: {}, specs: {}, imports: {}, scopes: {}, cases: {}, projects: {} });
 
 /**
  * A workspace saved by an older version lacks what was added since. Specs were never seeded on their own, so an old workspace simply has
  * none; import mappings and test cases start from `seed` (the examples). Everything the user wrote is kept.
  */
 export function migrateWorkspace(saved: Partial<WorkspaceData>, seed: () => WorkspaceData): WorkspaceData {
-  const needsSeed = saved.imports === undefined || saved.cases === undefined;
+  const needsSeed = saved.imports === undefined || saved.cases === undefined || saved.scopes === undefined;
   const seeded = needsSeed ? seed() : emptyWorkspace();
   return {
     grammars: saved.grammars ?? {},
     constraints: saved.constraints ?? {},
     specs: saved.specs ?? {},
     imports: saved.imports ?? seeded.imports,
+    scopes: saved.scopes ?? seeded.scopes,
     cases: saved.cases ?? seeded.cases,
     projects: saved.projects ?? {}
   };

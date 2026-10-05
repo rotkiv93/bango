@@ -13,11 +13,30 @@ export interface EditContext {
   grammar: Grammar;
   reflection: AstReflection;
   /** candidates for a reference of the given type (used to pick sensible defaults) */
-  refCandidates(refType: string): RefCandidate[];
+  refCandidates(refType: string, at?: RefSite): RefCandidate[];
 }
 
-export function defaultDto(type: string, schema: FormSchema, refCandidates: EditContext['refCandidates'], depth = 0): AstDto {
+/** Where a reference is going to be written: the node that holds it (possibly not created yet) and its feature. */
+export interface RefSite {
+  node: { $type: string; $container?: unknown; $containerProperty?: string };
+  feature: string;
+}
+
+/** The node an instance path leads to. */
+export function nodeAtPath(root: AstNode, path: PathStep[]): AstNode {
+  let n: AstNode = root;
+  for (const s of path) {
+    const v = (n as unknown as Record<string, unknown>)[s.feature];
+    n = (s.index !== undefined ? (v as AstNode[])[s.index] : v) as AstNode;
+    if (!n) throw new Error('The document changed, reload the form');
+  }
+  return n;
+}
+
+export function defaultDto(type: string, schema: FormSchema, refCandidates: EditContext['refCandidates'], depth = 0, at?: { container?: RefSite['node']; feature?: string }): AstDto {
   const dto: AstDto = { type, props: {}, refs: {}, children: {} };
+  // the node as far as a scope script can tell: its type, and where it will be
+  const self = { $type: type, $container: at?.container, $containerProperty: at?.feature };
   for (const f of schema.types[type]?.fields ?? []) {
     if (!f.required) continue;
     const one = (): unknown => {
@@ -25,8 +44,8 @@ export function defaultDto(type: string, schema: FormSchema, refCandidates: Edit
         case 'text': return f.name === 'name' ? `new${type}` : f.quoted ? '' : f.sample ?? 'value';
         case 'number': return 0;
         case 'enum': return f.options?.[0] ?? '';
-        case 'ref': return { text: refCandidates(f.refType ?? '')[0]?.name ?? 'TODO', resolved: false } satisfies RefDto;
-        case 'child': return depth < 3 && f.childTypes?.[0] ? defaultDto(f.childTypes[0], schema, refCandidates, depth + 1) : undefined;
+        case 'ref': return { text: refCandidates(f.refType ?? '', { node: self, feature: f.name })[0]?.name ?? 'TODO', resolved: false } satisfies RefDto;
+        case 'child': return depth < 3 && f.childTypes?.[0] ? defaultDto(f.childTypes[0], schema, refCandidates, depth + 1, { container: self, feature: f.name }) : undefined;
         default: return undefined;
       }
     };
@@ -48,15 +67,7 @@ export function applyEditToText(ctx: EditContext, op: EditOp): string {
   const printer = new Printer(indexRules(ctx.grammar));
   const root = doc.parseResult.value;
 
-  const nodeAt = (path: PathStep[]): AstNode => {
-    let n: AstNode = root;
-    for (const s of path) {
-      const v = (n as unknown as Record<string, unknown>)[s.feature];
-      n = (s.index !== undefined ? (v as AstNode[])[s.index] : v) as AstNode;
-      if (!n) throw new Error('The document changed, reload the form');
-    }
-    return n;
-  };
+  const nodeAt = (path: PathStep[]) => nodeAtPath(root, path);
   const span = (n: AstNode) => {
     const cst = n.$cstNode;
     if (!cst) throw new Error('Node has no source position');
@@ -119,7 +130,7 @@ export function applyEditToText(ctx: EditContext, op: EditOp): string {
     if (field.kind === 'child') {
       const type = op.type ?? field.childTypes?.[0];
       if (!type) throw new Error(`No node type can be created for '${op.feature}'`);
-      const child = defaultDto(type, schema, ctx.refCandidates);
+      const child = defaultDto(type, schema, ctx.refCandidates, 0, { container: node, feature: op.feature });
       if (node === root && field.many) {
         // top-level element: append instead of reprinting the whole file (keeps comments and layout)
         return text.trimEnd() + '\n' + printer.print(child, 0) + '\n';
@@ -131,7 +142,7 @@ export function applyEditToText(ctx: EditContext, op: EditOp): string {
     }
     return reprint(node, dto => {
       if (field.kind === 'ref') {
-        const first = ctx.refCandidates(field.refType ?? '')[0]?.name;
+        const first = ctx.refCandidates(field.refType ?? '', { node, feature: op.feature })[0]?.name;
         listOf(dto.refs, op.feature).push({ text: op.value ?? first ?? 'TODO', resolved: false });
       } else {
         listOf(dto.props as Record<string, unknown[]>, op.feature).push(op.value ?? (field.kind === 'number' ? 0 : ''));

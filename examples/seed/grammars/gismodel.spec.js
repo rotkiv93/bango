@@ -32,7 +32,7 @@ const spec = function (model, { refName }) {
           type: 'geojson',
           label,
           // the entity and the field of it that holds the geometry
-          entityName: `${refName(l.entity)}-${l.field ?? 'geometry'}`,
+          entityName: `${refName(l.entity)}-${l.field ? refName(l.field) : 'geometry'}`,
           editable: !!l.editable,
           defaultStyle: refName(l.defaultStyle),
           availableStyles: l.availableStyles.map(refName)

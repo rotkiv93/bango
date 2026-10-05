@@ -5,6 +5,9 @@ import { EXAMPLE_PROJECTS } from '../../../test-support/seed.js';
 
 const unresolved = (problems: { severity: string; message: string }[]) => problems.filter(p => /Could not resolve reference/.test(p.message)).length;
 
+/** A reference that is resolved through another (a field of the entity a form shows) is lost with it: Langium's usual cascade. */
+const throughAnother = /Could not resolve reference to (Field|PropertyField) named/;
+
 /** Every k-th element, so a big project is sampled evenly instead of taking the first few. */
 const sample = <T,>(items: T[], max: number) => (items.length <= max ? items : items.filter((_, i) => i % Math.ceil(items.length / max) === 0));
 
@@ -20,7 +23,11 @@ describe.each(EXAMPLE_PROJECTS)('reference integrity in %s', name => {
       const sites = referencesOf(state.ast!).filter(r => !seen.has(`${r.type}.${r.feature}`) && seen.add(`${r.type}.${r.feature}`));
       for (const site of sample(sites, 12)) {
         const edited = await bango.applyEdit(state.metamodel, { kind: 'set', path: site.path, feature: site.feature, index: site.index, value: 'Bogus' });
-        expect(unresolved(edited.problems), `${name}/${state.metamodel} ${site.type}.${site.feature}`).toBe(1);
+        // the reference that was broken is one error; what is resolved through it (scope scripts) is lost with it, and says so
+        const lost = edited.problems.filter(p => /Could not resolve reference/.test(p.message));
+        const here = `${name}/${state.metamodel} ${site.type}.${site.feature}`;
+        expect(lost.filter(p => p.message.includes("'Bogus'")), here).toHaveLength(1);
+        for (const p of lost.filter(p => !p.message.includes("'Bogus'"))) expect(p.message, `${here}: ${p.message}`).toMatch(throughAnother);
         // nothing else was disturbed: the other instances see no new unresolved reference
         for (const other of await bango.getInstances()) {
           if (other.metamodel !== state.metamodel) expect(unresolved(other.problems), `${name}: ${other.metamodel} after ${site.type}.${site.feature}`).toBe(0);

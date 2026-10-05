@@ -2,7 +2,7 @@
 // Merge it with the specs of the other metamodels to get the whole document.
 /** @type {Spec} */
 const spec = function (model, { refName }) {
-  const field = f => ({ name: f.property, label: f.label ?? f.property, readOnly: !!f.readOnly });
+  const field = f => ({ name: refName(f.property), label: f.label ?? refName(f.property), readOnly: !!f.readOnly });
 
   const form = f => {
     const out = { name: f.name, label: f.label ?? f.name, entity: refName(f.entity) };

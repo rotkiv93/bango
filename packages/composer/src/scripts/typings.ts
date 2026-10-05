@@ -35,6 +35,9 @@ interface CancellationToken { readonly isCancellationRequested: boolean }
 /** When Langium runs a check: \`fast\` on every edit, \`slow\` only when asked. */
 type ValidationCategory = 'fast' | 'slow' | 'built-in';
 
+/** Where a scope function is called: the reference feature being resolved, and the item of it when it is a list. */
+interface ScopeInfo { readonly property: string; readonly index?: number }
+
 interface Helpers {
   /** the name a reference points at: the target's name, or the text as written when it does not resolve */
   refName(ref: Ref<{ name?: string }> | undefined): string | undefined;
@@ -76,9 +79,27 @@ function typeToString(type: PropertyType | undefined): string {
 function interfaceToString(type: InterfaceType): string {
   const supers = [...type.superTypes].filter(isInterfaceType).map(s => s.name);
   const lines = [`  readonly $type: ${[...type.typeNames].sort().map(quote).join(' | ') || quote(type.name)};`];
+  // where a node can be: the node types that have it as a child (Langium's own `$container` typing); the root has none
+  const containers = [...type.containerTypes].map(c => c.name).sort();
+  if (containers.length) lines.push(`  readonly $container: ${containers.join(' | ')};`);
   // lists are always there (possibly empty), whatever the cardinality in the grammar
   for (const p of type.properties) lines.push(`  readonly ${p.name}${p.optional && !isArrayType(p.type) ? '?' : ''}: ${typeToString(p.type)};`);
   return `interface ${type.name} extends ${supers.length ? supers.join(', ') : 'AstNode'} {\n${lines.join('\n')}\n}`;
+}
+
+/** For each interface with reference features: `Type?: { feature?(node: Type, info: ScopeInfo): AstNode[] | undefined }`. */
+function scopeEntries(interfaces: InterfaceType[]): string[] {
+  const entries: string[] = [];
+  for (const i of interfaces) {
+    const refs = [...i.properties].filter(p => {
+      const t = p.type && isArrayType(p.type) ? p.type.elementType : p.type;
+      return !!t && isReferenceType(t);
+    });
+    if (!refs.length) continue;
+    const members = refs.map(p => `    ${p.name}?(node: ${i.name}, info: ScopeInfo): readonly AstNode[] | undefined;`);
+    entries.push(`  ${i.name}?: {\n${members.join('\n')}\n  };`);
+  }
+  return entries;
 }
 
 const unionToString = (type: UnionType) => `type ${type.name} = ${typeToString(type.type)};`;
@@ -121,6 +142,9 @@ export function generateTypings(flat: Grammar | undefined, root?: string): strin
     '',
     '/** What the JSON mapping returns: a function of the instance root, or `{ root: true, map }` for the mapping that lays out the whole document. */',
     `type Spec = ((model: ${rootType}, helpers: Helpers) => unknown) | { root?: boolean; map(model: ${rootType}, helpers: Helpers): unknown };`,
+    '',
+    '/** What `scope.js` returns: for a reference feature of a node type, the nodes that are visible there (`undefined`: the default scope). */',
+    `interface Scope {\n${scopeEntries(interfaces).join('\n')}\n}`,
     '',
     '/** What `import.js` returns: the inverse of the JSON mapping. It gets the whole project document and describes the instance of this metamodel with `n`. */',
     'type Import = (json: any, helpers: Helpers) => ImportNode;',

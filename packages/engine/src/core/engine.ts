@@ -15,11 +15,12 @@ import type {
   LocationDto,
   QuickFix,
   RefCandidate,
+  RefContext,
   RenameResult,
   SymbolDto,
   Unsubscribe
 } from '@bango/core';
-import { applyEditToText, defaultDto } from '../editing/edits.js';
+import { applyEditToText, defaultDto, nodeAtPath } from '../editing/edits.js';
 import { Printer } from '../editing/printer.js';
 import { buildFormSchema, indexRules } from '../editing/schema.js';
 import { buildModel } from './build.js';
@@ -103,7 +104,13 @@ export class ModelEngine implements EngineApi {
   getFormSchema(metamodel: string): Promise<FormSchema | undefined> {
     return this.queue.run(() => {
       const lang = this.store.languages.get(metamodel);
-      return lang && buildFormSchema(lang.metamodel.grammar, lang.metamodel.reflection);
+      if (!lang) return undefined;
+      const schema = buildFormSchema(lang.metamodel.grammar, lang.metamodel.reflection);
+      // a reference a scope script decides is offered from where it is written, not from the whole project
+      for (const type of Object.values(schema.types)) {
+        for (const field of type.fields) if (field.kind === 'ref' && this.store.scopeDecides(metamodel, type.type, field.name)) field.scoped = true;
+      }
+      return schema;
     });
   }
 
@@ -117,9 +124,17 @@ export class ModelEngine implements EngineApi {
     return this.queue.run(() => projectJson(this.store, options ?? {}));
   }
 
-  /** Every node in the shared index that a reference of `refType` could point to, across all metamodels. */
-  getRefCandidates(refType: string): Promise<RefCandidate[]> {
-    return this.queue.run(() => this.store.candidates(refType));
+  /**
+   * Every node a reference of `refType` could point to. Across all metamodels, or (given where the reference is written) the nodes
+   * that are visible from there: what the scope scripts of the metamodel say.
+   */
+  getRefCandidates(refType: string, context?: RefContext): Promise<RefCandidate[]> {
+    return this.queue.run(async () => {
+      if (!context) return this.store.candidates(refType);
+      const { doc } = await this.store.docFor(context.metamodel, this.store.texts.get(context.metamodel) ?? '');
+      const node = nodeAtPath(doc.parseResult.value, context.path);
+      return this.store.candidatesAt(context.metamodel, node, context.feature, refType);
+    });
   }
 
   /** Instances built from the JSON of a whole project, by the import mappings of the metamodels. Changes nothing: set the `texts` to use them. */
@@ -253,7 +268,7 @@ export class ModelEngine implements EngineApi {
     if (this.store.texts.has(metamodel)) return this.store.state(metamodel);
     const { metamodel: m } = this.store.language(metamodel);
     const schema = buildFormSchema(m.grammar, m.reflection);
-    const root = defaultDto(schema.root, schema, t => this.store.candidates(t));
+    const root = defaultDto(schema.root, schema, (t, at) => (at ? this.store.candidatesAt(metamodel, at.node, at.feature, t) : this.store.candidates(t)));
     return this.setTextNow(metamodel, new Printer(indexRules(m.grammar)).print(root, 0) + '\n');
   }
 
@@ -261,7 +276,7 @@ export class ModelEngine implements EngineApi {
     const text = this.store.texts.get(metamodel) ?? '';
     const { doc, lang } = await this.store.docFor(metamodel, text);
     const edited = applyEditToText(
-      { text, doc, grammar: lang.metamodel.grammar, reflection: lang.metamodel.reflection, refCandidates: t => this.store.candidates(t) },
+      { text, doc, grammar: lang.metamodel.grammar, reflection: lang.metamodel.reflection, refCandidates: (t, at) => (at ? this.store.candidatesAt(metamodel, at.node, at.feature, t) : this.store.candidates(t)) },
       op
     );
     return this.setTextNow(metamodel, edited);

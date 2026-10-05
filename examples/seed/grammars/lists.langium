@@ -8,8 +8,8 @@ entry ListModel: 'lists' (lists+=ListDef)*;
 // A list shows one entity. List the columns to show, or leave the block out to show all of them.
 ListDef: 'list' name=ID ('label' label=STRING)? 'entity' entity=[Entity:ID]
   ('pageSize' pageSize=INT)?
-  ('sortBy' sortBy=ID (descending?='descending')?)?
+  ('sortBy' sortBy=[Field:ID] (descending?='descending')?)?
   ('{' (columns+=ListColumn)* '}')?;
 
-// `property` is a field of the entity (checked by a constraint: it has to exist there)
-ListColumn: 'column' property=ID ('label' label=STRING)?;
+// `property` (and `sortBy`) is a field of the list's entity: lists.scope.js says which ones are visible there
+ListColumn: 'column' property=[Field:ID] ('label' label=STRING)?;

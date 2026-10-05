@@ -45,6 +45,7 @@ export class ModelComposer {
   private constraintTexts = new Map<string, string>();
   private specTexts = new Map<string, string>();
   private importTexts = new Map<string, string>();
+  private scopeTexts = new Map<string, string>();
   private lastGood = new Map<string, ComposedMetamodel>();
   private build?: Build;
   /** grammar workspaces built from texts with renamed types, by plan (one per distinct set of collisions) */
@@ -80,6 +81,12 @@ export class ModelComposer {
   /** The import mapping of the metamodel called `name`: the inverse of its JSON mapping (see `ImportFn`). */
   setImport(name: string, code: string): this {
     this.importTexts.set(name, code);
+    return this;
+  }
+
+  /** Which nodes each reference of the grammar `name` can point at (see `ScopeSet`): `<name>.scope.js`. */
+  setScope(name: string, code: string): this {
+    this.scopeTexts.set(name, code);
     return this;
   }
 
@@ -150,7 +157,7 @@ export class ModelComposer {
       report(grammars, r.file, 'info', `Type '${r.original}' is also declared by '${r.keeper}': in a project that uses both it is called '${r.renamed}'`);
     }
 
-    const scripts = new ScriptBinder(this.constraintTexts, this.specTexts, this.importTexts, plan, file => importsOf(base, file), grammars);
+    const scripts = new ScriptBinder(this.constraintTexts, this.specTexts, this.importTexts, this.scopeTexts, plan, file => importsOf(base, file), grammars);
     const usable: ComposedMetamodel[] = [];
     for (const name of names) {
       const info = grammars.find(g => g.name === name);
@@ -172,6 +179,7 @@ export class ModelComposer {
       usable.push({
         ...metamodel,
         constraints: metamodel.sources.flatMap(s => scripts.constraintsFor(s) ?? []),
+        scopes: metamodel.sources.flatMap(s => { const scope = scripts.scopeFor(s); return scope ? [scope] : []; }),
         spec: spec?.map,
         specRoot: spec?.root,
         importer: scripts.importFor(name)
@@ -215,7 +223,8 @@ export class ModelComposer {
       sources: [grammar, ...resolveTransitiveImports(build.documents, grammar)].map(g => nameOfDocument(AstUtils.getDocument(g))),
       requires: info.requires,
       stale: false,
-      constraints: []
+      constraints: [],
+      scopes: []
     };
   }
 

@@ -1,14 +1,16 @@
 # Writing metamodels
 
-A metamodel is up to three files, named after it. Only the grammar is required.
+A metamodel is up to five files, named after it. Only the grammar is required.
 
 | File | What it is | Loaded with |
 |---|---|---|
 | `<name>.langium` | the grammar: what instances look like | `bango.setGrammar(name, text)` |
 | `<name>.constraints.js` | validation the grammar cannot express | `bango.setConstraints(name, code)` |
 | `<name>.spec.js` | how an instance becomes JSON | `bango.setSpec(name, code)` |
+| `<name>.import.js` | how JSON becomes an instance | `bango.setImport(name, code)` |
+| `<name>.scope.js` | which nodes each reference can point at | `bango.setScope(name, code)` |
 
-In the playground, all three are edited on the **Metamodels** page (*Grammar*, *Constraints*, *JSON mapping*), and every project that uses the metamodel revalidates as you type.
+In the playground, they are edited on the **Metamodels** page (*Grammar*, *Constraints*, *Scope*, *JSON mapping*, *JSON import*), and every project that uses the metamodel revalidates as you type.
 
 ## 1. The grammar
 
@@ -153,11 +155,34 @@ SensorDef(sensor, accept) {
 
 ### What scripts can reach, and what happens when one never finishes
 
-Constraints, JSON mappings and import mappings run in the engine (in a worker, in the playground). Three things to know:
+Constraints, scopes, JSON mappings and import mappings run in the engine (in a worker, in the playground). Three things to know:
 
 - **They are strict function bodies** (`this` is undefined, a typo does not make a global), and what could take them out of the engine is not there: `fetch`, `XMLHttpRequest`, `WebSocket`, `importScripts`, `postMessage`, `self`, `globalThis`, `window`, `document`, `indexedDB`, `localStorage`, `Function`, `eval` and the timers are `undefined`. The helpers they are given are frozen. This is **defence in depth, not a sandbox**: a script is the code of whoever writes the metamodel, and the global object can still be reached through a function's `constructor`. Do not run metamodels from people you do not trust.
 - **A script that never finishes does not freeze the app.** With the engine in a worker made by a function (as the playground does), an engine that stops answering for 10 s is replaced, the scripts are switched back on one at a time, and the one that makes it stop again is switched off and reported (a banner in the playground, `bango.quarantined()` in code). Edit it, or switch it back on as it is. A loop in a *check* (that runs for every node) or at the top of a script (that runs when the project is composed) are both caught.
 - An in-process `Bango` cannot interrupt synchronous code from its own thread: use a worker for anything that runs scripts you did not just write.
+
+## Scope: what a reference can point at
+
+By default a reference `entity=[Entity:ID]` can point at any top-level node of that type, anywhere in the project. That is not enough when the target belongs to something else: the fields of a form are the fields of **its** entity, not of every entity. Langium's answer is the `ScopeProvider`; in Bango it is `<name>.scope.js`: for a reference feature of a node type, the nodes that are visible from where it is written.
+
+```js
+// forms.scope.js  (the grammar says: FormField: 'field' property=[Field:ID] ...)
+/** @type {Scope} */
+const scope = {
+  FormField: {
+    property: field => field.$container.entity?.ref?.fields ?? []
+  }
+};
+return scope;
+```
+
+- **The function gets the node that holds the reference** (a `FormField`) and a second argument `{ property, index }`. It returns a list of nodes, which are matched by name against what is written; a node of the wrong type is ignored. Follow other references with `.ref`, as in a constraint.
+- **`undefined` means "no opinion"**: the default scope (every exported node of the right type) is used. Returning a list is final: what it does not list does not resolve, with Langium's usual *Could not resolve reference to Field named 'x'*.
+- **Nested nodes are not exported**, so a reference to one (a field of an entity) needs a scope to be found at all. That is why the fields of the shipped forms and lists are references now, not text: renaming a property updates every form, list and sensor that uses it, completion offers the properties of the entity, and a form's drop-down lists only those.
+- **A broken entity breaks its fields**: when the reference a scope depends on does not resolve (`entity Nope`), the fields that are looked up through it do not resolve either. That is Langium's normal cascade, and the messages say which references were lost.
+- Keys can name a supertype (`Dimension`), and apply to its subtypes. The file is typed (`/** @type {Scope} */`): only the reference features of the grammar are accepted, and `node` is typed with its container.
+- It is **Langium**: the engine installs a `ScopeProvider` that asks these functions and falls back to `DefaultScopeProvider`. `MetamodelScopeProvider` (in `@bango/engine`'s sources) works in plain Langium services too; a test builds one without the Bango engine.
+- From code: `bango.setScope(name, code)`; `bango.getRefCandidates('Field', { metamodel: 'forms', path, feature: 'property' })` answers with what is visible at that place (without the context: every node of the type), and the form schema marks such fields with `scoped: true`.
 
 ## When two metamodels use the same type name
 
@@ -273,5 +298,6 @@ The **Tests** tab of a metamodel lists its cases, reruns them as you edit the gr
 - [ ] rule names are unique across all metamodels
 - [ ] each metamodel it needs is `import`ed (that is what makes it a requirement)
 - [ ] constraints for what only a person would notice
+- [ ] a scope for every reference to something nested (a field of an entity)
 - [ ] a few test cases: one valid sample, and one for each rule
 - [ ] a mapping, if the metamodel contributes to the JSON specification, and its import mapping if you want to start from existing JSON

@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
-import { openProject } from '../../../test-support/harness.js';
+import { feedSeed, openProject } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 async function bangoWithSeed() {
   const seed = loadSeed();
   const bango = new Bango();
-  for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
-  for (const [n, c] of Object.entries(seed.constraints)) await bango.setConstraints(n, c);
-  for (const [n, c] of Object.entries(seed.specs)) await bango.setSpec(n, c);
+  await feedSeed(bango, seed);
   return { bango, seed };
 }
 

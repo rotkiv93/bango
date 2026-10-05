@@ -2,6 +2,9 @@ import type { AstDto, EditOp, FieldSchema, FormSchema, InstanceState, PathStep, 
 import { asArray, clear, h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 
+/** Where a reference is written, as a key: the path of its node and its feature. */
+const scopeKey = (path: PathStep[], feature: string) => `${JSON.stringify(path)}|${feature}`;
+
 /**
  * Form editor generated from the grammar of the instance's metamodel.
  * Every change becomes an `EditOp` sent to the engine, which edits the text and re-parses it.
@@ -10,7 +13,7 @@ export class FormRenderer implements InstanceRenderer {
   private root!: HTMLElement;
   private error?: string;
   private seq = 0;
-  private data?: { ast: AstDto; schema: FormSchema; candidates: Record<string, RefCandidate[]> };
+  private data?: { ast: AstDto; schema: FormSchema; candidates: Record<string, RefCandidate[]>; scoped: Record<string, RefCandidate[]> };
   private message?: string;
 
   constructor(private ctx: RenderContext) {}
@@ -37,8 +40,20 @@ export class FormRenderer implements InstanceRenderer {
     const refTypes = new Set<string>();
     for (const t of Object.values(schema.types)) for (const f of t.fields) if (f.kind === 'ref' && f.refType) refTypes.add(f.refType);
     const entries = await Promise.all([...refTypes].map(async t => [t, await engine.getRefCandidates(t)] as const));
+    // a reference a scope script decides is offered what is visible from where it is written, node by node
+    const scopedEntries: (readonly [string, RefCandidate[]])[] = [];
+    const visit = async (node: AstDto, path: PathStep[]) => {
+      for (const f of schema.types[node.type]?.fields ?? []) {
+        if (f.kind === 'ref' && f.scoped) scopedEntries.push([scopeKey(path, f.name), await engine.getRefCandidates(f.refType ?? '', { metamodel, path, feature: f.name })] as const);
+      }
+      for (const [feature, value] of Object.entries(node.children)) {
+        const children = asArray(value);
+        for (const [i, child] of children.entries()) await visit(child, [...path, { feature, index: Array.isArray(value) ? i : undefined }]);
+      }
+    };
+    await visit(state.ast, []);
     if (seq !== this.seq) return; // a newer update is on its way
-    this.data = { ast: state.ast, schema, candidates: Object.fromEntries(entries) };
+    this.data = { ast: state.ast, schema, candidates: Object.fromEntries(entries), scoped: Object.fromEntries(scopedEntries) };
     this.message = undefined;
     this.render();
   }
@@ -114,7 +129,7 @@ export class FormRenderer implements InstanceRenderer {
     const control = (i: number, v: string | number | boolean | undefined): HTMLElement => {
       const idx = field.many ? i : undefined;
       const text = v === undefined ? '' : String(v);
-      if (field.kind === 'ref') return this.refSelect(text, refs[i]?.resolved ?? true, field, x => set(x || null, idx));
+      if (field.kind === 'ref') return this.refSelect(text, refs[i]?.resolved ?? true, field, path, x => set(x || null, idx));
       if (field.kind === 'enum') {
         return h('select', { onchange: (e: Event) => set((e.target as HTMLSelectElement).value || null, idx) },
           !field.required && h('option', { value: '' }, '(none)'),
@@ -144,8 +159,9 @@ export class FormRenderer implements InstanceRenderer {
     return h('div', { class: 'bango-field' }, label, box);
   }
 
-  private refSelect(value: string, resolved: boolean, field: FieldSchema, onPick: (v: string) => void): HTMLElement {
-    const options = [...new Set((this.data!.candidates[field.refType ?? ''] ?? []).map(c => c.name))];
+  private refSelect(value: string, resolved: boolean, field: FieldSchema, path: PathStep[], onPick: (v: string) => void): HTMLElement {
+    const visible = field.scoped ? this.data!.scoped[scopeKey(path, field.name)] : undefined;
+    const options = [...new Set((visible ?? this.data!.candidates[field.refType ?? ''] ?? []).map(c => c.name))];
     return h('select', { class: resolved ? '' : 'bango-invalid', onchange: (e: Event) => onPick((e.target as HTMLSelectElement).value) },
       (!field.required || !value) && h('option', { value: '', selected: !value }, field.required ? 'choose…' : '(none)'),
       !options.includes(value) && value && h('option', { value, selected: true }, `${value} (unresolved)`),

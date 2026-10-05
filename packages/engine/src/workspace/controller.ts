@@ -3,16 +3,17 @@ import type {
 } from '@bango/core';
 import { emptyWorkspace, migrateWorkspace, type WorkspaceData, type WorkspaceStorage } from './data.js';
 import { KeyedDebouncer } from './debounce.js';
-import { CONSTRAINTS_TEMPLATE, IMPORT_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
+import { CONSTRAINTS_TEMPLATE, IMPORT_TEMPLATE, SCOPE_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
 import { validateMetamodelName, validateProjectName } from './validation.js';
 
 /** The scripts a metamodel can own besides its grammar. */
-export type ScriptKind = 'constraints' | 'spec' | 'import';
+export type ScriptKind = 'constraints' | 'spec' | 'import' | 'scope';
 
-const SCRIPTS: Record<ScriptKind, { files: 'constraints' | 'specs' | 'imports'; template: string }> = {
+const SCRIPTS: Record<ScriptKind, { files: 'constraints' | 'specs' | 'imports' | 'scopes'; template: string }> = {
   constraints: { files: 'constraints', template: CONSTRAINTS_TEMPLATE },
   spec: { files: 'specs', template: SPEC_TEMPLATE },
-  import: { files: 'imports', template: IMPORT_TEMPLATE }
+  import: { files: 'imports', template: IMPORT_TEMPLATE },
+  scope: { files: 'scopes', template: SCOPE_TEMPLATE }
 };
 const KINDS = Object.keys(SCRIPTS) as ScriptKind[];
 
@@ -56,7 +57,7 @@ export class WorkspaceController {
   private current: WorkspaceState = { workspace: emptyWorkspace(), catalog: [], instances: [], ready: false, building: false, quarantined: [] };
   private listeners = new Set<(state: WorkspaceState) => void>();
   private loadedGrammars = new Set<string>();
-  private loadedScripts: Record<ScriptKind, Set<string>> = { constraints: new Set(), spec: new Set(), import: new Set() };
+  private loadedScripts: Record<ScriptKind, Set<string>> = { constraints: new Set(), spec: new Set(), import: new Set(), scope: new Set() };
   private readonly delay: Required<NonNullable<WorkspaceOptions['delays']>>;
   private readonly timers: KeyedDebouncer;
   private unsubscribe?: () => void;
@@ -135,7 +136,12 @@ export class WorkspaceController {
   }
 
   private send(kind: ScriptKind, metamodel: string, code: string) {
-    return kind === 'constraints' ? this.bango.setConstraints(metamodel, code) : kind === 'spec' ? this.bango.setSpec(metamodel, code) : this.bango.setImport(metamodel, code);
+    switch (kind) {
+      case 'constraints': return this.bango.setConstraints(metamodel, code);
+      case 'spec': return this.bango.setSpec(metamodel, code);
+      case 'import': return this.bango.setImport(metamodel, code);
+      case 'scope': return this.bango.setScope(metamodel, code);
+    }
   }
 
   /** Make the engine's grammars, constraints, JSON mappings and import mappings match the workspace. */

@@ -178,11 +178,12 @@ describe('workspace controller: metamodels and scripts', () => {
   it('a script gets its template on first use, and reaches the engine', async () => {
     const { controller, bango } = await ready();
     await controller.addGrammar('billing');
-    for (const kind of ['constraints', 'spec', 'import'] as const) controller.ensureScript(kind, 'billing');
+    for (const kind of ['constraints', 'spec', 'import', 'scope'] as const) controller.ensureScript(kind, 'billing');
     const { workspace } = controller.state;
     expect(workspace.constraints.billing).toContain('@type {Constraints}');
     expect(workspace.specs.billing).toContain('@type {Spec}');
     expect(workspace.imports.billing).toContain('@type {Import}');
+    expect(workspace.scopes.billing).toContain('@type {Scope}');
     // asking again keeps what is there
     controller.editScript('constraints', 'billing', '// mine\nreturn {};');
     controller.ensureScript('constraints', 'billing');
@@ -277,14 +278,15 @@ describe('workspace controller: saving', () => {
     expect(second.controller.state.instances[0].text).toBe('datamodel saved\n');
   });
 
-  it('a workspace saved before import mappings and test cases existed gets them from the examples', async () => {
+  it('a workspace saved before import mappings, scopes and test cases existed gets them from the examples', async () => {
     const seed = loadSeed();
     const old = workspaceFromSeed(seed) as Partial<WorkspaceData>;
-    delete old.imports; delete old.cases; delete old.specs;
+    delete old.imports; delete old.cases; delete old.specs; delete old.scopes;
     old.grammars = { ...old.grammars, mine: 'grammar Mine\nimport \'common\'\nentry Model: \'mine\' name=ID?;\n' };
     const { controller } = await ready({ storage: new MemoryStorage(old as WorkspaceData) });
     const { workspace } = controller.state;
     expect(Object.keys(workspace.imports).sort()).toEqual(METAMODELS);
+    expect(Object.keys(workspace.scopes).sort()).toEqual(['forms', 'gismodel', 'lists', 'sensors']);
     expect(Object.keys(workspace.cases).length).toBeGreaterThan(0);
     expect(workspace.specs).toEqual({});
     // what the user had is kept

@@ -12,14 +12,14 @@ const constraints = {
     }
 
     // the field the layer draws must exist in the entity and hold a geometry
+    // (a `field` that does not resolve is reported as such; without one, the layer draws `geometry`)
     const entity = layer.entity?.ref;
-    if (!entity) return;
-    const fieldName = layer.field ?? 'geometry';
-    const field = entity.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === fieldName);
+    if (!entity || (layer.field && !layer.field.ref)) return;
+    const field = layer.field ? layer.field.ref : entity.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === 'geometry');
     if (!field) {
-      accept('error', `entity '${entity.name}' has no property '${fieldName}' to draw`, { node: layer, property: layer.field ? 'field' : 'entity' });
+      accept('error', `entity '${entity.name}' has no property 'geometry' to draw`, { node: layer, property: 'entity' });
     } else if (!SPATIAL.includes(field.class)) {
-      accept('error', `'${entity.name}.${fieldName}' is a ${field.class}, not a geometry`, { node: layer, property: layer.field ? 'field' : 'entity' });
+      accept('error', `'${entity.name}.${field.name}' is a ${field.class}, not a geometry`, { node: layer, property: layer.field ? 'field' : 'entity' });
     }
   },
 

@@ -30,7 +30,7 @@ npm run e2e          # the browser tests (needs a browser, see below)
 
 ## Adding a metamodel
 
-1. `examples/seed/grammars/<name>.langium`, with `.constraints.js`, `.spec.js`, `.import.js` and `.cases.json` next to it (see [Writing metamodels](docs/writing-metamodels.md)).
+1. `examples/seed/grammars/<name>.langium`, with `.constraints.js`, `.scope.js`, `.spec.js`, `.import.js` and `.cases.json` next to it (see [Writing metamodels](docs/writing-metamodels.md)).
 2. A project in `examples/seed/projects/<project>/` that uses it (`project.json` plus one `<metamodel>.instance` per metamodel).
 3. Add it to `METAMODELS` (and the project to `EXAMPLE_PROJECTS`) in `test-support/seed.ts`.
 

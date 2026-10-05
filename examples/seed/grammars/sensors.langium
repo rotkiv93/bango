@@ -33,7 +33,7 @@ Dimension: SpatialDimension | CategoricalDimension;
 // Observations are grouped by where they are: a chain of entities, e.g. `spatial Region entities (Country, Ocean)`
 SpatialDimension: 'spatial' name=ID 'entities' '(' entities+=[Entity:ID] (',' entities+=[Entity:ID])* ')';
 
-// ... or by a category: a field of the fact table
-CategoricalDimension: 'categorical' name=ID 'field' field=ID;
+// ... or by a category: a property of the fact table (sensors.scope.js)
+CategoricalDimension: 'categorical' name=ID 'field' field=[PropertyField:ID];
 
 SensorGroup: 'sensorGroup' name=ID '(' sensors+=[SensorDef:ID] (',' sensors+=[SensorDef:ID])* ')';

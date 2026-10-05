@@ -1,6 +1,6 @@
 import type { GrammarInfo } from '@bango/core';
-import type { ConstraintModule, ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
-import { DEFAULT_HELPERS, compileConstraints, compileImport, compileSpec } from '../scripts/compile.js';
+import type { ConstraintModule, ConstraintSet, ImportFn, ScopeSet, ScriptHelpers, SpecFn } from '../model/types.js';
+import { DEFAULT_HELPERS, compileConstraints, compileImport, compileScope, compileSpec } from '../scripts/compile.js';
 import type { RenamePlan } from './collisions.js';
 import { report } from './grammar-workspace.js';
 
@@ -12,11 +12,13 @@ import { report } from './grammar-workspace.js';
 export class ScriptBinder {
   private readonly helpers: ScriptHelpers;
   private readonly compiled = new Map<string, ConstraintModule[] | undefined>();
+  private readonly compiledScopes = new Map<string, ScopeSet | undefined>();
 
   constructor(
     private readonly constraintTexts: Map<string, string>,
     private readonly specTexts: Map<string, string>,
     private readonly importTexts: Map<string, string>,
+    private readonly scopeTexts: Map<string, string>,
     private readonly plan: RenamePlan,
     /** the grammar files a grammar imports, in the grammars as written */
     private readonly importsOf: (grammar: string) => string[],
@@ -46,6 +48,20 @@ export class ScriptBinder {
     return set;
   }
 
+  /** The compiled scope script of one grammar file, if it has one (and it compiles). */
+  scopeFor(source: string): ScopeSet | undefined {
+    if (this.compiledScopes.has(source)) return this.compiledScopes.get(source);
+    const code = this.scopeTexts.get(source);
+    let set: ScopeSet | undefined;
+    if (code?.trim()) {
+      try { set = this.translateScope(source, compileScope(code, this.helpers)); } catch (e) {
+        report(this.infos, source, 'error', `${source}.scope.js: ${(e as Error).message}`);
+      }
+    }
+    this.compiledScopes.set(source, set);
+    return set;
+  }
+
   /** The compiled JSON mapping of a metamodel, if it has one (and it compiles). */
   specFor(name: string): { map: SpecFn; root: boolean } | undefined {
     const code = this.specTexts.get(name);
@@ -64,6 +80,18 @@ export class ScriptBinder {
       report(this.infos, name, 'error', `${name}.import.js: ${(e as Error).message}`);
       return undefined;
     }
+  }
+
+  /** A scope is written against the names its author knows too: a key that names a renamed type means the renamed one. */
+  private translateScope(source: string, scopes: ScopeSet): ScopeSet {
+    if (!this.plan.renames.length) return scopes;
+    const visible = [source, ...this.importsOf(source)];
+    const out: ScopeSet = {};
+    for (const [key, features] of Object.entries(scopes)) {
+      const declared = visible.flatMap(f => this.plan.declarations.get(f) ?? []).find(d => d.name === key);
+      out[(declared && this.plan.nodes.get(declared.node)) ?? key] = features;
+    }
+    return out;
   }
 
   /** A constraint is written against the names its author knows: a key that names a renamed type means the renamed one. */
