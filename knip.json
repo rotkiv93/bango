@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": ["examples/plain/monaco-worker.js", "examples/seed/**"],
+  "ignoreDependencies": ["comlink", "elkjs", "langium", "monaco-editor", "oxlint", "@playwright/test"],
+  "ignoreBinaries": ["playwright"],
+  "workspaces": {
+    ".": { "entry": ["scripts/*.mjs", "e2e/*.ts"] }
+  }
+}

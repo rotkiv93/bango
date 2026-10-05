@@ -4,7 +4,6 @@ import type { GrammarInfo, SelectionCheck } from '@bango/core';
 import { flatten } from '../grammar/flatten.js';
 import { generateTypings } from '../scripts/typings.js';
 import { nameOfDocument } from '../model/documents.js';
-import { wholeFile } from '../model/problems.js';
 import type { ComposedMetamodel } from '../model/types.js';
 import { planRenames, rewriteTexts, type RenamePlan } from './collisions.js';
 import { Composition } from './composition.js';

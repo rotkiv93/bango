@@ -2,6 +2,13 @@
   "name": "bango",
   "private": true,
   "version": "0.1.0",
+  "description": "Define metamodels as Langium grammars, compose them into projects, and edit instances as text, forms or diagrams",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotkiv93/bango.git"
+  },
+  "homepage": "https://github.com/rotkiv93/bango",
   "type": "module",
   "workspaces": [
     "packages/*",
@@ -10,14 +17,21 @@
   "scripts": {
     "dev": "npm run dev -w apps/playground",
     "test": "vitest run",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p e2e",
     "build:libs": "npm run build -w @bango/core && npm run build -w @bango/composer && npm run build -w @bango/engine && npm run build -w @bango/renderer",
     "build": "npm run build:libs && npm run build -w @bango/playground",
     "example": "node examples/serve.mjs",
     "pages": "npm run build -w @bango/playground",
-    "pages:preview": "npm run preview -w @bango/playground"
+    "pages:preview": "npm run preview -w @bango/playground",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "lint": "oxlint packages apps test-support scripts e2e",
+    "knip": "knip --no-config-hints",
+    "pack:smoke": "node scripts/pack-smoke.mjs",
+    "check:bundles": "node scripts/check-bundles.mjs",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:bundles && npm run pack:smoke"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -25,10 +39,15 @@
     "comlink": "^4.4.2",
     "elkjs": "^0.12.0",
     "happy-dom": "^20.14.5",
+    "knip": "^6.39.0",
     "langium": "^4.4.0",
     "monaco-editor": "^0.57.0",
+    "oxlint": "^1.87.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

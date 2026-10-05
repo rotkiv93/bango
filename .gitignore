@@ -4,3 +4,9 @@ dist
 
 # a local copy of examples/seed/expected/sensors_gresint.json
 /sensors_gresint.json
+
+# screenshots and scratch files from manual browser checks
+/*.png
+/scratch*
+playwright-report
+test-results

@@ -2,6 +2,23 @@
   "name": "@bango/renderer",
   "version": "0.1.0",
   "description": "Framework-agnostic renderers (text, form, diagram, AST) for Bango model instances",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotkiv93/bango.git",
+    "directory": "packages/renderer"
+  },
+  "homepage": "https://github.com/rotkiv93/bango/tree/main/packages/renderer#readme",
+  "bugs": {
+    "url": "https://github.com/rotkiv93/bango/issues"
+  },
+  "keywords": [
+    "bango",
+    "metamodel",
+    "editor",
+    "diagram",
+    "monaco"
+  ],
   "type": "module",
   "sideEffects": false,
   "files": [
@@ -36,5 +53,8 @@
   "scripts": {
     "build": "vite build && vite build -c vite.bundle.config.ts && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p ."
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

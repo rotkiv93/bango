@@ -6,7 +6,7 @@ import { IdbStorage } from './persistence.js';
 import type { State, WorkspaceSlice } from './types.js';
 
 /** Projects, metamodels, scripts, saving, building, importing: all of it is `WorkspaceController`, in the library. */
-export const controller = new WorkspaceController(bango, {
+const controller = new WorkspaceController(bango, {
   storage: new IdbStorage(),
   seed: seedWorkspace,
   onError: e => console.error('Bango workspace:', e)

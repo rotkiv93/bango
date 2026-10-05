@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "import", "unicorn"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "import/default": "off",
+    "unicorn/no-useless-spread": "off",
+    "unicorn/prefer-string-starts-ends-with": "off",
+    "eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "typescript/no-explicit-any": "off",
+    "react/exhaustive-deps": "warn"
+  },
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "apps/playground/src/monaco-features.ts"]
+}
