@@ -1,8 +1,13 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { parseSeed, type Seed, type SeedProject } from '../examples/seed/parse.js';
+import { parseSeed, type Seed as LibrarySeed, type SeedProject } from '@bango/engine/workspace';
 
-export type { Seed, SeedProject };
+export type { SeedProject };
+
+/** The shipped examples, plus the JSON the gresint project is expected to produce (what the tests compare against). */
+export interface Seed extends LibrarySeed {
+  expected: { gresint: unknown };
+}
 
 const root = join(import.meta.dirname, '../examples/seed');
 
@@ -14,5 +19,5 @@ export function loadSeed(): Seed {
     const path = join(entry.parentPath, entry.name);
     files[relative(root, path).replaceAll('\\', '/')] = readFileSync(path, 'utf8');
   }
-  return parseSeed(files);
+  return { ...parseSeed(files), expected: { gresint: JSON.parse(files['expected/sensors_gresint.json']) } };
 }

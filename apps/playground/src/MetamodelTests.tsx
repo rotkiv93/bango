@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { messagesOf, type CaseResult, type MetamodelCase } from '@bango/core';
-import { bango, useWorkspace } from './store.js';
+import { useWorkspace } from './store.js';
 import { EmptyState } from './ui.js';
 
 const NO_CASES: MetamodelCase[] = [];
@@ -14,6 +14,7 @@ export function MetamodelTests({ name, requires }: { name: string; requires: str
   const catalog = useWorkspace(s => s.catalog);
   const projectText = useWorkspace(s => s.instances.find(i => i.metamodel === name)?.text);
   const setCases = useWorkspace(s => s.setCases);
+  const runCases = useWorkspace(s => s.runCases);
   const [results, setResults] = useState<CaseResult[]>([]);
   const [failure, setFailure] = useState<string>();
 
@@ -22,14 +23,14 @@ export function MetamodelTests({ name, requires }: { name: string; requires: str
     let cancelled = false;
     const timer = setTimeout(async () => {
       try {
-        const found = await bango.runCases(name, cases);
+        const found = await runCases(name, cases);
         if (!cancelled) { setResults(found); setFailure(undefined); }
       } catch (e) {
         if (!cancelled) setFailure((e as Error).message);
       }
     }, 400);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [name, cases, catalog]);
+  }, [name, cases, catalog, runCases]);
 
   const update = (index: number, patch: Partial<MetamodelCase>) => setCases(name, cases.map((c, i) => (i === index ? { ...c, ...patch } : c)));
   const updateExpect = (index: number, patch: Partial<MetamodelCase['expect']>) => update(index, { expect: { ...cases[index].expect, ...patch } });

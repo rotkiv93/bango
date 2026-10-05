@@ -1,6 +1,6 @@
-import type { BuildResult, CompositionInfo, GrammarInfo, ImportResult, InstanceState, JsonValue, MetamodelCase, Range0, SelectionCheck } from '@bango/core';
+import type { CaseResult, ImportResult, JsonValue, MetamodelCase, Range0, SelectionCheck } from '@bango/core';
+import type { ScriptKind, SelectionResult, WorkspaceState } from '@bango/engine/workspace';
 import type { ViewKind } from '@bango/renderer';
-import type { Workspace } from '../types.js';
 
 export type Page = 'projects' | 'project' | 'metamodels';
 export type Theme = 'dark' | 'light';
@@ -8,11 +8,6 @@ export type MetamodelView = 'grammar' | 'constraints' | 'spec' | 'import' | 'tes
 export type OverviewView = 'diagram' | 'project-json' | 'project-ast';
 interface Toast { id: number; kind: 'error' | 'success' | 'info'; text: string }
 
-/** Why a project could not be created or changed (the composer's answer, in plain language). */
-type SelectionResult = { ok: true } | { ok: false; errors: string[]; suggested: string[] };
-
-/** The two kinds of script a metamodel can own, besides its grammar: where they live in the workspace and how they reach the worker. */
-export type ScriptKind = 'constraints' | 'spec' | 'import';
 
 /** What the user is looking at: pages, tabs, views, theme, toasts. */
 export interface UiSlice {
@@ -44,18 +39,8 @@ export interface UiSlice {
   setMetamodelView(view: MetamodelView): void;
 }
 
-/** What is saved and what the worker knows: the workspace, the open project, and the engine's answers about them. */
-export interface WorkspaceSlice {
-  workspace: Workspace;
-  activeProject?: string;
-  composition?: CompositionInfo;
-  /** every grammar of the workspace: the metamodels a project can choose from, plus libraries */
-  catalog: GrammarInfo[];
-  /** status of the open project's instances, mirrored from the engine */
-  instances: InstanceState[];
-  ready: boolean;
-  build?: { result: BuildResult; project: string };
-  building: boolean;
+/** The library's `WorkspaceController` state (workspace, open project, engine answers), plus what a screen does after each action. */
+export interface WorkspaceSlice extends WorkspaceState {
 
   init(): Promise<void>;
   checkSelection(selection: string[]): Promise<SelectionCheck>;
@@ -74,6 +59,7 @@ export interface WorkspaceSlice {
   editSpec(metamodel: string, text: string): void;
   editImport(metamodel: string, text: string): void;
   setCases(metamodel: string, cases: MetamodelCase[]): void;
+  runCases(metamodel: string, cases?: MetamodelCase[]): Promise<CaseResult[]>;
   /** what importing this JSON into the open project would produce; changes nothing */
   previewImport(json: JsonValue): Promise<ImportResult>;
   /** replace the open project's instances with imported ones (the other instances stay) */

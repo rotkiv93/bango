@@ -15,6 +15,7 @@
       "@bango/composer": ["./packages/composer/src/index.ts"],
       "@bango/engine": ["./packages/engine/src/index.ts"],
       "@bango/engine/worker": ["./packages/engine/src/worker/index.ts"],
+      "@bango/engine/workspace": ["./packages/engine/src/workspace/index.ts"],
       "@bango/renderer": ["./packages/renderer/src/index.ts"],
       "@bango/renderer/text": ["./packages/renderer/src/views/text/index.ts"]
     }

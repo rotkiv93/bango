@@ -55,7 +55,7 @@ The forms and lists JSON is not described by the sensor DSL or the given specifi
 
 ### Adding an example
 
-Put the grammar (and optional constraints, mappings and test cases) in `grammars/`, a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `test-support/seed.ts` loads them for the tests.
+Put the grammar (and optional constraints, mappings and test cases) in `grammars/`, a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `parseSeed` in `@bango/engine/workspace` reads the layout, and `test-support/seed.ts` loads them for the tests.
 
 ## `plain/`: the library without a bundler
 

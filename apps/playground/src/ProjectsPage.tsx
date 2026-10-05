@@ -1,3 +1,4 @@
+import { validateProjectName } from '@bango/engine/workspace';
 import { useState } from 'react';
 import { MetamodelPicker, SelectionVerdict, useSelectionCheck } from './MetamodelPicker.js';
 import { useWorkspace } from './store.js';
@@ -5,6 +6,7 @@ import { Chip, Dialog, EmptyState } from './ui.js';
 
 function NewProjectDialog({ onClose }: { onClose(): void }) {
   const createProject = useWorkspace(s => s.createProject);
+  const existing = Object.keys(useWorkspace(s => s.workspace.projects));
   const toast = useWorkspace(s => s.toast);
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
@@ -13,11 +15,11 @@ function NewProjectDialog({ onClose }: { onClose(): void }) {
   const [busy, setBusy] = useState(false);
   const check = useSelectionCheck(selected);
 
-  const nameError = attempted && !name.trim() ? 'Give the project a name' : undefined;
+  const nameError = attempted ? validateProjectName(name, existing) : undefined;
 
   const submit = async () => {
     setAttempted(true);
-    if (!name.trim()) return;
+    if (validateProjectName(name, existing)) return;
     setBusy(true);
     const result = await createProject(name.trim(), selected);
     setBusy(false);

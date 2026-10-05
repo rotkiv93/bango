@@ -1,3 +1,4 @@
+import { validateMetamodelName } from '@bango/engine/workspace';
 import { useEffect, useState } from 'react';
 import { CodeEditorView } from './CodeEditorView.js';
 import { GrammarAst } from './GrammarAst.js';
@@ -9,8 +10,10 @@ import { Chip, Dialog, EmptyState, Segmented, Status } from './ui.js';
 
 function NewMetamodelDialog({ onClose }: { onClose(): void }) {
   const addGrammar = useWorkspace(s => s.addGrammar);
+  const existing = Object.keys(useWorkspace(s => s.workspace.grammars));
   const [name, setName] = useState('');
-  const valid = /^[a-z][a-z0-9]*$/.test(name);
+  const error = validateMetamodelName(name, existing);
+  const valid = !error;
   const submit = () => { if (valid) { void addGrammar(name); onClose(); } };
   return (
     <Dialog
@@ -21,7 +24,7 @@ function NewMetamodelDialog({ onClose }: { onClose(): void }) {
       <label className="field">
         <span>Name <small className="muted">lowercase letters and digits; it becomes the file extension of its instances</small></span>
         <input autoFocus value={name} placeholder="e.g. billing" onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }} />
-        {name && !valid && <small className="err">Use lowercase letters and digits, starting with a letter</small>}
+        {name && error && <small className="err">{error}</small>}
       </label>
       <p className="muted">It starts from a minimal grammar that imports the shared terminals. Import other metamodels to reference their types.</p>
     </Dialog>

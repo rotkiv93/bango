@@ -34,12 +34,12 @@ Also: light and dark themes, and **Reset examples** to restore what ships with t
 | File | |
 |---|---|
 | `src/bango.worker.ts` | `serveBango()`: Langium runs here, off the UI thread |
-| `src/store.ts`, `src/state/` | the app state (zustand), in two slices: `ui-slice` (pages, tabs, views, theme, toasts) and `workspace-slice` (projects, metamodels and their scripts, the engine's answers). `state/bango.ts` talks to the worker with `connectBango` (`@bango/core/client`); `state/persistence.ts` saves to IndexedDB |
+| `src/store.ts`, `src/state/` | the app state (zustand), in two slices: `ui-slice` (pages, tabs, views, theme, toasts: what the user is looking at) and `workspace-slice`, which only mirrors the library's `WorkspaceController` (`@bango/engine/workspace`: projects, metamodels, scripts, saving, building, importing) and decides where to look after an action. `state/bango.ts` talks to the worker with `connectBango`; `state/persistence.ts` is the IndexedDB `WorkspaceStorage` and the theme |
 | `src/MetamodelTests.tsx`, `src/ScriptEditorView.tsx`, `src/script-intelligence.ts` | the *Tests* tab of a metamodel, and the editor of its constraints and mapping, which loads Monaco's TypeScript service on first use and feeds it the types generated from the grammar |
 | `src/InstanceView.tsx` | mounts a library `ModelRenderer` in an element: this is the whole integration of the views |
 | `src/CodeEditorView.tsx` | the library's `CodeEditor` for grammars, constraints and mappings |
 | `src/monaco.ts`, `src/monaco-features.ts` | Monaco setup: its worker, and just the editor features it needs |
-| `src/seed.ts` | loads `examples/seed` into the first workspace (the folder layout is parsed by `examples/seed/parse.ts`, shared with the tests) |
+| `src/seed.ts` | lists the files of `examples/seed` for the library, which knows the folder layout (`parseSeed`, shared with the tests) |
 | `src/ProjectsPage.tsx`, `ProjectPage.tsx`, `MetamodelsPage.tsx` | the three pages |
 | `src/MetamodelPicker.tsx` | metamodel cards and the composer's verdict on a selection |
 

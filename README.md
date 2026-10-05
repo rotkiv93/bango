@@ -42,7 +42,7 @@ await bango.toProjectJson();       // the project's JSON specification
 |---|---|
 | [`@bango/core`](packages/core/README.md) | the plain data types, the JSON helpers and the worker client that every other package shares; no Langium |
 | [`@bango/composer`](packages/composer/README.md) | composes grammars into languages; checks that a selection fits together; compiles constraints and JSON mappings |
-| [`@bango/engine`](packages/engine/README.md) | parses, validates and edits **one instance per metamodel**; builds the final model; JSON; runs in the page or in a worker |
+| [`@bango/engine`](packages/engine/README.md) | parses, validates and edits **one instance per metamodel**; builds the final model; JSON; runs in the page or in a worker. Its `workspace` entry (no Langium) holds projects, scripts, saving: everything an editor needs that is not drawing |
 | [`@bango/renderer`](packages/renderer/README.md) | framework-agnostic views: text (Monaco), form, diagram, AST, JSON; a custom element |
 
 ```

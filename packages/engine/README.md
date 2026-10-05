@@ -21,6 +21,7 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 | Import | |
 |---|---|
 | `@bango/engine` | `Bango`, `ModelEngine`, and the types |
+| `@bango/engine/workspace` | `WorkspaceController` and the data it keeps: projects, metamodels, scripts, test cases, saving. No Langium |
 | `@bango/engine/worker` | `serveBango()` (inside a worker); the page side, `connectBango(worker)`, is in [`@bango/core/client`](../core/README.md) |
 | `@bango/engine/bundle` | a self-contained ES module (Langium and Comlink inlined) for pages without a bundler |
 | `@bango/engine/bundle/worker` | the matching worker script |
@@ -137,6 +138,38 @@ Every instance is relinked on each change, so **any** instance may have new prob
 
 Calls are serialized: each public method runs after the previous one has finished, so you can fire edits without coordinating them.
 
+## Projects and workspaces (`@bango/engine/workspace`)
+
+Everything an editor needs that is not drawing lives here, so an application is only views. It imports **only `@bango/core`** (no Langium), so a page whose engine is in a worker can use it without loading the parser.
+
+```ts
+import { WorkspaceController, MemoryStorage, parseSeed, workspaceFromSeed } from '@bango/engine/workspace';
+import { connectBango } from '@bango/core/client';
+
+const controller = new WorkspaceController(connectBango(worker), {
+  storage,                                            // anything with load() / save(data): IndexedDB, a file, MemoryStorage
+  seed: () => workspaceFromSeed(parseSeed(files)),    // the examples of a first visit
+});
+controller.subscribe(state => render(state));         // state: workspace, activeProject, composition, catalog, instances, build, ...
+await controller.init();
+await controller.createProject('shop', ['datamodel']); // { ok: true } or { ok: false, errors, suggested }
+controller.editGrammar('datamodel', text);              // sent to the engine a moment later, per file
+await controller.buildProject();                        // sees every edit made before the call
+```
+
+| | |
+|---|---|
+| `init()`, `reset()` | load the saved workspace (or the examples; workspaces saved by older versions are completed) and bring the engine up to date; back to the examples |
+| `createProject(name, selection)`, `openProject`, `deleteProject`, `setProjectMetamodels(selection)` | projects. The composer decides whether the metamodels fit; the answer says why not and what to add. The selection is kept in catalog order |
+| `createInstance`, `removeInstance`, `undo`, `redo` | the instances of the open project, mirrored into the saved project |
+| `editGrammar(name, text)`, `editScript(kind, metamodel, code)`, `ensureScript(kind, metamodel)`, `addGrammar(name)` | metamodels and their constraints / JSON mapping / import mapping. Edits are **debounced per file**: editing two grammars in quick succession sends both |
+| `setCases(metamodel, cases)`, `runCases(metamodel)` | the saved test cases of a metamodel, run against the grammar and scripts as they are now |
+| `previewImport(json)`, `applyImport(texts)` | import JSON into the open project; instances of metamodels without an import mapping stay |
+| `buildProject()` | the final model of the open project |
+| `flush()` | send everything that is waiting now and wait for it. Called before anything that reads the engine; call it in tests |
+
+Also exported: `WorkspaceData` (what is saved), `migrateWorkspace`, `MemoryStorage`, the starting `templates` and `grammarTemplate`, `validateMetamodelName` / `validateProjectName`, `parseSeed` / `workspaceFromSeed` (the layout of a folder of examples), and `KeyedDebouncer`.
+
 ## In a worker
 
 ```ts
@@ -173,6 +206,7 @@ The composer and the engine run together inside the worker; only plain data cros
 src/core/     ModelEngine (the façade) over InstanceStore (texts, documents, state), json-views, serial-queue, event-bus; languages, editor features, build
 src/facade/   Bango
 src/editing/  form schema, printer, text edits
+src/workspace/ WorkspaceController, saved data, templates, seed layout, name validation (no Langium)
 src/worker/   serveBango
 src/bundle/   entries of the self-contained browser build
 ```
