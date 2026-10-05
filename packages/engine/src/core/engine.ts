@@ -39,9 +39,14 @@ import { SerialQueue } from './serial-queue.js';
  * Every public method is async and runs one at a time, so callers can fire edits without coordinating.
  */
 export class ModelEngine implements EngineApi {
-  private store = new InstanceStore();
+  private store: InstanceStore;
   private queue = new SerialQueue();
   private events = new EventBus();
+
+  /** `incremental: false` remakes every instance document on every change (slower; what the tests compare the default against). */
+  constructor(options: { incremental?: boolean; maxInstanceChars?: number } = {}) {
+    this.store = new InstanceStore(options);
+  }
 
   /** Load a composition. Instance texts are kept and revalidated against the new languages. */
   use(composition: Composition): Promise<void> {
@@ -88,7 +93,7 @@ export class ModelEngine implements EngineApi {
     return this.queue.run(async () => {
       this.store.texts.delete(metamodel);
       this.store.history.clear(metamodel);
-      await this.store.rebuild();
+      await this.store.rebuild([metamodel]);
       this.events.emit({ type: 'instance', metamodel });
     });
   }

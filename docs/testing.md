@@ -17,7 +17,24 @@ These do not know any metamodel by name. They take what ships in `examples/seed`
 | `fuzz.test.ts` | seeded **random edits** (add, set, remove, from each instance's form schema): the text always parses, `undo` restores the original exactly, `redo` replays. Deeper run: `FUZZ_SEEDS=1,2,3,4,5,6,7,8 FUZZ_STEPS=60 npx vitest run packages/engine/test/fuzz.test.ts` |
 | `churn.test.ts` | grammars changing under a running project: break and repair (identity in the end), remove and restore, a clashing metamodel joining and leaving, constraints and mappings that throw, cyclic and missing imports, and **calls in flight at once** ending in the same state as the same calls one after another |
 | `langium-conformance.test.ts` | each metamodel through **plain Langium** (no Bango engine): the composed grammar is accepted, and Langium reports exactly what Bango reports for every shipped instance |
+| `incremental.test.ts` | the incremental engine says exactly what a full rebuild says, after every step of random edits, broken texts, removals and undos |
+| `watchdog.test.ts` | an engine that stops answering is replaced, the culprit script is quarantined, the rest comes back (with a fake worker that goes silent; the real loop is in `e2e/`) |
+| `limits.test.ts` | instances and grammars over the size limits, text nested too deeply, a long line, many tiny entities, CRLF |
 | `new-metamodels.test.ts` | the chains that stress composition: a type three metamodels contribute to, a diamond of imports, recursion, a slot another metamodel fills, in every composition order |
+
+## What it costs
+
+`bench.test.ts` generates a project nobody would write by hand (`test-support/generate.ts`: entities with fields and a relation, a form for every second one, a list for every fifth, 20 roles, 40 users, hundreds of grants) and times the engine on it. Typical numbers on a laptop, median of several runs (the limits in the test are several times these, so a real regression fails and a slow day does not):
+
+| 500 entities (92 KB data model, 130 KB in all) | |
+|---|---|
+| load every instance | ~100 ms |
+| a change to a metamodel that nothing needs (`security`) | ~10 ms |
+| ... to `forms` (needed by `security`) | ~20 ms |
+| ... to the data model (needed by all) | ~80 ms |
+| a form edit, the project JSON | ~10 ms, ~5 ms |
+
+An edit remakes only the instance documents it can have reached: the changed one and the metamodels that need it. At 1000 entities a change to a leaf costs ~17 ms; remaking everything, as the engine used to, costs ~190 ms (`new Bango({ incremental: false })` is still there, as the reference). `incremental.test.ts` holds the fast way to the slow way: two engines driven through the same random edits, broken texts, removals and undos must say **exactly** the same about every instance after every step.
 
 ## What the suites found
 
@@ -29,7 +46,8 @@ Writing them found, and fixed, things that single-case tests had not:
 - removing the only child of a node left an empty `{ }` behind;
 - adding a node whose field is a data type rule (an interval bound) started it with text the grammar rejects;
 - `Bango` ordered the composer's calls but not the engine's, so `compose(...)` followed by an un-awaited `applyEdit(...)` could fail;
-- editing two grammars close together lost the first (the workspace debounce was shared).
+- editing two grammars close together lost the first (the workspace debounce was shared);
+- a text nested too deeply for the parser threw out of the call instead of being a problem of that instance (now: `could not be read: it is nested too deeply`, and the rest is intact).
 
 ## Writing a test for a new metamodel
 

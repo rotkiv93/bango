@@ -30,9 +30,15 @@ import type {
  * Use it directly in a page, or serve it from a worker (`@bango/engine/worker`) and talk to it with the same API.
  */
 export class Bango implements BangoApi {
-  readonly composer = new ModelComposer();
-  readonly engine = new ModelEngine();
+  readonly composer: ModelComposer;
+  readonly engine: ModelEngine;
   private composition?: Composition;
+
+  /** `incremental: false` makes the engine remake every instance document on every change (slower; the reference the tests compare against). */
+  constructor(options: { incremental?: boolean; maxInstanceChars?: number; maxGrammarChars?: number } = {}) {
+    this.engine = new ModelEngine(options);
+    this.composer = new ModelComposer({ maxGrammarChars: options.maxGrammarChars });
+  }
 
   /**
    * Every call runs one at a time, in the order it was made: the composer's and the engine's together. An app may fire `compose(...)` and then

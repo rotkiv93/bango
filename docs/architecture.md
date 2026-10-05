@@ -69,6 +69,12 @@ Constraints, JSON mappings and import mappings are user code, and code can loop.
 
 `onRestart` and `quarantined()` say what happened; `WorkspaceController` exposes it as `state.quarantined`, re-reads the project from the new engine, and takes a script off the list when it is edited (or switched back on with `reenableScript`). The playground shows a banner. A connection made from the worker itself, and an in-process `Bango`, have no watchdog: synchronous code cannot be interrupted from the same thread, so use a worker in anything that runs other people's metamodels.
 
+## Cost, and limits
+
+Every change to an instance remakes only the documents it can have reached: the changed one, and the metamodels that **need** it (`requires`, which already holds everything a grammar imports, directly or not). A document of any other metamodel cannot refer to what changed, so it keeps its links and its diagnostics. Replacing the composition, or all instances at once, starts from nothing. The same text again costs nothing. (Numbers: [How Bango is tested](testing.md#what-it-costs).)
+
+Limits keep pathological input from becoming a hang: an instance over `maxInstanceChars` (default 2 million) or a grammar over `maxGrammarChars` (1 million) is kept but **not read**, and reported as a problem with the size and the limit; a text nested so deeply that the parser runs out of stack is a problem of that instance (`could not be read: it is nested too deeply`), not a failed call. What no limit can catch (a regular expression that backtracks forever, a script in a loop) is what the [watchdog](#when-a-script-never-finishes) is for.
+
 ## Decisions and trade-offs
 
 - **Langium is a peer dependency**, not bundled: Langium's AST types and `instanceof` checks break with two copies. (The self-contained browser builds inline it, because there it is the only copy.)

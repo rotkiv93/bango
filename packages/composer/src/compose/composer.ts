@@ -15,7 +15,32 @@ import { ScriptBinder } from './script-binder.js';
  * Holds the metamodels (Langium grammars) of a workspace and composes any selection of them
  * into languages: imports inlined, dependencies checked, constraints compiled.
  */
+/** How big a grammar may be (characters). Beyond it the grammar is not read: it is reported, and the metamodel is unavailable. */
+export const DEFAULT_MAX_GRAMMAR_CHARS = 1_000_000;
+
 export class ModelComposer {
+  constructor(private readonly limits: { maxGrammarChars?: number } = {}) {}
+
+  private get maxGrammarChars() {
+    return this.limits.maxGrammarChars ?? DEFAULT_MAX_GRAMMAR_CHARS;
+  }
+
+  /** The grammar texts, with the ones over the limit replaced by an empty grammar (and named, so they can be reported). */
+  private limited(texts: Map<string, string>): { texts: Map<string, string>; oversized: string[] } {
+    const oversized: string[] = [];
+    const out = new Map<string, string>();
+    for (const [name, text] of texts) {
+      if (text.length > this.maxGrammarChars) { oversized.push(name); out.set(name, `grammar ${name.replace(/\W/g, '_')}\n`); } else out.set(name, text);
+    }
+    return { texts: out, oversized };
+  }
+
+  private reportOversized(build: Build, oversized: string[]) {
+    for (const name of oversized) {
+      report(build.infos, name, 'error', `The grammar is ${(this.grammarTexts.get(name)!.length / 1_000_000).toFixed(1)} million characters, over the limit of ${(this.maxGrammarChars / 1_000_000).toFixed(1)} million: it was not read`);
+    }
+  }
+
   private grammarTexts = new Map<string, string>();
   private constraintTexts = new Map<string, string>();
   private specTexts = new Map<string, string>();
@@ -172,7 +197,9 @@ export class ModelComposer {
     if (cached) return cached;
     const texts = new Map(this.grammarTexts);
     for (const [file, text] of rewriteTexts(base.docs, usage.keys(), plan.nodes, this.grammarTexts)) texts.set(file, text);
-    const build = await buildWorkspace(texts, this.grammarTexts);
+    const { texts: kept, oversized } = this.limited(texts);
+    const build = await buildWorkspace(kept, this.grammarTexts);
+    this.reportOversized(build, oversized);
     this.renamedBuilds.set(key, build);
     return build;
   }
@@ -196,7 +223,9 @@ export class ModelComposer {
     for (;;) {
       if (this.build) return this.build;
       const version = this.version;
-      const build = await buildWorkspace(this.grammarTexts);
+      const { texts, oversized } = this.limited(this.grammarTexts);
+      const build = await buildWorkspace(texts, this.grammarTexts);
+      this.reportOversized(build, oversized);
       // an edit during the build makes the result obsolete
       if (version === this.version) return (this.build = build);
     }

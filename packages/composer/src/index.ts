@@ -1,4 +1,4 @@
-export { ModelComposer } from './compose/composer.js';
+export { ModelComposer, DEFAULT_MAX_GRAMMAR_CHARS } from './compose/composer.js';
 export { Composition } from './compose/composition.js';
 export { CompositeAstReflection } from './grammar/reflection.js';
 export { compileConstraints, compileImport, compileSpec } from './scripts/compile.js';

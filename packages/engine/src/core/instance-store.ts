@@ -5,11 +5,35 @@ import type { InstanceState, RefCandidate } from '@bango/core';
 import { History } from './history.js';
 import { createLanguages, type Language } from './languages.js';
 
+/** Why a text could not be read, in words: a parser that ran out of stack says "Maximum call stack size exceeded", which is a text nested too deeply. */
+const reasonOf = (e: unknown) => (e instanceof RangeError ? 'it is nested too deeply' : (e as Error)?.message ?? String(e));
+
+/** How big an instance may be (characters). Every keystroke parses it again, so beyond this it is reported instead of read. */
+export const DEFAULT_MAX_INSTANCE_CHARS = 2_000_000;
+
 /**
  * The instances of one composition: their texts, one Langium document per metamodel in one shared index (so references can
  * cross metamodels), and the languages they are parsed with. Not queued: callers (the engine) serialise access.
  */
 export class InstanceStore {
+  /**
+   * Remake only the documents a change can have touched. Turning it off remakes all of them every time (what this used to do): slower,
+   * and the reference the incremental way is checked against in the tests.
+   */
+  constructor(private readonly options: { incremental?: boolean; maxInstanceChars?: number } = {}) {}
+
+  private get maxInstanceChars() {
+    return this.options.maxInstanceChars ?? DEFAULT_MAX_INSTANCE_CHARS;
+  }
+
+  /** Instances whose text could not be read at all (a parser that ran out of stack on a text nested too deeply), and why. */
+  private unreadable = new Map<string, string>();
+
+  /** The text of an instance is over the limit: it is kept (the editor still shows it) but not parsed. */
+  tooLarge(metamodel: string): boolean {
+    return (this.texts.get(metamodel)?.length ?? 0) > this.maxInstanceChars;
+  }
+
   composition?: Composition;
   shared?: LangiumSharedServices;
   languages = new Map<string, Language>();
@@ -38,11 +62,15 @@ export class InstanceStore {
     return lang;
   }
 
-  /** Change one instance's text. `typing`: it comes from an editor, so changes in quick succession are one step of history. */
+  /**
+   * Change one instance's text. `typing`: it comes from an editor, so changes in quick succession are one step of history.
+   * The same text again changes nothing, and costs nothing.
+   */
   async setText(metamodel: string, text: string, typing = false) {
+    if (this.texts.get(metamodel) === text && (this.docs.has(metamodel) || !this.languages.has(metamodel))) return;
     this.remember(metamodel, text, typing);
     this.texts.set(metamodel, text);
-    await this.rebuild();
+    await this.rebuild([metamodel]);
   }
 
   /** Change several instances with one rebuild (a rename that reaches into other instances, say). */
@@ -51,13 +79,13 @@ export class InstanceStore {
       this.remember(metamodel, text, false);
       this.texts.set(metamodel, text);
     }
-    await this.rebuild();
+    await this.rebuild([...changes.keys()]);
   }
 
   /** Put a text back (undo, redo): what history keeps is already in order, so nothing is recorded. */
   async restore(metamodel: string, text: string) {
     this.texts.set(metamodel, text);
-    await this.rebuild();
+    await this.rebuild([metamodel]);
   }
 
   private remember(metamodel: string, text: string, typing: boolean) {
@@ -76,6 +104,13 @@ export class InstanceStore {
     const text = this.texts.get(metamodel) ?? '';
     const doc = this.docs.get(metamodel);
     const lang = this.languages.get(metamodel);
+    if (lang && !doc && this.unreadable.has(metamodel)) {
+      return { metamodel, text, problems: [wholeFile('error', `This text could not be read: ${this.unreadable.get(metamodel)}`)], stale: lang.metamodel.stale, available: true };
+    }
+    if (lang && !doc && this.tooLarge(metamodel)) {
+      const limit = (this.maxInstanceChars / 1_000_000).toFixed(1);
+      return { metamodel, text, problems: [wholeFile('error', `This text is ${(text.length / 1_000_000).toFixed(1)} million characters, over the limit of ${limit} million: it is not read. Split it, or raise the limit (maxInstanceChars).`)], stale: lang.metamodel.stale, available: true };
+    }
     if (!doc || !lang) return { metamodel, text, problems: [wholeFile('error', this.unavailable(metamodel))], stale: false, available: false };
     return {
       metamodel,
@@ -100,24 +135,58 @@ export class InstanceStore {
     return index.allElements(refType).toArray().map(d => ({ name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path) }));
   }
 
-  /** Re-creates every instance document so all of them are relinked against fresh content. */
-  async rebuild() {
+  /**
+   * The metamodels whose documents must be made again when the instances of `changed` changed: those, and every metamodel that needs one
+   * of them (`requires` already holds everything it imports, directly or not). A document of any other metamodel cannot refer to what
+   * changed, so what it says, and what is said about it, stays true.
+   */
+  private affectedBy(changed: string[]): Set<string> {
+    const affected = new Set(changed);
+    for (const [name, lang] of this.languages) {
+      if (lang.metamodel.requires.some(r => changed.includes(r))) affected.add(name);
+    }
+    return affected;
+  }
+
+  /**
+   * Makes the instance documents again so they are linked against fresh content: all of them, or (given `changed`, the metamodels whose
+   * text was just changed or removed) only the ones that change can have reached.
+   */
+  async rebuild(changed?: string[]) {
     const shared = this.shared;
     if (!shared) return;
+    const only = changed && this.options.incremental !== false ? this.affectedBy(changed) : undefined;
     const { LangiumDocumentFactory, LangiumDocuments, DocumentBuilder } = shared.workspace;
-    const old = [...this.docs.values()].map(d => d.uri);
-    this.docs.clear();
-    // drop previous documents from the shared index first
-    if (old.length) await DocumentBuilder.update([], old);
+    const stale = [...this.docs].filter(([metamodel]) => !only || only.has(metamodel));
+    for (const [metamodel] of stale) this.docs.delete(metamodel);
+    // drop the documents that are made again from the shared index first
+    if (stale.length) await DocumentBuilder.update([], stale.map(([, d]) => d.uri));
     const docs: LangiumDocument[] = [];
     for (const [metamodel, text] of this.texts) {
+      if (only && !only.has(metamodel)) continue;
+      this.unreadable.delete(metamodel);
+      if (this.tooLarge(metamodel)) continue;
       const lang = this.languages.get(metamodel);
       if (!lang) continue; // metamodel not available in this composition
-      const doc = LangiumDocumentFactory.fromString(text, documentUri(metamodel, lang.metamodel.extension));
+      let doc: LangiumDocument;
+      try {
+        doc = LangiumDocumentFactory.fromString(text, documentUri(metamodel, lang.metamodel.extension));
+      } catch (e) {
+        // the parser itself gave up (its stack is only so deep): that is a problem of this text, not a reason to fail the call
+        this.unreadable.set(metamodel, reasonOf(e));
+        continue;
+      }
       LangiumDocuments.addDocument(doc);
       this.docs.set(metamodel, doc);
       docs.push(doc);
     }
-    await DocumentBuilder.build(docs, { validation: true });
+    try {
+      await DocumentBuilder.build(docs, { validation: true });
+    } catch (e) {
+      // linking or checking ran out of stack on one of them: they are left out, one by one, until what remains builds
+      for (const doc of docs) this.unreadable.set(nameOfPath(doc.uri.path), reasonOf(e));
+      for (const doc of docs) this.docs.delete(nameOfPath(doc.uri.path));
+      try { await DocumentBuilder.update([], docs.map(d => d.uri)); } catch { /* the index is rebuilt with the next change */ }
+    }
   }
 }

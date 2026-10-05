@@ -28,6 +28,8 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 
 ## `Bango` and `ModelEngine`
 
+`new Bango(options?)` takes `{ maxInstanceChars, maxGrammarChars, incremental }`: the size limits (2 million and 1 million characters by default; over it a text is kept but not read, and reported), and `incremental: false` to remake every instance document on every change (slower; the reference the tests compare the default against).
+
 `ModelEngine` owns the instances of a `Composition`. `Bango` is a `ModelComposer` and a `ModelEngine` behind one object, which is what you want unless you build compositions yourself. Both implement `EngineApi`; `Bango` adds the composer's operations (`BangoApi`).
 
 ### Composing (`Bango`)
