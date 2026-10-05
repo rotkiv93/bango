@@ -50,6 +50,17 @@ describe('worker boundary', () => {
     close();
   });
 
+  it('typings and metamodel cases cross the boundary', async () => {
+    const { client, close } = connect();
+    const seed = loadSeed();
+    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
+    for (const [n, c] of Object.entries(seed.constraints)) await client.setConstraints(n, c);
+    expect(await client.getTypings('datamodel')).toContain('interface Entity extends AstNode');
+    const results = await client.runCases('datamodel', seed.cases.datamodel);
+    expect(results.map(r => r.ok)).toEqual(seed.cases.datamodel.map(() => true));
+    close();
+  });
+
   it('delivers events to a callback across the boundary and stops after unsubscribe', async () => {
     const { client, close } = connect();
     const seed = loadSeed();

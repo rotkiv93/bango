@@ -1,0 +1,37 @@
+[
+  {
+    "name": "a form over an entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Product {\n  property name: String pk\n  property price: Double\n}\n"
+    },
+    "text": "forms\nform ProductForm entity Product {\n  field name\n  field price\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a field of a form must be a field of its entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Product {\n  property name: String pk\n}\n"
+    },
+    "text": "forms\nform ProductForm entity Product {\n  field colour\n}\n",
+    "expect": {
+      "errors": [
+        "has no field 'colour'"
+      ]
+    }
+  },
+  {
+    "name": "a field is listed once",
+    "with": {
+      "datamodel": "datamodel d\nentity Product {\n  property name: String pk\n}\n"
+    },
+    "text": "forms\nform ProductForm entity Product {\n  field name\n  field name\n}\n",
+    "expect": {
+      "errors": [
+        "field 'name' is listed twice"
+      ]
+    }
+  }
+]

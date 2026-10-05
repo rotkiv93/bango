@@ -6,10 +6,22 @@ const refName = (ref: unknown): string | undefined => {
   return typeof r?.ref?.name === 'string' ? r.ref.name : r?.$refText;
 };
 
-export const DEFAULT_HELPERS: ScriptHelpers = { refName, typeName: node => (node as { $type?: string } | undefined)?.$type };
+/** The items that repeat the key of an earlier one (the later ones), with their index in `items`. */
+const duplicates: ScriptHelpers['duplicates'] = (items, key = item => item) => {
+  const seen = new Set<unknown>();
+  const out: { item: (typeof items)[number]; index: number }[] = [];
+  items.forEach((item, index) => {
+    const k = key(item);
+    if (seen.has(k)) out.push({ item, index });
+    else seen.add(k);
+  });
+  return out;
+};
+
+export const DEFAULT_HELPERS: ScriptHelpers = { refName, duplicates, typeName: node => (node as { $type?: string } | undefined)?.$type };
 
 /** User code on purpose: the author's own validation rules and JSON mappings are function bodies that see the helpers as variables. */
-const run = (code: string, helpers: ScriptHelpers): any => new Function('typeName', 'refName', `"use strict";\n${code}`)(helpers.typeName, helpers.refName);
+const run = (code: string, helpers: ScriptHelpers): any => new Function('typeName', 'refName', 'duplicates', `"use strict";\n${code}`)(helpers.typeName, helpers.refName, helpers.duplicates);
 
 /**
  * `<metamodel>.constraints.js` holds a function body that returns `{ RuleName(node, accept) { ... } }`.

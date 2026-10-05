@@ -1,6 +1,7 @@
 // JSON mapping: the part of the product specification that the lists own, `data.lists`.
 // Merge it with the specs of the other metamodels to get the whole document.
-return function (model, { refName }) {
+/** @type {Spec} */
+const spec = function (model, { refName }) {
   const column = c => ({ name: c.property, label: c.label ?? c.property });
 
   const list = l => {
@@ -17,3 +18,5 @@ return function (model, { refName }) {
 
   return { data: { lists: model.lists.map(list) } };
 };
+
+return spec;

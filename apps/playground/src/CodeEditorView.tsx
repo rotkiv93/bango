@@ -4,14 +4,16 @@ import type { Problem } from '@bango/core';
 import { monaco } from './monaco.js';
 
 /** A metamodel (or constraints) editor: the library's `CodeEditor` bound to one text. */
-export function CodeEditorView({ id, language, value, problems = [], onChange, readOnly }: {
+export function CodeEditorView({ id, language, value, problems = [], onChange, readOnly, disposeModel }: {
   /** one Monaco model per id keeps undo history when switching tabs */
   id: string;
-  language: 'langium' | 'bango-js';
+  language: 'langium' | 'bango-js' | 'javascript';
   value: string;
   problems?: Problem[];
   onChange?(value: string): void;
   readOnly?: boolean;
+  /** drop the Monaco model when the editor goes away (scripts share one global scope in the TypeScript service, so they must not pile up) */
+  disposeModel?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const editor = useRef<CodeEditor | undefined>(undefined);
@@ -24,6 +26,7 @@ export function CodeEditorView({ id, language, value, problems = [], onChange, r
       language,
       value,
       onChange: t => onChangeRef.current?.(t),
+      disposeModel,
       editorOptions: { readOnly: !!readOnly }
     });
     editor.current = ed;

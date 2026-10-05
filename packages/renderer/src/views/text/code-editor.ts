@@ -34,6 +34,8 @@ export interface CodeEditorOptions {
   /** one Monaco model per uri keeps undo history and cursor position across switches */
   uri: string;
   language: string;
+  /** dispose the model with the editor instead of keeping it (and its undo history) for the next editor on the same uri */
+  disposeModel?: boolean;
   value?: string;
   /** called (debounced) with the new text after the user typed */
   onChange?(value: string): void | Promise<unknown>;
@@ -59,6 +61,7 @@ export class CodeEditor {
     const uri = monaco.Uri.parse(options.uri);
     this.model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(options.value ?? '', options.language, uri);
     if (options.value !== undefined && this.model.getValue() !== options.value) this.model.setValue(options.value);
+    this.setLanguage(options.language);
     this.editor = monaco.editor.create(el, {
       model: this.model,
       automaticLayout: true,
@@ -137,5 +140,6 @@ export class CodeEditor {
   dispose() {
     this.flush();
     this.editor.dispose();
+    if (this.options.disposeModel) this.model.dispose();
   }
 }

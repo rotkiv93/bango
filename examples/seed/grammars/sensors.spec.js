@@ -1,6 +1,7 @@
 // JSON mapping: the part of the product specification that the sensors own, `data.dataWarehouse`.
 // Merge it with the specs of the other metamodels to get the whole document.
-return function (model, { refName }) {
+/** @type {Spec} */
+const spec = function (model, { refName }) {
   const dimension = d => {
     if (d.$type === 'SpatialDimension') return { id: d.name, type: 'SPATIAL', entities: d.entities.map(refName) };
     return { id: d.name, type: 'CATEGORICAL', field: d.field };
@@ -34,3 +35,5 @@ return function (model, { refName }) {
     }
   };
 };
+
+return spec;

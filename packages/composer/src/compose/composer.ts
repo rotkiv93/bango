@@ -1,7 +1,8 @@
 import { interpretAstReflection, resolveTransitiveImports } from 'langium/grammar';
-import { AstUtils } from 'langium';
+import { AstUtils, GrammarUtils } from 'langium';
 import type { GrammarInfo, SelectionCheck } from '@bango/core';
 import { flatten } from '../grammar/flatten.js';
+import { generateTypings } from '../scripts/typings.js';
 import { nameOfDocument } from '../model/documents.js';
 import { wholeFile } from '../model/problems.js';
 import type { ComposedMetamodel, ConstraintSet } from '../model/types.js';
@@ -58,6 +59,23 @@ export class ModelComposer {
   /** Every grammar of the workspace: metamodels (with an extension) and libraries, with their problems. */
   async metamodels(): Promise<GrammarInfo[]> {
     return copyInfos((await this.ensureBuild()).infos);
+  }
+
+  /**
+   * TypeScript declarations for the scripts (constraints, JSON mapping) of the grammar `name`: its AST types, with the
+   * grammars it imports inlined. Works on the grammar as written, whether or not it is part of a project.
+   */
+  async typings(name: string): Promise<string> {
+    const build = await this.ensureBuild();
+    const doc = build.docs.get(name);
+    if (!doc) return generateTypings(undefined);
+    try {
+      const flat = flatten(doc.parseResult.value, build.documents);
+      const entry = flat.rules.find(r => r.$type === 'ParserRule' && r.entry);
+      return generateTypings(flat, entry && GrammarUtils.getRuleTypeName(entry));
+    } catch {
+      return generateTypings(undefined);
+    }
   }
 
   /**

@@ -1,0 +1,49 @@
+[
+  {
+    "name": "a layer that draws a geometry",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String required pk\n  property geometry: LineString\n}\n"
+    },
+    "text": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a layer cannot draw a property that is not a geometry",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: String\n}\n"
+    },
+    "text": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\n",
+    "expect": {
+      "errors": [
+        "is a String, not a geometry"
+      ]
+    }
+  },
+  {
+    "name": "the default style must be one of the available styles",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String required pk\n  property geometry: LineString\n}\n"
+    },
+    "text": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonstyle wide fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 4.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles wide\n",
+    "expect": {
+      "errors": [
+        "defaultStyle 'thin' must be one of availableStyles"
+      ]
+    }
+  },
+  {
+    "name": "two layers of a map at the same order warn",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String required pk\n  property geometry: LineString\n}\n"
+    },
+    "text": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\ngeojsonlayer roads2 entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n  use roads2 style thin selected order 1\n}\n",
+    "expect": {
+      "warnings": [
+        "order 1 is used twice in map 'main'"
+      ]
+    }
+  }
+]

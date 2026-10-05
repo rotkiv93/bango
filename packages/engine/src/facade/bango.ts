@@ -1,9 +1,11 @@
 import { ModelComposer, type Composition, type CompositionInfo, type GrammarInfo, type SelectionCheck } from '@bango/composer';
 import { ModelEngine } from '../core/engine.js';
+import { runCases } from '../core/cases.js';
 import { SerialQueue } from '../core/serial-queue.js';
 import type {
   BangoApi,
   BuildResult,
+  CaseResult,
   CompletionDto,
   DefinitionDto,
   EditOp,
@@ -13,6 +15,7 @@ import type {
   InstanceState,
   JsonSpecOptions,
   JsonValue,
+  MetamodelCase,
   RefCandidate,
   Unsubscribe
 } from '@bango/core';
@@ -70,6 +73,14 @@ export class Bango implements BangoApi {
 
   checkSelection(selection: string[]): Promise<SelectionCheck> {
     return this.run(() => this.composer.check(selection));
+  }
+
+  getTypings(grammar: string): Promise<string> {
+    return this.run(() => this.composer.typings(grammar));
+  }
+
+  runCases(metamodel: string, cases: MetamodelCase[]): Promise<CaseResult[]> {
+    return this.run(() => runCases(this.composer, metamodel, cases));
   }
 
   getGrammarAst(name: string): Promise<AstDto | undefined> {

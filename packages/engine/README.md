@@ -39,6 +39,8 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 | `listMetamodels(): Promise<GrammarInfo[]>` | every grammar, with its description and requirements |
 | `checkSelection(selection): Promise<SelectionCheck>` | can this be a project? Does not touch the loaded instances |
 | `bundleText(metamodel)` | the composed, self-contained grammar of one metamodel |
+| `getTypings(grammar)` | TypeScript declarations for the constraints and JSON mapping of a grammar, from its AST types |
+| `runCases(metamodel, cases)` | check sample instances against what they must report: tests for a grammar and its constraints ([format](../../docs/writing-metamodels.md#5-testing-a-metamodel)). Runs in an engine of its own |
 | `getGrammarAst(name)` | the AST of a grammar |
 
 Composer operations run one at a time, in call order, so overlapping `compose` calls cannot apply out of order.

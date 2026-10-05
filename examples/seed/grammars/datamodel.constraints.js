@@ -1,5 +1,6 @@
 // Extra rules the grammar cannot express. Return { AstTypeName(node, accept) { ... } }.
-return {
+/** @type {Constraints} */
+const constraints = {
   Entity(entity, accept) {
     const pks = entity.fields.filter(f => f.$type === 'PropertyField' && f.pk);
     if (pks.length !== 1) {
@@ -8,13 +9,9 @@ return {
         property: 'name'
       });
     }
-    const seen = new Set();
-    entity.fields.forEach((field, index) => {
-      if (seen.has(field.name)) {
-        accept('error', `duplicate field '${field.name}'`, { node: entity, property: 'fields', index });
-      }
-      seen.add(field.name);
-    });
+    for (const { item, index } of duplicates(entity.fields, f => f.name)) {
+      accept('error', `duplicate field '${item.name}'`, { node: entity, property: 'fields', index });
+    }
   },
 
   // a bidirectional relationship needs the other side to exist, to point back, and to differ in ownership
@@ -22,7 +19,7 @@ return {
     if (!field.bidirectional) return;
     const target = field.target.ref;
     if (!target) return;
-    const other = target.fields.find(f => f.$type === 'RelationshipField' && f.name === field.bidirectional);
+    const other = target.fields.filter(f => f.$type === 'RelationshipField').find(f => f.name === field.bidirectional);
     if (!other) {
       accept('error', `'${target.name}' has no relationship '${field.bidirectional}' to be the other side of '${field.name}'`, {
         node: field,
@@ -38,3 +35,5 @@ return {
     }
   }
 };
+
+return constraints;

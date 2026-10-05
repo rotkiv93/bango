@@ -231,6 +231,34 @@ export interface BuildResult {
   };
 }
 
+// ------------------------------------------------------------- metamodel tests
+
+/** A sample instance of a metamodel and what checking it must report: the way to test a grammar and its constraints. */
+export interface MetamodelCase {
+  name: string;
+  /** the instance text */
+  text: string;
+  /** instances of the metamodels this one needs (by metamodel), when the sample refers to them */
+  with?: Record<string, string>;
+  expect: {
+    /**
+     * The errors the sample must have, each a piece of the message, no more and no fewer. Omitted: no errors at all.
+     */
+    errors?: string[];
+    /** Same for warnings. Omitted: warnings are not checked. */
+    warnings?: string[];
+  };
+}
+
+export interface CaseResult {
+  name: string;
+  ok: boolean;
+  /** what differed from the expectation, in plain language (empty when ok) */
+  failures: string[];
+  /** what the sample actually reported */
+  problems: Problem[];
+}
+
 // ---------------------------------------------------------------------- events
 
 /**
@@ -285,4 +313,11 @@ export interface BangoApi extends EngineApi {
   listMetamodels(): Promise<GrammarInfo[]>;
   /** can this selection of metamodels be a project? Does not touch the loaded instances. */
   checkSelection(selection: string[]): Promise<SelectionCheck>;
+  /** TypeScript declarations for the scripts (constraints, JSON mapping) of a grammar, from its AST types: load them in an editor for completion */
+  getTypings(grammar: string): Promise<string>;
+  /**
+   * Check sample instances of a metamodel: composes it with what it requires, loads each sample and compares what is reported
+   * with what the case expects. Does not touch the loaded composition or instances.
+   */
+  runCases(metamodel: string, cases: MetamodelCase[]): Promise<CaseResult[]>;
 }

@@ -56,11 +56,12 @@ How Bango reads it:
 
 ## 2. Constraints
 
-Constraints report what the grammar cannot: uniqueness, "this default must be one of those", and anything that needs two metamodels to be said. The file returns an object whose keys are **AST type names** (the rule names) and whose values check one node:
+Constraints report what the grammar cannot: uniqueness, "this default must be one of those", and anything that needs two metamodels to be said. The file is a function body that returns an object whose keys are **AST type names** (the rule names) and whose values check one node:
 
 ```js
 // datamodel.constraints.js
-return {
+/** @type {Constraints} */
+const constraints = {
   Entity(entity, accept) {
     const pks = entity.fields.filter(f => f.$type === 'PropertyField' && f.pk);
     if (pks.length !== 1) {
@@ -69,14 +70,32 @@ return {
         property: 'name'
       });
     }
+    for (const { item, index } of duplicates(entity.fields, f => f.name)) {
+      accept('error', `duplicate field '${item.name}'`, { node: entity, property: 'fields', index });
+    }
   }
 };
+
+return constraints;
 ```
+
+The `/** @type {Constraints} */` line is what gives the editor the types: `Constraints` (and one interface per AST type, with its properties) is generated from the grammar, so `entity.` completes to `fields`, `name`, ... and a misspelled property is underlined. It is optional: without it the file works the same, just without help. A few things that help the checker follow what you mean:
+
+- Narrow a union with `filter` before `find`: `entity.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === n)` is typed as a `PropertyField`, while `find(f => f.$type === '...' && ...)` is not.
+- References are `Ref<T>`: `ref.ref` is the target or `undefined`.
 
 `accept(severity, message, { node, property, index })`:
 
 - `severity`: `'error'`, `'warning'`, `'info'` or `'hint'`. Errors fail a build; warnings are reported but do not.
 - `node` is the node to mark; `property` narrows it to one feature (and `index` to one item of a list).
+
+Helpers you can call without importing anything:
+
+| | |
+|---|---|
+| `duplicates(items, key?)` | the items that repeat the key of an earlier one, as `{ item, index }`: the usual "names must be unique" check |
+| `refName(ref)` | the name a reference points at, or the text as written when it does not resolve |
+| `typeName(node)` | the type of a node as its author wrote it (see [type name clashes](#when-two-metamodels-use-the-same-type-name)) |
 
 Inside a check:
 
@@ -129,7 +148,8 @@ The mapping turns an instance into the piece of the project's JSON that the meta
 
 ```js
 // datamodel.spec.js
-return function (model, { refName }) {
+/** @type {Spec} */
+const spec = function (model, { refName }) {
   return {
     data: {
       dataModel: {
@@ -141,14 +161,18 @@ return function (model, { refName }) {
     }
   };
 };
+
+return spec;
 ```
+
+`Spec` is typed from the grammar too: `model` is the type of the entry rule.
 
 - `model` is the root node of the instance (the entry rule's node).
 - `typeName(node)` is available too (see [type name clashes](#when-two-metamodels-use-the-same-type-name)).
 - `refName(ref)` returns the name a reference points at (or the written text when it does not resolve). Use it instead of `ref.ref.name`.
 - Return plain JSON. The result goes through `JSON.stringify`, so functions and `undefined` values disappear and nothing else can leak out.
 - Throwing is fine: the failure is reported as `The JSON mapping of '<name>' failed: ...` in the JSON views and fails a build.
-- Write `return { root: true, map(model, { refName }) { ... } }` instead of a bare function for the mapping that lays out the whole document: it is merged first, so its key order becomes the document's (see [Key order](json-spec.md#key-order)). `basic` does this.
+- Write `return { root: true, map(model, { refName }) { ... } }` (typed as `Spec` as well) instead of a bare function for the mapping that lays out the whole document: it is merged first, so its key order becomes the document's (see [Key order](json-spec.md#key-order)). `basic` does this.
 - Without a mapping file, a metamodel's JSON is the generic tree (and it is left out of the merged project document).
 
 ## 4. Trying it
@@ -158,6 +182,25 @@ return function (model, { refName }) {
 3. Add it to a project (*Manage metamodels*), create its instance and write some text. Completion offers the keywords and the references that exist in the project.
 4. Add constraints and a mapping (the *Constraints* and *JSON mapping* tabs create a starting file).
 5. *Composed* shows the grammar exactly as the composer builds it, with every import inlined.
+6. *Tests* keeps sample instances and what they must report (below), so you can keep changing the grammar and the constraints with a safety net.
+
+## 5. Testing a metamodel
+
+A **test case** is a sample instance and the problems it must have:
+
+```json
+{
+  "name": "a field name cannot repeat",
+  "text": "datamodel shop\nentity Road {\n  property name: String pk\n  property name: String\n}\n",
+  "expect": { "errors": ["duplicate field 'name'"] }
+}
+```
+
+- `expect.errors` are the errors the sample must report, each a piece of the message, **no more and no fewer**. Leave it out and the sample must have no errors at all.
+- `expect.warnings` works the same way, but only when you list it: without it, warnings are not checked. `"warnings": []` says there must be none.
+- `with` gives instances of the metamodels this one needs, by name, for samples that refer to them: `"with": { "datamodel": "datamodel d\nentity Road { ... }" }`.
+
+The **Tests** tab of a metamodel lists its cases, reruns them as you edit the grammar, constraints or mapping, and offers *Expect what it reports* on a failing case, to turn what you see into the expectation. In code it is `bango.runCases(metamodel, cases)`: it composes the metamodel with what it requires in an engine of its own, so the project you have open is not touched. The shipped metamodels keep theirs in `examples/seed/grammars/<name>.cases.json`, and a test runs all of them.
 
 ## Checklist
 
@@ -166,4 +209,5 @@ return function (model, { refName }) {
 - [ ] rule names are unique across all metamodels
 - [ ] each metamodel it needs is `import`ed (that is what makes it a requirement)
 - [ ] constraints for what only a person would notice
+- [ ] a few test cases: one valid sample, and one for each rule
 - [ ] a mapping, if the metamodel contributes to the JSON specification

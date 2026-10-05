@@ -46,6 +46,7 @@ composition.get('gismodel')?.extension;     // 'gismodel'
 | `grammarNames` | the names of the grammars set so far |
 | `metamodels(): Promise<GrammarInfo[]>` | every grammar with its description, requirements and problems; libraries have no `extension` |
 | `check(selection): Promise<SelectionCheck>` | can this selection be a project? Loads nothing |
+| `typings(grammar): Promise<string>` | TypeScript declarations of the AST types of a grammar (imports inlined), plus `Constraints`, `Spec` and the script helpers: load them in an editor and scripts get completion and checks |
 | `compose(selection?): Promise<Composition>` | compose a selection (every metamodel when omitted) |
 
 The grammars are rebuilt lazily, on the first call after a change.

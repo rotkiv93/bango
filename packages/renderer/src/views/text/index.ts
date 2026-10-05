@@ -5,7 +5,7 @@ import { TextRenderer, type TextRendererOptions } from './text-renderer.js';
 
 export { CodeEditor, registerCodeLanguages, type CodeEditorOptions } from './code-editor.js';
 export { TextRenderer, languageIdOf, modelUri, type TextRendererOptions } from './text-renderer.js';
-export { monarchFor } from './monarch.js';
+export { monarchFor, javascriptMonarch } from './monarch.js';
 
 /**
  * Registers the `text` view (Monaco). Pass the Monaco namespace you already use, so the library never bundles

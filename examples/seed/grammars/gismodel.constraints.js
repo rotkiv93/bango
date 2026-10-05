@@ -3,7 +3,8 @@
 const SPATIAL = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon'];
 const bound = text => (text === 'Infinity' ? Infinity : text === '-Infinity' ? -Infinity : Number(text));
 
-return {
+/** @type {Constraints} */
+const constraints = {
   GeoJsonLayer(layer, accept) {
     const available = layer.availableStyles.map(ref => ref.$refText);
     if (layer.defaultStyle && !available.includes(layer.defaultStyle.$refText)) {
@@ -14,7 +15,7 @@ return {
     const entity = layer.entity?.ref;
     if (!entity) return;
     const fieldName = layer.field ?? 'geometry';
-    const field = entity.fields.find(f => f.$type === 'PropertyField' && f.name === fieldName);
+    const field = entity.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === fieldName);
     if (!field) {
       accept('error', `entity '${entity.name}' has no property '${fieldName}' to draw`, { node: layer, property: layer.field ? 'field' : 'entity' });
     } else if (!SPATIAL.includes(field.class)) {
@@ -23,12 +24,8 @@ return {
   },
 
   MapDef(map, accept) {
-    const orders = new Set();
-    for (const entry of map.layers) {
-      if (orders.has(entry.order)) {
-        accept('warning', `order ${entry.order} is used twice in map '${map.name}'`, { node: entry, property: 'order' });
-      }
-      orders.add(entry.order);
+    for (const { item } of duplicates(map.layers, e => e.order)) {
+      accept('warning', `order ${item.order} is used twice in map '${map.name}'`, { node: item, property: 'order' });
     }
     if (map.layers.filter(e => e.baseLayer).length > 1) {
       accept('warning', `map '${map.name}' has more than one base layer`, { node: map, property: 'name' });
@@ -57,3 +54,5 @@ return {
     }
   }
 };
+
+return constraints;

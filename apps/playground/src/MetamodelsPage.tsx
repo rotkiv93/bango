@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { CodeEditorView } from './CodeEditorView.js';
 import { GrammarAst } from './GrammarAst.js';
+import { MetamodelTests } from './MetamodelTests.js';
+import { ScriptEditorView } from './ScriptEditorView.js';
 import { ProblemList } from './ProblemList.js';
 import { bango, useWorkspace, type MetamodelView } from './store.js';
 import { Chip, Dialog, EmptyState, Segmented, Status } from './ui.js';
@@ -94,6 +96,7 @@ export function MetamodelsPage() {
                       { value: 'grammar', label: 'Grammar', title: 'The Langium grammar' },
                       { value: 'constraints', label: 'Constraints', title: 'Validation the grammar cannot express' },
                       { value: 'spec', label: 'JSON mapping', title: 'The piece of the JSON specification this metamodel owns' },
+                      { value: 'tests', label: `Tests${(s.workspace.cases[s.activeGrammar]?.length ?? 0) ? ` (${s.workspace.cases[s.activeGrammar].length})` : ''}`, title: 'Sample instances and what they must report' },
                       { value: 'composed', label: 'Composed', title: 'The grammar with every import inlined' },
                       { value: 'ast', label: 'AST', title: 'The grammar as a tree' }
                     ]}
@@ -105,11 +108,12 @@ export function MetamodelsPage() {
                   <CodeEditorView id={`grammar/${s.activeGrammar}`} language="langium" value={s.workspace.grammars[s.activeGrammar] ?? ''} problems={info.problems} onChange={t => s.editGrammar(s.activeGrammar!, t)} />
                 )}
                 {view === 'constraints' && (
-                  <CodeEditorView id={`constraints/${s.activeGrammar}`} language="bango-js" value={s.workspace.constraints[s.activeGrammar] ?? ''} onChange={t => s.editConstraints(s.activeGrammar!, t)} />
+                  <ScriptEditorView id={`constraints/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.constraints[s.activeGrammar] ?? ''} onChange={t => s.editConstraints(s.activeGrammar!, t)} />
                 )}
                 {view === 'spec' && (
-                  <CodeEditorView id={`spec/${s.activeGrammar}`} language="bango-js" value={s.workspace.specs[s.activeGrammar] ?? ''} onChange={t => s.editSpec(s.activeGrammar!, t)} />
+                  <ScriptEditorView id={`spec/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.specs[s.activeGrammar] ?? ''} onChange={t => s.editSpec(s.activeGrammar!, t)} />
                 )}
+                {view === 'tests' && <div className="scroll"><MetamodelTests name={s.activeGrammar} requires={info.requires} /></div>}
                 {view === 'composed' && <Composed name={s.activeGrammar} />}
                 {view === 'ast' && <GrammarAst name={s.activeGrammar} />}
               </div>

@@ -1,6 +1,7 @@
 // JSON mapping: the part of the product specification that the data model owns, `data.dataModel`.
 // Merge it with the specs of the other metamodels to get the whole document.
-return function (model) {
+/** @type {Spec} */
+const spec = function (model) {
   // numeric keys that generate themselves are written `Long (autoinc)`
   const className = field => (field.autoinc ? `${field.class} (autoinc)` : field.class);
 
@@ -36,3 +37,5 @@ return function (model) {
     }
   };
 };
+
+return spec;

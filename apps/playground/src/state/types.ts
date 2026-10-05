@@ -1,10 +1,10 @@
-import type { BuildResult, CompositionInfo, GrammarInfo, InstanceState, Range0, SelectionCheck } from '@bango/core';
+import type { BuildResult, CompositionInfo, GrammarInfo, InstanceState, MetamodelCase, Range0, SelectionCheck } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import type { Workspace } from '../types.js';
 
 export type Page = 'projects' | 'project' | 'metamodels';
 export type Theme = 'dark' | 'light';
-export type MetamodelView = 'grammar' | 'constraints' | 'spec' | 'ast' | 'composed';
+export type MetamodelView = 'grammar' | 'constraints' | 'spec' | 'tests' | 'ast' | 'composed';
 export type OverviewView = 'diagram' | 'project-json' | 'project-ast';
 interface Toast { id: number; kind: 'error' | 'success' | 'info'; text: string }
 
@@ -69,6 +69,7 @@ export interface WorkspaceSlice {
   editGrammar(name: string, text: string): void;
   editConstraints(metamodel: string, text: string): void;
   editSpec(metamodel: string, text: string): void;
+  setCases(metamodel: string, cases: MetamodelCase[]): void;
   /** the first visit to a script view creates the metamodel's (template) script */
   ensureScript(kind: ScriptKind, metamodel: string): void;
   addGrammar(name: string): Promise<void>;

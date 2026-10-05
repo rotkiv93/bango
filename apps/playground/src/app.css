@@ -182,3 +182,22 @@ input[type=checkbox] { accent-color: var(--accent); }
   .view-area.split { grid-template-columns: 1fr; }
   .page { padding: 16px; }
 }
+
+/* metamodel tests */
+.scroll { position: absolute; inset: 0; overflow: auto; padding: 14px; }
+.tests { display: flex; flex-direction: column; gap: 12px; }
+.tests-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.case { background: var(--surface2); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.case.pass { border-left-color: var(--ok); }
+.case.fail { border-left-color: var(--err); }
+.case-head { display: flex; align-items: center; gap: 8px; }
+.case-head input { flex: 1; font-weight: 600; }
+.case-failures { margin: 0; padding-left: 20px; color: var(--err); font-size: 13px; }
+.case-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.case-expect { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.case-expect textarea { width: 100%; }
+.case textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: inherit; font: 12.5px/1.5 ui-monospace, monospace; resize: vertical; }
+.case-with { font-size: 13px; }
+.case-with summary { cursor: pointer; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+@media (max-width: 800px) { .case-body { grid-template-columns: 1fr; } }

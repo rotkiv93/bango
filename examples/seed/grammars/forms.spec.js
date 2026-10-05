@@ -1,6 +1,7 @@
 // JSON mapping: the part of the product specification that the forms own, `data.forms`.
 // Merge it with the specs of the other metamodels to get the whole document.
-return function (model, { refName }) {
+/** @type {Spec} */
+const spec = function (model, { refName }) {
   const field = f => ({ name: f.property, label: f.label ?? f.property, readOnly: !!f.readOnly });
 
   const form = f => {
@@ -12,3 +13,5 @@ return function (model, { refName }) {
 
   return { data: { forms: model.forms.map(form) } };
 };
+
+return spec;

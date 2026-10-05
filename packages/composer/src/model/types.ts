@@ -12,6 +12,8 @@ export interface ScriptHelpers {
    * rename the type because another metamodel of the project declares one with the same name.
    */
   typeName(node: unknown): string | undefined;
+  /** the items that repeat the key of an earlier one, with their index: `duplicates(entity.fields, f => f.name)` */
+  duplicates<T>(items: T[], key?: (item: T) => unknown): { item: T; index: number }[];
 }
 
 /**

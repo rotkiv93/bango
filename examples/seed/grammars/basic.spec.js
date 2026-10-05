@@ -2,7 +2,8 @@
 // the whole document: the empty slots below are filled in by the other metamodels (data model, GIS model,
 // sensors, forms, lists), and fix the order of the keys in the merged document. `menus` and `statics` are not
 // described by any metamodel yet, so they stay empty.
-return {
+/** @type {Spec} */
+const spec = {
   // merged first: its key order becomes the order of the merged document
   root: true,
   map(model) {
@@ -36,3 +37,5 @@ return {
     };
   }
 };
+
+return spec;

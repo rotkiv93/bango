@@ -108,7 +108,7 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
   };
 
   return {
-    workspace: { grammars: {}, constraints: {}, specs: {}, projects: {} },
+    workspace: { grammars: {}, constraints: {}, specs: {}, cases: {}, projects: {} },
     catalog: [],
     instances: [],
     ready: false,
@@ -117,7 +117,9 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
     async init() {
       get().initTheme();
       const workspace = (await loadWorkspace()) ?? seedWorkspace();
+      // older saved workspaces have no specs or cases: start them from the examples'
       workspace.specs ??= {};
+      workspace.cases ??= seedWorkspace().cases;
       await bango.subscribe(() => scheduleRefresh());
       await open(workspace, undefined, true);
     },
@@ -208,6 +210,11 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
 
     editConstraints: (metamodel, text) => editScript('constraints', metamodel, text),
     editSpec: (metamodel, text) => editScript('spec', metamodel, text),
+
+    setCases(metamodel, cases) {
+      const { workspace } = get();
+      commit({ ...workspace, cases: { ...workspace.cases, [metamodel]: cases } });
+    },
 
     ensureScript(kind, metamodel) {
       const { files, template } = SCRIPTS[kind];

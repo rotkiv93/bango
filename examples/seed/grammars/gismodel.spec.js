@@ -1,6 +1,7 @@
 // JSON mapping: the part of the product specification that the map viewer owns, `data.mapViewer`.
 // Merge it with the specs of the other metamodels to get the whole document.
-return function (model, { refName }) {
+/** @type {Spec} */
+const spec = function (model, { refName }) {
   // interval bounds are numbers, except the infinities, which stay text
   const bound = text => (text === 'Infinity' || text === '-Infinity' ? text : Number(text));
 
@@ -79,3 +80,5 @@ return function (model, { refName }) {
     }
   };
 };
+
+return spec;

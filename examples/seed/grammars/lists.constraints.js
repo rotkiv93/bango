@@ -1,25 +1,22 @@
 // Rules the grammar cannot express. Return { AstTypeName(node, accept) { ... } }.
-return {
+/** @type {Constraints} */
+const constraints = {
   ListModel(model, accept) {
-    const seen = new Set();
-    for (const list of model.lists) {
-      if (seen.has(list.name)) accept('error', `duplicate list '${list.name}'`, { node: list, property: 'name' });
-      seen.add(list.name);
-    }
+    for (const { item } of duplicates(model.lists, l => l.name)) accept('error', `duplicate list '${item.name}'`, { node: item, property: 'name' });
   },
 
   // columns and the sort field are fields of the entity
   ListDef(list, accept) {
     const entity = list.entity?.ref;
     const has = name => entity?.fields.some(f => f.name === name);
-    const seen = new Set();
-    list.columns.forEach((column, index) => {
+    for (const column of list.columns) {
       if (entity && !has(column.property)) {
         accept('error', `entity '${entity.name}' has no field '${column.property}'`, { node: column, property: 'property' });
       }
-      if (seen.has(column.property)) accept('error', `column '${column.property}' is listed twice`, { node: list, property: 'columns', index });
-      seen.add(column.property);
-    });
+    }
+    for (const { item, index } of duplicates(list.columns, c => c.property)) {
+      accept('error', `column '${item.property}' is listed twice`, { node: list, property: 'columns', index });
+    }
     if (entity && list.sortBy !== undefined && !has(list.sortBy)) {
       accept('error', `cannot sort by '${list.sortBy}': entity '${entity.name}' has no such field`, { node: list, property: 'sortBy' });
     }
@@ -28,3 +25,5 @@ return {
     }
   }
 };
+
+return constraints;

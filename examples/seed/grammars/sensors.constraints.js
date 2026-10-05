@@ -1,15 +1,14 @@
 // Rules the grammar cannot express. Return { AstTypeName(node, accept) { ... } }.
 // accept(severity, message, { node, property, index }) reports a problem on the node.
-const property = (entity, name) => entity?.fields.find(f => f.$type === 'PropertyField' && f.name === name);
+const property = (entity, name) => entity?.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === name);
 const relatedTo = (entity, other) =>
   !!entity && !!other && entity.fields.some(f => f.$type === 'RelationshipField' && f.target.ref === other);
 
-return {
+/** @type {Constraints} */
+const constraints = {
   SensorModel(model, accept) {
-    const seen = new Set();
-    for (const node of [...model.sensors, ...model.groups]) {
-      if (seen.has(node.name)) accept('error', `duplicate sensor or group '${node.name}'`, { node, property: 'name' });
-      seen.add(node.name);
+    for (const { item } of duplicates([...model.sensors, ...model.groups], n => n.name)) {
+      accept('error', `duplicate sensor or group '${item.name}'`, { node: item, property: 'name' });
     }
   },
 
@@ -37,7 +36,7 @@ return {
 
     // the sensor draws what it stores: the geometry of the entity, on a layer that shows that entity
     const geometry = property(entity, 'geometry');
-    if (geometry && geometry.class !== sensor.geom) {
+    if (entity && geometry && geometry.class !== sensor.geom) {
       accept('warning', `sensor '${sensor.name}' says ${sensor.geom}, but '${entity.name}.geometry' is ${geometry.class}`, { node: sensor, property: 'geom' });
     }
     if (entity && layer?.entity?.ref && layer.entity.ref !== entity) {
@@ -47,17 +46,14 @@ return {
       accept('warning', `map '${map.name}' does not show layer '${layer.name}'`, { node: sensor, property: 'defaultMap' });
     }
 
-    const names = new Set();
-    sensor.measureData.forEach((m, index) => {
-      if (names.has(m.name)) accept('error', `measurement '${m.name}' is declared twice`, { node: sensor, property: 'measureData', index });
-      names.add(m.name);
-    });
+    for (const { item, index } of duplicates(sensor.measureData, m => m.name)) {
+      accept('error', `measurement '${item.name}' is declared twice`, { node: sensor, property: 'measureData', index });
+    }
+    for (const { item, index } of duplicates(sensor.dimensions, d => d.name)) {
+      accept('error', `dimension '${item.name}' is declared twice`, { node: sensor, property: 'dimensions', index });
+    }
 
-    const dimensions = new Set();
-    sensor.dimensions.forEach((d, index) => {
-      if (dimensions.has(d.name)) accept('error', `dimension '${d.name}' is declared twice`, { node: sensor, property: 'dimensions', index });
-      dimensions.add(d.name);
-
+    sensor.dimensions.forEach(d => {
       if (d.$type === 'CategoricalDimension' && factTable && !property(factTable, d.field)) {
         accept('error', `categorical field '${d.field}' is not a property of fact table '${factTable.name}'`, { node: d, property: 'field' });
       }
@@ -73,3 +69,5 @@ return {
     });
   }
 };
+
+return constraints;

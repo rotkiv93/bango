@@ -1,0 +1,46 @@
+[
+  {
+    "name": "a valid entity",
+    "text": "datamodel shop\nentity Road {\n  property name: String required pk\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an entity without a primary key is a warning",
+    "text": "datamodel shop\nentity Road {\n  property name: String\n}\n",
+    "expect": {
+      "warnings": [
+        "should have exactly one pk property (found 0)"
+      ]
+    }
+  },
+  {
+    "name": "a field name cannot repeat",
+    "text": "datamodel shop\nentity Road {\n  property name: String pk\n  property name: String\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate field 'name'"
+      ]
+    }
+  },
+  {
+    "name": "a relationship needs an entity that exists",
+    "text": "datamodel shop\nentity Road {\n  property name: String pk\n  relation to -> Nowhere\n}\n",
+    "expect": {
+      "errors": [
+        "Nowhere"
+      ]
+    }
+  },
+  {
+    "name": "the other side of a bidirectional relationship must exist",
+    "text": "datamodel shop\nentity A {\n  property id: Long pk\n  relation b -> B inverse a owner\n}\nentity B {\n  property id: Long pk\n}\n",
+    "expect": {
+      "errors": [
+        "'B' has no relationship 'a'"
+      ]
+    }
+  }
+]

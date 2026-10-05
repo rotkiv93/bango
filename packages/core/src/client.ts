@@ -2,7 +2,7 @@ import * as Comlink from 'comlink';
 import type { BangoApi, EngineEvent, Unsubscribe } from './types.js';
 
 const METHODS = [
-  'setGrammar', 'removeGrammar', 'setConstraints', 'setSpec', 'compose', 'bundleText', 'getGrammarAst', 'listMetamodels', 'checkSelection',
+  'setGrammar', 'removeGrammar', 'setConstraints', 'setSpec', 'compose', 'bundleText', 'getGrammarAst', 'listMetamodels', 'checkSelection', 'getTypings', 'runCases',
   'getInstance', 'getInstances', 'getComposition', 'setText', 'setInstances', 'createInstance', 'removeInstance', 'applyEdit',
   'getFormSchema', 'toJson', 'toProjectJson', 'getRefCandidates', 'complete', 'hover', 'definition', 'build'
 ] as const;
