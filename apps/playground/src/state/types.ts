@@ -1,10 +1,10 @@
-import type { BuildResult, CompositionInfo, GrammarInfo, InstanceState, MetamodelCase, Range0, SelectionCheck } from '@bango/core';
+import type { BuildResult, CompositionInfo, GrammarInfo, ImportResult, InstanceState, JsonValue, MetamodelCase, Range0, SelectionCheck } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import type { Workspace } from '../types.js';
 
 export type Page = 'projects' | 'project' | 'metamodels';
 export type Theme = 'dark' | 'light';
-export type MetamodelView = 'grammar' | 'constraints' | 'spec' | 'tests' | 'ast' | 'composed';
+export type MetamodelView = 'grammar' | 'constraints' | 'spec' | 'import' | 'tests' | 'ast' | 'composed';
 export type OverviewView = 'diagram' | 'project-json' | 'project-ast';
 interface Toast { id: number; kind: 'error' | 'success' | 'info'; text: string }
 
@@ -12,7 +12,7 @@ interface Toast { id: number; kind: 'error' | 'success' | 'info'; text: string }
 type SelectionResult = { ok: true } | { ok: false; errors: string[]; suggested: string[] };
 
 /** The two kinds of script a metamodel can own, besides its grammar: where they live in the workspace and how they reach the worker. */
-export type ScriptKind = 'constraints' | 'spec';
+export type ScriptKind = 'constraints' | 'spec' | 'import';
 
 /** What the user is looking at: pages, tabs, views, theme, toasts. */
 export interface UiSlice {
@@ -72,7 +72,12 @@ export interface WorkspaceSlice {
   editGrammar(name: string, text: string): void;
   editConstraints(metamodel: string, text: string): void;
   editSpec(metamodel: string, text: string): void;
+  editImport(metamodel: string, text: string): void;
   setCases(metamodel: string, cases: MetamodelCase[]): void;
+  /** what importing this JSON into the open project would produce; changes nothing */
+  previewImport(json: JsonValue): Promise<ImportResult>;
+  /** replace the open project's instances with imported ones (the other instances stay) */
+  applyImport(texts: Record<string, string>): Promise<void>;
   /** the first visit to a script view creates the metamodel's (template) script */
   ensureScript(kind: ScriptKind, metamodel: string): void;
   addGrammar(name: string): Promise<void>;

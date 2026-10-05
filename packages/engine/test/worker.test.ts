@@ -61,6 +61,20 @@ describe('worker boundary', () => {
     close();
   });
 
+  it('imports a project from its JSON through the boundary', async () => {
+    const { client, close } = connect();
+    const seed = loadSeed();
+    for (const [n, t] of Object.entries(seed.grammars)) await client.setGrammar(n, t);
+    for (const [n, c] of Object.entries(seed.specs)) await client.setSpec(n, c);
+    for (const [n, c] of Object.entries(seed.imports)) await client.setImport(n, c);
+    await client.compose(seed.projects.gresint.metamodels);
+    const result = await client.importJson(seed.expected.gresint as never);
+    expect(result.errors).toEqual([]);
+    await client.setInstances(result.texts);
+    expect(await client.toProjectJson()).toEqual(seed.expected.gresint);
+    close();
+  });
+
   it('delivers events to a callback across the boundary and stops after unsubscribe', async () => {
     const { client, close } = connect();
     const seed = loadSeed();

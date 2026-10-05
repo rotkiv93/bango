@@ -112,6 +112,10 @@ interface JsonSpecOptions {
 
 With `format: 'generic'` the project JSON cannot be merged (every tree has its own `$type`), so `toProjectJson` always returns one entry per metamodel.
 
+## Back again: importing JSON
+
+The mappings have inverses. A metamodel can have an **import mapping** (`<metamodel>.import.js`) that builds its instance from the same project document, so a specification that already exists becomes instances you can edit: `bango.importJson(json)`, or **Import JSON** on a project page. The shipped mappings are exact inverses: importing `sensors_gresint.json` and exporting the result gives that file again. See [the import mapping](writing-metamodels.md#4-the-import-mapping-optional).
+
 ## When a mapping fails
 
 A mapping that throws rejects with `The JSON mapping of '<metamodel>' failed: <reason>`. The JSON views show that message in place of the document, `build()` fails with it, and a mapping that is not a function (or has a syntax error) is reported as a problem of the metamodel, which then falls back to the generic tree.

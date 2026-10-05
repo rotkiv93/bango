@@ -1,6 +1,6 @@
 import type { GrammarInfo } from '@bango/core';
-import type { ConstraintSet, ScriptHelpers, SpecFn } from '../model/types.js';
-import { DEFAULT_HELPERS, compileConstraints, compileSpec } from '../scripts/compile.js';
+import type { ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
+import { DEFAULT_HELPERS, compileConstraints, compileImport, compileSpec } from '../scripts/compile.js';
 import type { RenamePlan } from './collisions.js';
 import { report } from './grammar-workspace.js';
 
@@ -16,6 +16,7 @@ export class ScriptBinder {
   constructor(
     private readonly constraintTexts: Map<string, string>,
     private readonly specTexts: Map<string, string>,
+    private readonly importTexts: Map<string, string>,
     private readonly plan: RenamePlan,
     /** the grammar files a grammar imports, in the grammars as written */
     private readonly importsOf: (grammar: string) => string[],
@@ -51,6 +52,16 @@ export class ScriptBinder {
     if (!code?.trim()) return undefined;
     try { return compileSpec(code, this.helpers); } catch (e) {
       report(this.infos, name, 'error', `${name}.spec.js: ${(e as Error).message}`);
+      return undefined;
+    }
+  }
+
+  /** The compiled import mapping of a metamodel, if it has one (and it compiles). */
+  importFor(name: string): ImportFn | undefined {
+    const code = this.importTexts.get(name);
+    if (!code?.trim()) return undefined;
+    try { return compileImport(code, this.helpers); } catch (e) {
+      report(this.infos, name, 'error', `${name}.import.js: ${(e as Error).message}`);
       return undefined;
     }
   }

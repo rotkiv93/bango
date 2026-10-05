@@ -1,4 +1,4 @@
-import type { ConstraintSet, ScriptHelpers, SpecFn } from '../model/types.js';
+import type { ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
 
 /** The name a reference points at: the target's name, or the text as written when it does not resolve. */
 const refName = (ref: unknown): string | undefined => {
@@ -18,10 +18,13 @@ const duplicates: ScriptHelpers['duplicates'] = (items, key = item => item) => {
   return out;
 };
 
-export const DEFAULT_HELPERS: ScriptHelpers = { refName, duplicates, typeName: node => (node as { $type?: string } | undefined)?.$type };
+export const DEFAULT_HELPERS: ScriptHelpers = {
+  refName, duplicates, n: (type, fields) => ({ $node: type, fields }), typeName: node => (node as { $type?: string } | undefined)?.$type
+};
 
 /** User code on purpose: the author's own validation rules and JSON mappings are function bodies that see the helpers as variables. */
-const run = (code: string, helpers: ScriptHelpers): any => new Function('typeName', 'refName', 'duplicates', `"use strict";\n${code}`)(helpers.typeName, helpers.refName, helpers.duplicates);
+const run = (code: string, helpers: ScriptHelpers): any =>
+  new Function('typeName', 'refName', 'duplicates', 'n', `"use strict";\n${code}`)(helpers.typeName, helpers.refName, helpers.duplicates, helpers.n);
 
 /**
  * `<metamodel>.constraints.js` holds a function body that returns `{ RuleName(node, accept) { ... } }`.
@@ -47,4 +50,15 @@ export function compileSpec(code: string, helpers: ScriptHelpers = DEFAULT_HELPE
   if (typeof result === 'function') return { map: root => result(root, helpers), root: false };
   if (result && typeof result === 'object' && typeof result.map === 'function') return { map: root => result.map(root, helpers), root: !!result.root };
   throw new Error('a JSON mapping must `return function (model, { refName }) { ... }` or `return { root: true, map(model, { refName }) { ... } }`');
+}
+
+/**
+ * `<metamodel>.import.js` holds a function body that returns `function (json, { n }) { return n('Model', { ... }) }`: the inverse of
+ * the JSON mapping. `json` is the whole project document. Throws with a readable message when the code is invalid.
+ * The returned function takes the document only: the helpers are already bound.
+ */
+export function compileImport(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): ImportFn {
+  const result = run(code, helpers);
+  if (typeof result !== 'function') throw new Error('an import mapping must `return function (json, { n }) { return n(\'Type\', { ... }) }`');
+  return json => result(json, helpers);
 }

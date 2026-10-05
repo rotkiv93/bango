@@ -6,6 +6,7 @@ import type { MetamodelCase } from '@bango/core';
 //   grammars/<name>.langium            a metamodel (or a library grammar)
 //   grammars/<name>.constraints.js     its validation rules
 //   grammars/<name>.spec.js            its JSON mapping
+//   grammars/<name>.import.js          the inverse of its JSON mapping: JSON back into its instance
 //   grammars/<name>.cases.json         sample instances and what they must report (MetamodelCase[])
 //   projects/<project>/project.json    { "metamodels": [...], "playground": false? }
 //   projects/<project>/<metamodel>.instance
@@ -29,6 +30,8 @@ export interface Seed {
   constraints: Record<string, string>;
   /** metamodel name -> JSON mapping code */
   specs: Record<string, string>;
+  /** metamodel name -> import mapping code */
+  imports: Record<string, string>;
   /** the JSON the gresint project is expected to produce */
   expected: { gresint: unknown };
   projects: Record<string, SeedProject>;
@@ -36,7 +39,7 @@ export interface Seed {
 
 /** `files`: path relative to `examples/seed` (forward slashes) -> text. */
 export function parseSeed(files: Record<string, string>): Seed {
-  const seed: Seed = { grammars: {}, constraints: {}, specs: {}, cases: {}, projects: {}, expected: { gresint: undefined } };
+  const seed: Seed = { grammars: {}, constraints: {}, specs: {}, imports: {}, cases: {}, projects: {}, expected: { gresint: undefined } };
   const projectFiles = new Map<string, Record<string, string>>();
 
   for (const [path, text] of Object.entries(files)) {
@@ -45,6 +48,7 @@ export function parseSeed(files: Record<string, string>): Seed {
       const file = parts[1];
       if (file.endsWith('.constraints.js')) seed.constraints[file.replace(/\.constraints\.js$/, '')] = text;
       else if (file.endsWith('.spec.js')) seed.specs[file.replace(/\.spec\.js$/, '')] = text;
+      else if (file.endsWith('.import.js')) seed.imports[file.replace(/\.import\.js$/, '')] = text;
       else if (file.endsWith('.cases.json')) seed.cases[file.replace(/\.cases\.json$/, '')] = JSON.parse(text);
       else seed.grammars[file.replace(/\.langium$/, '')] = text;
     } else if (parts[0] === 'projects' && parts.length === 3) {

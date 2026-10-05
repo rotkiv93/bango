@@ -175,16 +175,42 @@ return spec;
 - Write `return { root: true, map(model, { refName }) { ... } }` (typed as `Spec` as well) instead of a bare function for the mapping that lays out the whole document: it is merged first, so its key order becomes the document's (see [Key order](json-spec.md#key-order)). `basic` does this.
 - Without a mapping file, a metamodel's JSON is the generic tree (and it is left out of the merged project document).
 
-## 4. Trying it
+## 4. The import mapping (optional)
+
+The JSON mapping goes one way: instances to JSON. The **import mapping** goes back: it turns the JSON of a whole project into this metamodel's instance, so a specification that already exists (written by hand, or by another tool) can become instances you edit as text, forms or diagrams. It is `<metamodel>.import.js`, a function of the whole document that describes the instance with `n(type, features)`:
+
+```js
+// datamodel.import.js
+/** @type {Import} */
+const importer = function (json, { n }) {
+  const property = p => n('PropertyField', { name: p.name, class: p.class, pk: p.pk, required: p.required });
+  return n('Model', {
+    entities: json.data.dataModel.entities.map(e => n('Entity', { name: e.name, fields: e.properties.map(property) }))
+  });
+};
+
+return importer;
+```
+
+- `n('Entity', { name: 'Road', fields: [...] })` says *which node* and *which features are set*. The feature names are the ones of the grammar; the engine looks at the grammar to know what each is: text, numbers and flags (`true` writes the keyword) as they are, **a reference as the name it points at** (`target: 'Road'`), **a child node as another `n(...)`**. Leave a feature out, or give it `undefined`, and it is not written. A mistake (an unknown node type, a misspelled feature, a list where one value goes) is reported with where it happened.
+- You do **not** write any text: the engine prints the tree with the grammar, the same way the form view does, so it always parses back.
+- Leave out what the JSON mapping would fill in anyway (`label` when it is the name, a default `srid`), so the text reads like one a person wrote. `basic.import.js` shows it.
+- It is the **inverse** of `spec.js`, and the shipped ones are exact inverses: importing `examples/seed/expected/sensors_gresint.json` and exporting the result gives that file back, byte for byte (a test checks it). A metamodel without an import mapping is skipped: its instance is left as it is.
+- Same types as the other scripts: `Import` and `n` come from the grammar, so `n('Entity', { fields: ... })` completes the feature names and a wrong one is underlined.
+
+In code, `bango.importJson(json)` returns `{ texts, skipped, errors, problems }` and **changes nothing**: `problems` is what each new instance reports once they are loaded together, and `await bango.setInstances(texts)` makes them the instances. In the playground, **Import JSON** on a project page does both, after showing the preview.
+
+## 5. Trying it
 
 1. Open the playground, go to **Metamodels**, and create one (*+ New metamodel*): it starts from a minimal grammar that imports `common`.
 2. Edit the grammar; the problems list shows grammar errors as you type.
 3. Add it to a project (*Manage metamodels*), create its instance and write some text. Completion offers the keywords and the references that exist in the project.
 4. Add constraints and a mapping (the *Constraints* and *JSON mapping* tabs create a starting file).
-5. *Composed* shows the grammar exactly as the composer builds it, with every import inlined.
-6. *Tests* keeps sample instances and what they must report (below), so you can keep changing the grammar and the constraints with a safety net.
+5. *JSON import* is the inverse mapping: with it, *Import JSON* on a project fills this metamodel's instance from a whole project's JSON.
+6. *Composed* shows the grammar exactly as the composer builds it, with every import inlined.
+7. *Tests* keeps sample instances and what they must report (below), so you can keep changing the grammar and the constraints with a safety net.
 
-## 5. Testing a metamodel
+## 6. Testing a metamodel
 
 A **test case** is a sample instance and the problems it must have:
 
@@ -210,4 +236,4 @@ The **Tests** tab of a metamodel lists its cases, reruns them as you edit the gr
 - [ ] each metamodel it needs is `import`ed (that is what makes it a requirement)
 - [ ] constraints for what only a person would notice
 - [ ] a few test cases: one valid sample, and one for each rule
-- [ ] a mapping, if the metamodel contributes to the JSON specification
+- [ ] a mapping, if the metamodel contributes to the JSON specification, and its import mapping if you want to start from existing JSON

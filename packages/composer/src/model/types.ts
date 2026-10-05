@@ -14,7 +14,24 @@ export interface ScriptHelpers {
   typeName(node: unknown): string | undefined;
   /** the items that repeat the key of an earlier one, with their index: `duplicates(entity.fields, f => f.name)` */
   duplicates<T>(items: T[], key?: (item: T) => unknown): { item: T; index: number }[];
+  /**
+   * Import mappings only: describe a node of the instance, `n('Entity', { name: 'Road', fields: [...] })`. Values go by what the
+   * grammar says each feature is: text and numbers as they are, a reference as the name it points at, a child as another `n(...)`.
+   */
+  n(type: string, fields: Record<string, unknown>): ImportNode;
 }
+
+/** A node of the instance an import mapping describes: its type, and a value for each feature that is set. */
+export interface ImportNode {
+  $node: string;
+  fields: Record<string, unknown>;
+}
+
+/**
+ * The inverse of a JSON mapping: turns the project's JSON back into the tree of this metamodel's instance. Written in
+ * `<metamodel>.import.js`. The engine prints the tree as text.
+ */
+export type ImportFn = (json: any) => ImportNode;
 
 /**
  * The JSON mapping of a metamodel: turns the root of an instance into the plain JSON it contributes to the
@@ -42,6 +59,8 @@ export interface ComposedMetamodel {
   constraints: ConstraintSet[];
   /** the metamodel's own JSON mapping, when it has one */
   spec?: SpecFn;
+  /** the inverse of the JSON mapping, when it has one */
+  importer?: ImportFn;
   /** the mapping lays out the whole document and the others fill it in, so it is merged first */
   specRoot?: boolean;
 }

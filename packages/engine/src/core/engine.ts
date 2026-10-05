@@ -8,6 +8,7 @@ import type {
   EngineApi,
   EngineEvent,
   FormSchema,
+  ImportResult,
   InstanceState,
   JsonSpecOptions,
   JsonValue,
@@ -24,6 +25,7 @@ import { buildFormSchema, indexRules } from '../editing/schema.js';
 import { buildModel } from './build.js';
 import { EventBus } from './event-bus.js';
 import * as features from './features.js';
+import { importJson } from './importer.js';
 import { InstanceStore } from './instance-store.js';
 import { projectJson, specOf } from './json-views.js';
 import { applyQuickFix, quickFixes } from './quick-fixes.js';
@@ -113,6 +115,19 @@ export class ModelEngine implements EngineApi {
   /** Every node in the shared index that a reference of `refType` could point to, across all metamodels. */
   getRefCandidates(refType: string): Promise<RefCandidate[]> {
     return this.queue.run(() => this.store.candidates(refType));
+  }
+
+  /** Instances built from the JSON of a whole project, by the import mappings of the metamodels. Changes nothing: set the `texts` to use them. */
+  importJson(json: JsonValue): Promise<ImportResult> {
+    return this.queue.run(() => importJson(this.store, json, async texts => {
+      // the instances are checked next to each other, in an engine of their own, so the open ones are not disturbed
+      const scratch = new ModelEngine();
+      await scratch.use(this.store.composition!);
+      await scratch.setInstances(texts);
+      const states = await scratch.getInstances();
+      scratch.dispose();
+      return states;
+    }));
   }
 
   /** Applies a form/diagram edit to the instance text, then re-parses it. */

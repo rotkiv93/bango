@@ -37,10 +37,19 @@ interface Helpers {
   typeName(node: AstNode | undefined): string | undefined;
   /** the items that repeat the key of an earlier one, with their index: \`duplicates(entity.fields, f => f.name)\` */
   duplicates<T>(items: readonly T[], key?: (item: T) => unknown): { item: T; index: number }[];
+  /** import mappings: describe a node of the instance. Features are the properties of the node type; a reference is the name it points at, a child is another \`n(...)\`. */
+  n<T extends keyof Types>(type: T, fields: Init<Types[T]>): ImportNode;
 }
+
+/** A node an import mapping describes: build it with \`n\`. */
+interface ImportNode { readonly $node: string; readonly fields: Record<string, unknown> }
+/** What a feature is given in an import mapping: text and numbers as they are, a reference as a name, a child as an \`n(...)\`. */
+type Init<T> = { [K in keyof T as K extends \`$\${string}\` ? never : K]?: InitValue<T[K]> | null };
+type InitValue<V> = V extends Ref<unknown> ? string : V extends readonly (infer I)[] ? InitValue<I>[] : V extends AstNode ? ImportNode : V;
 declare const refName: Helpers['refName'];
 declare const typeName: Helpers['typeName'];
 declare const duplicates: Helpers['duplicates'];
+declare const n: Helpers['n'];
 `;
 
 const quote = (s: string) => JSON.stringify(s);
@@ -96,11 +105,17 @@ export function generateTypings(flat: Grammar | undefined, root?: string): strin
     ...interfaces.map(interfaceToString),
     ...unions.map(unionToString),
     '',
+    '/** The node types by name: what `n` takes. */',
+    `interface Types {\n${interfaces.map(i => `  ${i.name}: ${i.name};`).join('\n')}\n}`,
+    '',
     '/** What `constraints.js` returns: validation checks keyed by AST type name. */',
     `interface Constraints {\n${keyed.map(n => `  ${n}?(node: ${n}, accept: Accept): void;`).join('\n')}\n}`,
     '',
     '/** What the JSON mapping returns: a function of the instance root, or `{ root: true, map }` for the mapping that lays out the whole document. */',
     `type Spec = ((model: ${rootType}, helpers: Helpers) => unknown) | { root?: boolean; map(model: ${rootType}, helpers: Helpers): unknown };`,
+    '',
+    '/** What `import.js` returns: the inverse of the JSON mapping. It gets the whole project document and describes the instance of this metamodel with `n`. */',
+    'type Import = (json: any, helpers: Helpers) => ImportNode;',
     ''
   ].join('\n');
 }

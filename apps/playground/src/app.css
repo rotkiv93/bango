@@ -204,3 +204,8 @@ input[type=checkbox] { accent-color: var(--accent); }
 
 .history { display: inline-flex; gap: 2px; margin-right: 6px; }
 .history .icon { font-size: 18px; }
+
+.import-json { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: inherit; font: 12.5px/1.5 ui-monospace, monospace; resize: vertical; }
+.import-result { display: flex; flex-direction: column; gap: 6px; }
+.import-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); }
+.import-row .err { color: var(--err); font-size: 13px; }

@@ -55,13 +55,16 @@ describe('typings for scripts', () => {
     }
   });
 
-  it('every shipped constraint file and JSON mapping type-checks against the typings of its metamodel', async () => {
+  it('every shipped constraint file, JSON mapping and import mapping type-checks against the typings of its metamodel', async () => {
     const { composer, seed } = composerWith();
     for (const [name, code] of Object.entries(seed.constraints)) {
       expect(check(await composer.typings(name), code), `${name}.constraints.js`).toBe('');
     }
     for (const [name, code] of Object.entries(seed.specs)) {
       expect(check(await composer.typings(name), code), `${name}.spec.js`).toBe('');
+    }
+    for (const [name, code] of Object.entries(seed.imports)) {
+      expect(check(await composer.typings(name), code), `${name}.import.js`).toBe('');
     }
   }, 120_000);
 

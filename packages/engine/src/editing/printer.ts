@@ -27,6 +27,8 @@ export class Printer {
       const prev = toks[i - 1];
       if (t.block) out += '\n' + ind(level + 1) + t.text;
       else if (prev?.block && /^[}\])]$/.test(t.text)) out += '\n' + ind(level) + t.text;
+      // a brace that holds child nodes starts its body on a new line, not behind the brace
+      else if (prev?.text === '{' && !prev.block && this.holdsBlock(toks, i)) out += '\n' + ind(level + 1) + t.text;
       else {
         // punctuation hugs its neighbours: `name: String`, `a, b`, `f(x)`
         const tight = !i || /^[:,;.)\]]$/.test(t.text) || /^[([.]$/.test(prev?.text ?? '') && !prev?.block;
@@ -34,6 +36,15 @@ export class Printer {
       }
     });
     return out;
+  }
+
+  /** Is there a child node among the tokens from `from` up to the next closing brace? */
+  private holdsBlock(toks: Tok[], from: number): boolean {
+    for (let j = from; j < toks.length; j++) {
+      if (toks[j].block) return true;
+      if (toks[j].text === '}') return false;
+    }
+    return false;
   }
 
   /** Does the element still have a value to emit? Drives optional groups and repetitions. */

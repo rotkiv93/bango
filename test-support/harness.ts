@@ -14,6 +14,7 @@ export function composerWith(extra: Record<string, string> = {}) {
   const composer = new ModelComposer();
   for (const [name, text] of Object.entries({ ...seed.grammars, ...extra })) composer.setGrammar(name, text);
   for (const [name, code] of Object.entries(seed.constraints)) composer.setConstraints(name, code);
+  for (const [name, code] of Object.entries(seed.imports)) composer.setImport(name, code);
   return { composer, seed };
 }
 
@@ -30,6 +31,7 @@ export async function openProject(name: string, bango = new Bango()): Promise<Op
   for (const [n, text] of Object.entries(seed.grammars)) await bango.setGrammar(n, text);
   for (const [n, code] of Object.entries(seed.constraints)) await bango.setConstraints(n, code);
   for (const [n, code] of Object.entries(seed.specs)) await bango.setSpec(n, code);
+  for (const [n, code] of Object.entries(seed.imports)) await bango.setImport(n, code);
   await bango.compose(project.metamodels);
   for (const [metamodel, text] of Object.entries(project.instances)) await bango.setText(metamodel, text);
   return { bango, seed, project };

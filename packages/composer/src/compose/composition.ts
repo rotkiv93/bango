@@ -103,6 +103,7 @@ export class Composition {
         name: m.name,
         extension: m.extension,
         stale: m.stale,
+        canImport: !!m.importer,
         keywords: [...new Set(AstUtils.streamAllContents(m.grammar).filter(GrammarAST.isKeyword).map(k => k.value))]
       }))
     };

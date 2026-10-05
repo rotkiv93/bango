@@ -3,19 +3,20 @@ import { seedWorkspace } from '../seed.js';
 import type { Workspace } from '../types.js';
 import { bango } from './bango.js';
 import { debounced, loadWorkspace, saveWorkspace } from './persistence.js';
-import { CONSTRAINTS_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
+import { CONSTRAINTS_TEMPLATE, IMPORT_TEMPLATE, SPEC_TEMPLATE, grammarTemplate } from './templates.js';
 import type { ScriptKind, State, WorkspaceSlice } from './types.js';
 
 /** The scripts a metamodel can own besides its grammar: where they live in the workspace and how they reach the worker. */
-const SCRIPTS: Record<ScriptKind, { files: 'constraints' | 'specs'; template: string; send(metamodel: string, code: string): Promise<void> }> = {
+const SCRIPTS: Record<ScriptKind, { files: 'constraints' | 'specs' | 'imports'; template: string; send(metamodel: string, code: string): Promise<void> }> = {
   constraints: { files: 'constraints', template: CONSTRAINTS_TEMPLATE, send: (m, code) => bango.setConstraints(m, code) },
-  spec: { files: 'specs', template: SPEC_TEMPLATE, send: (m, code) => bango.setSpec(m, code) }
+  spec: { files: 'specs', template: SPEC_TEMPLATE, send: (m, code) => bango.setSpec(m, code) },
+  import: { files: 'imports', template: IMPORT_TEMPLATE, send: (m, code) => bango.setImport(m, code) }
 };
 const KINDS = Object.keys(SCRIPTS) as ScriptKind[];
 
 export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> = (set, get) => {
   const loadedGrammars = new Set<string>();
-  const loadedScripts: Record<ScriptKind, Set<string>> = { constraints: new Set(), spec: new Set() };
+  const loadedScripts: Record<ScriptKind, Set<string>> = { constraints: new Set(), spec: new Set(), import: new Set() };
 
   const persist = debounced(() => saveWorkspace(get().workspace), 400);
 
@@ -108,7 +109,7 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
   };
 
   return {
-    workspace: { grammars: {}, constraints: {}, specs: {}, cases: {}, projects: {} },
+    workspace: { grammars: {}, constraints: {}, specs: {}, imports: {}, cases: {}, projects: {} },
     catalog: [],
     instances: [],
     ready: false,
@@ -117,9 +118,11 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
     async init() {
       get().initTheme();
       const workspace = (await loadWorkspace()) ?? seedWorkspace();
-      // older saved workspaces have no specs or cases: start them from the examples'
+      // older saved workspaces have no specs, import mappings or cases: start them from the examples'
+      const seeded = seedWorkspace();
       workspace.specs ??= {};
-      workspace.cases ??= seedWorkspace().cases;
+      workspace.imports ??= seeded.imports;
+      workspace.cases ??= seeded.cases;
       await bango.subscribe(() => scheduleRefresh());
       await open(workspace, undefined, true);
     },
@@ -208,6 +211,16 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
       await bango.redo(metamodel);
     },
 
+    previewImport: json => bango.importJson(json),
+
+    async applyImport(texts) {
+      // instances of metamodels the import did not produce (no mapping, or it failed) stay as they are
+      const current = Object.fromEntries(get().instances.map(i => [i.metamodel, i.text]));
+      await bango.setInstances({ ...current, ...texts });
+      await refreshInstances();
+      set({ activeTab: 'overview' });
+    },
+
     // --------------------------------------------------------------- metamodels
 
     editGrammar(name, text) {
@@ -218,6 +231,7 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
 
     editConstraints: (metamodel, text) => editScript('constraints', metamodel, text),
     editSpec: (metamodel, text) => editScript('spec', metamodel, text),
+    editImport: (metamodel, text) => editScript('import', metamodel, text),
 
     setCases(metamodel, cases) {
       const { workspace } = get();

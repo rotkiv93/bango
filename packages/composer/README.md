@@ -43,6 +43,7 @@ composition.get('gismodel')?.extension;     // 'gismodel'
 | `removeGrammar(name)` | remove one |
 | `setConstraints(name, code)` | the validation rules of the metamodel `name` ([format](../../docs/writing-metamodels.md#2-constraints)) |
 | `setSpec(name, code)` | its JSON mapping ([format](../../docs/writing-metamodels.md#3-the-json-mapping)) |
+| `setImport(name, code)` | its import mapping: the inverse of the JSON mapping ([format](../../docs/writing-metamodels.md#4-the-import-mapping-optional)) |
 | `grammarNames` | the names of the grammars set so far |
 | `metamodels(): Promise<GrammarInfo[]>` | every grammar with its description, requirements and problems; libraries have no `extension` |
 | `check(selection): Promise<SelectionCheck>` | can this selection be a project? Loads nothing |
@@ -85,7 +86,7 @@ interface SelectionCheck {
 | | |
 |---|---|
 | `toAstDto(node)` | any Langium AST as a plain tree (`AstDto`): `{ type, name?, range?, props, refs, children }` |
-| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. Scripts see `typeName(node)` and `refName(ref)` (`ScriptHelpers`); a compiled mapping takes just the root node |
+| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. Scripts see `typeName(node)`, `refName(ref)`, `duplicates(items, key)` and, in import mappings, `n(type, features)` (`ScriptHelpers`); `compileImport` is the third compiler; a compiled mapping takes just the root node |
 | `CompositeAstReflection` | merges the reflections of several metamodels |
 | `toProblem`, `wholeFile` | LSP diagnostic -> `Problem`; a problem about a whole document |
 | `documentUri`, `nameOfDocument`, `nameOfPath`, `nameOfUri` | every document lives at `memory:/<name>.<extension>`: these build and read that shape |

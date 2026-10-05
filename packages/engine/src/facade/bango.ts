@@ -6,6 +6,7 @@ import type {
   BangoApi,
   BuildResult,
   CaseResult,
+  ImportResult,
   CompletionDto,
   DefinitionDto,
   EditOp,
@@ -49,6 +50,10 @@ export class Bango implements BangoApi {
 
   setSpec(metamodel: string, code: string): Promise<void> {
     return this.run(() => { this.composer.setSpec(metamodel, code); });
+  }
+
+  setImport(metamodel: string, code: string): Promise<void> {
+    return this.run(() => { this.composer.setImport(metamodel, code); });
   }
 
   setConstraints(metamodel: string, code: string): Promise<void> {
@@ -103,6 +108,7 @@ export class Bango implements BangoApi {
   toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined> { return this.engine.toJson(metamodel, options); }
   toProjectJson(options?: JsonSpecOptions): Promise<JsonValue> { return this.engine.toProjectJson(options); }
   getRefCandidates(refType: string): Promise<RefCandidate[]> { return this.engine.getRefCandidates(refType); }
+  importJson(json: JsonValue): Promise<ImportResult> { return this.engine.importJson(json); }
   complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]> { return this.engine.complete(metamodel, text, line, column); }
   hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined> { return this.engine.hover(metamodel, text, line, column); }
   definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]> { return this.engine.definition(metamodel, text, line, column); }

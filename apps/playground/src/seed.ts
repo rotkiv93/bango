@@ -10,5 +10,5 @@ export function seedWorkspace(): Workspace {
   const projects: Workspace['projects'] = {};
   // fixtures for tests that show what the composer rejects are not offered as examples
   for (const p of Object.values(seed.projects)) if (p.playground) projects[p.name] = { name: p.name, metamodels: p.metamodels, instances: p.instances };
-  return { grammars: seed.grammars, constraints: seed.constraints, specs: seed.specs, cases: seed.cases, projects };
+  return { grammars: seed.grammars, constraints: seed.constraints, specs: seed.specs, imports: seed.imports, cases: seed.cases, projects };
 }

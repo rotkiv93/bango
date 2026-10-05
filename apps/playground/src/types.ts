@@ -17,6 +17,8 @@ export interface Workspace {
   constraints: Record<string, string>;
   /** metamodel name -> JSON mapping code: the piece of the product specification the metamodel owns */
   specs: Record<string, string>;
+  /** metamodel name -> import mapping code: the inverse of its JSON mapping */
+  imports: Record<string, string>;
   /** metamodel name -> its test cases: sample instances and what they must report */
   cases: Record<string, MetamodelCase[]>;
   projects: Record<string, Project>;

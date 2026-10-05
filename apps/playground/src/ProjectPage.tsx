@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { InstanceState } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import { InstanceView } from './InstanceView.js';
+import { ImportDialog } from './ImportDialog.js';
 import { MetamodelPicker, SelectionVerdict, useSelectionCheck } from './MetamodelPicker.js';
 import { ProblemList } from './ProblemList.js';
 import { useWorkspace, type OverviewView } from './store.js';
@@ -214,6 +215,7 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
 export function ProjectPage() {
   const s = useWorkspace();
   const [managing, setManaging] = useState(false);
+  const [importing, setImporting] = useState(false);
   const project = s.activeProject ? s.workspace.projects[s.activeProject] : undefined;
 
   if (!project) {
@@ -236,6 +238,7 @@ export function ProjectPage() {
           <h1>{project.name}</h1>
           <div className="chips">{project.metamodels.map(m => <Chip key={m} tone="accent">{m}</Chip>)}</div>
           <button className="link" onClick={() => setManaging(true)}>Manage metamodels</button>
+          <button className="link" onClick={() => setImporting(true)} title="Fill the instances from the JSON of a whole project">Import JSON</button>
         </div>
         <button className="primary large" disabled={s.building} onClick={() => void s.buildProject()}>{s.building ? 'Building…' : 'Build model'}</button>
       </div>
@@ -257,6 +260,7 @@ export function ProjectPage() {
       </div>
 
       {managing && <ManageDialog onClose={() => setManaging(false)} />}
+      {importing && <ImportDialog onClose={() => setImporting(false)} />}
     </div>
   );
 }

@@ -22,6 +22,19 @@ const spec = function (model, { refName }) {
 return spec;
 `;
 
+export const IMPORT_TEMPLATE = `// The inverse of the JSON mapping: how the project's JSON becomes this metamodel's instance.
+// \`json\` is the whole project document. Describe the instance with n('NodeType', { feature: value, ... }):
+// text and numbers as they are, a reference as the name it points at, a child as another n(...), a flag as true or false.
+// Features left out (or undefined) are not written.
+/** @type {Import} */
+const importer = function (json, { n }) {
+  return n('Model', {
+  });
+};
+
+return importer;
+`;
+
 export const grammarTemplate = (name: string) => {
   const pascal = name.charAt(0).toUpperCase() + name.slice(1);
   return `grammar ${pascal}

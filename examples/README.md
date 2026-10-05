@@ -22,7 +22,7 @@ seed/
     sensors_gresint.json   the JSON the gresint project must produce
 ```
 
-Next to each grammar, `<name>.constraints.js` holds its extra validation and `<name>.spec.js` its [JSON mapping](../docs/json-spec.md). `common` has neither.
+Next to each grammar, `<name>.constraints.js` holds its extra validation, `<name>.spec.js` its [JSON mapping](../docs/json-spec.md), `<name>.import.js` the [inverse of that mapping](../docs/writing-metamodels.md#4-the-import-mapping-optional) (JSON back into its instance) and `<name>.cases.json` its [test cases](../docs/writing-metamodels.md#6-testing-a-metamodel). `common` has none of them.
 
 ### The metamodels
 
@@ -55,7 +55,7 @@ The forms and lists JSON is not described by the sensor DSL or the given specifi
 
 ### Adding an example
 
-Put the grammar (and optional constraints and mapping) in `grammars/`, a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `test-support/seed.ts` loads them for the tests.
+Put the grammar (and optional constraints, mappings and test cases) in `grammars/`, a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `test-support/seed.ts` loads them for the tests.
 
 ## `plain/`: the library without a bundler
 

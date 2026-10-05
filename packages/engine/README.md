@@ -34,11 +34,12 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 | Method | |
 |---|---|
 | `setGrammar(name, text)`, `removeGrammar(name)` | metamodels |
-| `setConstraints(metamodel, code)`, `setSpec(metamodel, code)` | validation rules and JSON mapping |
+| `setConstraints(metamodel, code)`, `setSpec(metamodel, code)`, `setImport(metamodel, code)` | validation rules, JSON mapping, and its inverse |
 | `compose(selection?): Promise<CompositionInfo>` | compose and load into the engine. Instance texts are kept and revalidated |
 | `listMetamodels(): Promise<GrammarInfo[]>` | every grammar, with its description and requirements |
 | `checkSelection(selection): Promise<SelectionCheck>` | can this be a project? Does not touch the loaded instances |
 | `bundleText(metamodel)` | the composed, self-contained grammar of one metamodel |
+| `importJson(json)` | build the instances of the project from the JSON of a whole project, using the import mappings: `{ texts, skipped, errors, problems }`. Changes nothing; `setInstances(texts)` uses the result ([format](../../docs/writing-metamodels.md#4-the-import-mapping-optional)) |
 | `getTypings(grammar)` | TypeScript declarations for the constraints and JSON mapping of a grammar, from its AST types |
 | `runCases(metamodel, cases)` | check sample instances against what they must report: tests for a grammar and its constraints ([format](../../docs/writing-metamodels.md#5-testing-a-metamodel)). Runs in an engine of its own |
 | `getGrammarAst(name)` | the AST of a grammar |

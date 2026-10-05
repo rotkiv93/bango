@@ -57,6 +57,8 @@ export interface LanguageInfo {
   extension: string;
   /** every keyword literal of the grammar and its imports, used for highlighting */
   keywords: string[];
+  /** the metamodel has an import mapping, so `importJson` can fill its instance from a project's JSON */
+  canImport: boolean;
   /** true when the grammar currently has errors and this is the last version that compiled */
   stale: boolean;
 }
@@ -307,6 +309,20 @@ export interface CaseResult {
   problems: Problem[];
 }
 
+// ------------------------------------------------------------------- json import
+
+/** What `importJson` made of a project's JSON. */
+export interface ImportResult {
+  /** the instance text of every metamodel that has an import mapping and produced one */
+  texts: Record<string, string>;
+  /** metamodels of the project with no import mapping: their instances are not part of the result */
+  skipped: string[];
+  /** metamodels whose import mapping failed, and why */
+  errors: string[];
+  /** what the new instances report, each checked next to the others (as it will be once they are set) */
+  problems: Record<string, Problem[]>;
+}
+
 // ---------------------------------------------------------------------- events
 
 /**
@@ -337,6 +353,11 @@ export interface EngineApi {
   /** the project's JSON: every instance's spec merged into one document, or one entry per metamodel */
   toProjectJson(options?: JsonSpecOptions): Promise<JsonValue>;
   getRefCandidates(refType: string): Promise<RefCandidate[]>;
+  /**
+   * Turn a project's JSON back into instances: each metamodel with an import mapping builds its own instance from the whole document.
+   * Changes nothing: apply `texts` with `setInstances` to use them.
+   */
+  importJson(json: JsonValue): Promise<ImportResult>;
   complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]>;
   hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined>;
   definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]>;
@@ -363,6 +384,8 @@ export interface BangoApi extends EngineApi {
   setConstraints(metamodel: string, code: string): Promise<void>;
   /** the JSON mapping of a metamodel (`<metamodel>.spec.js`) */
   setSpec(metamodel: string, code: string): Promise<void>;
+  /** the import mapping of a metamodel (`<metamodel>.import.js`): the inverse of its JSON mapping */
+  setImport(metamodel: string, code: string): Promise<void>;
   /** compose the selected metamodels and load the result into the engine, keeping instance texts */
   compose(selection?: string[]): Promise<CompositionInfo>;
   /** self-contained `.langium` text of one composed metamodel */
