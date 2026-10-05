@@ -1,0 +1,6 @@
+node_modules
+dist
+*.tsbuildinfo
+
+# a local copy of examples/seed/expected/sensors_gresint.json
+/sensors_gresint.json

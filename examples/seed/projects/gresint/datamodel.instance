@@ -1,0 +1,25 @@
+datamodel gresint
+
+entity ZoneDimension display "$id" {
+  property id: Long autoinc required pk unique
+  property geometry: Polygon
+  property name: String
+  relation StationObservationEntity -> StationObservationEntity inverse zonedimension_id multiple
+}
+
+entity StationObservationEntity display "$id" {
+  property id: Long autoinc required pk unique
+  property geometry: Polygon
+  property name: String
+  relation sensors -> StationObservationMeasurement inverse sensor_id multiple
+  relation zonedimension_id -> ZoneDimension inverse StationObservationEntity owner
+}
+
+entity StationObservationMeasurement display "$id" {
+  property id: Long autoinc required pk unique
+  property date: DateTime required
+  property value: Double
+  property quality: Integer
+  property sensorType: String
+  relation sensor_id -> StationObservationEntity inverse sensors owner
+}

@@ -1,0 +1,13 @@
+datamodel shop
+
+entity Road display "Road" {
+  property name: String required pk
+  property lanes: Integer
+  property geometry: LineString
+}
+
+entity Parcel {
+  property code: String unique
+  property geometry: Polygon
+  relation road -> Road
+}

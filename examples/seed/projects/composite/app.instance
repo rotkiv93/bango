@@ -1,0 +1,9 @@
+app demo
+
+entity Building display "Building" {
+  property name: String required pk
+  property geometry: Polygon
+}
+
+geojsonstyle outline fillColor "#ccc" strokeColor "#333" fillOpacity 0.4 strokeOpacity 1.0 radius 3.0
+geojsonlayer buildings entity Building defaultStyle outline availableStyles outline

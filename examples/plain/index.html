@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bango without a framework</title>
+  <style>
+    body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: #1e1e1e; color: #d4d4d4; }
+    header { padding: 10px 16px; background: #252526; border-bottom: 1px solid #3c3c3c; display: flex; gap: 12px; align-items: center; }
+    header p { margin: 0; opacity: .7; flex: 1; }
+    main { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #3c3c3c; }
+    section { background: #1e1e1e; min-width: 0; }
+    h2 { margin: 0; padding: 6px 12px; font-size: 12px; background: #252526; font-weight: 600; }
+    bango-instance { display: block; height: 70vh; }
+    pre { margin: 0; padding: 8px 16px; white-space: pre-wrap; background: #252526; border-top: 1px solid #3c3c3c; max-height: 22vh; overflow: auto; }
+    button { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Bango</strong>
+    <p>No bundler, no framework: two script imports, one worker and one custom element.</p>
+    <button id="build">Build model</button>
+  </header>
+  <main>
+    <section><h2>datamodel · text</h2><bango-instance id="text" metamodel="datamodel" view="text"></bango-instance></section>
+    <section><h2>datamodel · form (same instance)</h2><bango-instance id="form" metamodel="datamodel" view="form"></bango-instance></section>
+    <section><h2>project · diagram</h2><bango-instance id="diagram" metamodel="mapviewer" view="diagram"></bango-instance></section>
+  </main>
+  <pre id="out">starting…</pre>
+
+  <!-- Monaco (AMD build, served locally) provides the text view; the library only needs its namespace -->
+  <script src="../../node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script type="module">
+    import { connectBango } from '../../packages/engine/dist/bundle/bango.js';
+    import { defineBangoElements, registerTextRenderer } from '../../packages/renderer/dist/bundle/renderer.js';
+
+    const out = document.getElementById('out');
+    const read = async url => (await fetch(url)).text();
+    const seed = '../seed';
+
+    // 1. Monaco, as the page would load it anyway
+    window.MonacoEnvironment = { getWorkerUrl: () => './monaco-worker.js' };
+    require.config({ paths: { vs: '../../node_modules/monaco-editor/min/vs' } });
+    const monaco = await new Promise(resolve => require(['vs/editor/editor.main'], () => resolve(window.monaco)));
+    registerTextRenderer(monaco);
+
+    // 2. The engine runs in a worker; `bango` has the same async API as an in-page Bango
+    const worker = new Worker('../../packages/engine/dist/bundle/bango.worker.js', { type: 'module' });
+    const bango = connectBango(worker);
+
+    // 3. Metamodels are Langium grammars; a project picks which ones it uses
+    for (const name of ['common', 'datamodel', 'mapviewer']) await bango.setGrammar(name, await read(`${seed}/grammars/${name}.langium`));
+    for (const name of ['datamodel', 'mapviewer']) await bango.setConstraints(name, await read(`${seed}/grammars/${name}.constraints.js`));
+    // how each metamodel's instances become JSON: the pieces of one specification
+    for (const name of ['datamodel', 'mapviewer']) await bango.setSpec(name, await read(`${seed}/grammars/${name}.spec.js`));
+    const composition = await bango.compose(['datamodel', 'mapviewer']);
+
+    // 4. One instance per metamodel
+    await bango.setInstances({
+      datamodel: await read(`${seed}/projects/city/datamodel.instance`),
+      mapviewer: await read(`${seed}/projects/city/mapviewer.instance`)
+    });
+
+    // 5. Views are custom elements; give them the engine and they stay in sync with it
+    defineBangoElements();
+    for (const el of document.querySelectorAll('bango-instance')) el.engine = bango;
+    out.textContent = 'languages: ' + composition.languages.map(l => l.name).join(', ') + '\nEdit the text or the form; the other views follow.';
+
+    document.getElementById('build').onclick = async () => {
+      const result = await bango.build('city');
+      out.textContent = result.ok
+        ? `Build succeeded: ${result.model.instances.length} instances; the merged JSON has data.${Object.keys(result.model.spec.data).join(', data.')}\n` + result.warnings.join('\n')
+        : 'Build failed:\n' + result.errors.join('\n');
+    };
+    window.bango = bango; // for poking around in the console
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "@bango/composer",
+  "version": "0.1.0",
+  "description": "Composes Langium grammars (metamodels) into whole, project-scoped languages",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "langium": "^4.4.0"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p ."
+  }
+}
