@@ -1,0 +1,10 @@
+forms
+
+form ProductForm label "Product" entity Product {
+  field name label "Name"
+  field price
+  field inStock label "In stock" readOnly
+  field category
+}
+
+form CategoryForm entity Category

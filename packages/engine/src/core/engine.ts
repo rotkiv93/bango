@@ -258,13 +258,13 @@ export class ModelEngine implements EngineApi {
     if (options.format === 'generic' || options.merge === false) {
       return Object.fromEntries(metamodels.map(m => [m, this.specOf(m, options)!]));
     }
-    // metamodels without a JSON mapping have no place in the merged document. A metamodel that needs others
-    // (sensors needs the data and map models) is the root of the document, and the ones it needs fill it in,
-    // so the root goes first: its key order becomes the order of the merged document.
-    const needs = (m: string) => this.languages.get(m)?.metamodel.requires.length ?? 0;
+    // metamodels without a JSON mapping have no place in the merged document. The mapping that lays out the
+    // document (`root: true`) goes first, so its key order becomes the order of the merged document.
+    const meta = (m: string) => this.languages.get(m)!.metamodel;
     const parts = metamodels
       .filter(m => this.languages.get(m)?.metamodel.spec)
-      .sort((a, b) => needs(b) - needs(a))
+      // the root mapping first (it lays out the document), then the ones that need more before the ones that need less
+      .sort((a, b) => Number(!!meta(b).specRoot) - Number(!!meta(a).specRoot) || meta(b).requires.length - meta(a).requires.length)
       .map(m => this.specOf(m, options)!);
     return mergeJson(...parts);
   }

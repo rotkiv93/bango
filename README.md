@@ -20,14 +20,14 @@ import { ModelRenderer } from '@bango/renderer';
 
 const bango = new Bango();
 await bango.setGrammar('datamodel', datamodelGrammar);
-await bango.setGrammar('mapviewer', mapviewerGrammar);           // `import 'datamodel'` inside it
+await bango.setGrammar('gismodel', gismodelGrammar);           // `import 'datamodel'` inside it
 
-(await bango.checkSelection(['mapviewer'])).errors;
-// ["'mapviewer' needs 'datamodel': add 'datamodel' to this project"]
+(await bango.checkSelection(['gismodel'])).errors;
+// ["'gismodel' needs 'datamodel': add 'datamodel' to this project"]
 
-await bango.compose(['datamodel', 'mapviewer']);
+await bango.compose(['datamodel', 'gismodel']);
 await bango.setText('datamodel', 'datamodel shop\nentity Road { property geometry: LineString }');
-await bango.setText('mapviewer', 'mapviewer\ngeojsonlayer roads entity Road defaultStyle s availableStyles s ...');
+await bango.setText('gismodel', 'gismodel\ngeojsonlayer roads entity Road defaultStyle s availableStyles s ...');
 
 const view = new ModelRenderer(bango);
 await view.mount(document.querySelector('#editor')!, 'datamodel', 'form');   // or 'text', 'diagram', 'json', 'ast'
@@ -61,7 +61,7 @@ Each module only depends on the one before it, and the renderer on the engine's 
 | [The JSON specification](docs/json-spec.md) | mapping, merging, the generic format, options |
 | [Deploying to GitHub Pages](docs/deploy-github-pages.md) | publishing the playground |
 | [The playground](apps/playground/README.md) | the app: pages, how it uses the library |
-| [The examples](examples/README.md) | the shipped metamodels (data model, map viewer, sensors) and projects, and a page without a bundler |
+| [The examples](examples/README.md) | the shipped metamodels (basic, data model, GIS model, sensors, forms, lists) and projects, and a page without a bundler |
 
 ## Repository layout
 

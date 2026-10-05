@@ -15,7 +15,7 @@ export interface LanguageSet {
 
 /**
  * One shared Langium container for every metamodel of a composition. Sharing it (documents, index and the
- * merged reflection) is what lets a reference in a `.mapviewer` instance resolve to a node of a `.datamodel` one.
+ * merged reflection) is what lets a reference in a `.gismodel` instance resolve to a node of a `.datamodel` one.
  */
 export function createLanguages(composition: Composition): LanguageSet {
   const shared = inject(createDefaultSharedModule(EmptyFileSystem), { AstReflection: () => composition.reflection });

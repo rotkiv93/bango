@@ -45,4 +45,4 @@ The app runs against the **library sources** (Vite aliases in `vite.config.ts`),
 
 ## Saved work
 
-The workspace (metamodels, constraints, mappings, projects and their instances) is stored in the browser under the key `bango-workspace-v4`; the theme in `localStorage`. Both are per browser and per site. When the examples change in an incompatible way the key is bumped and the examples are loaded again.
+The workspace (metamodels, constraints, mappings, projects and their instances) is stored in the browser under the key `bango-workspace-v5`; the theme in `localStorage`. Both are per browser and per site. When the examples change in an incompatible way the key is bumped and the examples are loaded again.

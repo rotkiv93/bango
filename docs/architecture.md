@@ -2,7 +2,7 @@
 
 Bango has two levels, and three modules that connect them.
 
-- **Metamodels**: what can be said. A metamodel is a [Langium](https://langium.org) grammar: `datamodel` says what an entity is, `mapviewer` what a layer is. Metamodels can refer to each other: a map layer must show a data-model entity.
+- **Metamodels**: what can be said. A metamodel is a [Langium](https://langium.org) grammar: `datamodel` says what an entity is, `gismodel` what a layer is. Metamodels can refer to each other: a map layer must show a data-model entity.
 - **Instances**: what is said. A project chooses metamodels and holds one instance (a text) of each. Instances are checked against their metamodel *and against each other*.
 
 ```

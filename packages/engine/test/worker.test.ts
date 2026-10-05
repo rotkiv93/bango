@@ -28,24 +28,24 @@ describe('worker boundary', () => {
 
     const info = await client.compose(city.metamodels);
     expect(info.problems).toEqual([]);
-    expect(info.languages.map(l => l.name)).toEqual(['datamodel', 'mapviewer']);
+    expect(info.languages.map(l => l.name)).toEqual(['datamodel', 'gismodel']);
 
     for (const [m, t] of Object.entries(city.instances)) await client.setText(m, t);
-    const state = await client.getInstance('mapviewer');
+    const state = await client.getInstance('gismodel');
     expect(errors(state.problems)).toEqual([]);
-    expect(state.ast!.type).toBe('Viewer');
+    expect(state.ast!.type).toBe('Gis');
 
-    const edited = await client.applyEdit('mapviewer', { kind: 'add', path: [], feature: 'layers', type: 'TileLayer' });
+    const edited = await client.applyEdit('gismodel', { kind: 'add', path: [], feature: 'layers', type: 'TileLayer' });
     expect(edited.text).toContain('tilelayer newTileLayer');
 
     expect((await client.getRefCandidates('Entity')).map(c => c.name)).toContain('Road');
     expect((await client.build('city')).ok).toBe(true);
-    expect(await client.bundleText('mapviewer')).toMatch(/^grammar MapViewer/);
+    expect(await client.bundleText('gismodel')).toMatch(/^grammar GisModel/);
 
     // editor requests carry the live text, which the engine adopts as the instance text
-    const live = 'mapviewer\ngeojsonlayer r entity ';
-    expect((await client.complete('mapviewer', live, 1, 'geojsonlayer r entity '.length)).map(i => i.label)).toContain('Road');
-    expect((await client.getInstance('mapviewer')).text).toBe(live);
+    const live = 'gismodel\ngeojsonlayer r entity ';
+    expect((await client.complete('gismodel', live, 1, 'geojsonlayer r entity '.length)).map(i => i.label)).toContain('Road');
+    expect((await client.getInstance('gismodel')).text).toBe(live);
     close();
   });
 

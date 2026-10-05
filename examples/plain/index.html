@@ -25,7 +25,7 @@
   <main>
     <section><h2>datamodel · text</h2><bango-instance id="text" metamodel="datamodel" view="text"></bango-instance></section>
     <section><h2>datamodel · form (same instance)</h2><bango-instance id="form" metamodel="datamodel" view="form"></bango-instance></section>
-    <section><h2>project · diagram</h2><bango-instance id="diagram" metamodel="mapviewer" view="diagram"></bango-instance></section>
+    <section><h2>project · diagram</h2><bango-instance id="diagram" metamodel="gismodel" view="diagram"></bango-instance></section>
   </main>
   <pre id="out">starting…</pre>
 
@@ -50,16 +50,16 @@
     const bango = connectBango(worker);
 
     // 3. Metamodels are Langium grammars; a project picks which ones it uses
-    for (const name of ['common', 'datamodel', 'mapviewer']) await bango.setGrammar(name, await read(`${seed}/grammars/${name}.langium`));
-    for (const name of ['datamodel', 'mapviewer']) await bango.setConstraints(name, await read(`${seed}/grammars/${name}.constraints.js`));
+    for (const name of ['common', 'datamodel', 'gismodel']) await bango.setGrammar(name, await read(`${seed}/grammars/${name}.langium`));
+    for (const name of ['datamodel', 'gismodel']) await bango.setConstraints(name, await read(`${seed}/grammars/${name}.constraints.js`));
     // how each metamodel's instances become JSON: the pieces of one specification
-    for (const name of ['datamodel', 'mapviewer']) await bango.setSpec(name, await read(`${seed}/grammars/${name}.spec.js`));
-    const composition = await bango.compose(['datamodel', 'mapviewer']);
+    for (const name of ['datamodel', 'gismodel']) await bango.setSpec(name, await read(`${seed}/grammars/${name}.spec.js`));
+    const composition = await bango.compose(['datamodel', 'gismodel']);
 
     // 4. One instance per metamodel
     await bango.setInstances({
       datamodel: await read(`${seed}/projects/city/datamodel.instance`),
-      mapviewer: await read(`${seed}/projects/city/mapviewer.instance`)
+      gismodel: await read(`${seed}/projects/city/gismodel.instance`)
     });
 
     // 5. Views are custom elements; give them the engine and they stay in sync with it

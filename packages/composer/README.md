@@ -9,16 +9,16 @@ import { ModelComposer } from '@bango/composer';
 
 const composer = new ModelComposer();
 composer.setGrammar('datamodel', datamodelGrammar);
-composer.setGrammar('mapviewer', mapviewerGrammar);   // contains: import 'datamodel'
+composer.setGrammar('gismodel', gismodelGrammar);   // contains: import 'datamodel'
 
-const check = await composer.check(['mapviewer']);
+const check = await composer.check(['gismodel']);
 check.ok;          // false
-check.errors;      // ["'mapviewer' needs 'datamodel': add 'datamodel' to this project"]
-check.suggested;   // ['mapviewer', 'datamodel']
+check.errors;      // ["'gismodel' needs 'datamodel': add 'datamodel' to this project"]
+check.suggested;   // ['gismodel', 'datamodel']
 
-const composition = await composer.compose(['datamodel', 'mapviewer']);
+const composition = await composer.compose(['datamodel', 'gismodel']);
 composition.ok;                              // true
-composition.get('mapviewer')?.extension;     // 'mapviewer'
+composition.get('gismodel')?.extension;     // 'gismodel'
 ```
 
 `langium` is a **peer dependency**: install it next to this package (Langium's types break with two copies).

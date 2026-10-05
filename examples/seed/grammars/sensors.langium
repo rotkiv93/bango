@@ -1,24 +1,15 @@
 grammar Sensors
 import 'common'
 import 'datamodel'
-import 'mapviewer'
+import 'gismodel'
 
-// Sensors: the product and its sensors with their dimensions. Needs the data model and the map viewer.
+// Sensors: the sensors of the product, with their measurements and dimensions. Needs the data model and the GIS model.
 //
-// This is the root of the product specification (modeled on @lbdudc/sensor-dsl and the JSON it produces for the
-// product line). A sensor does not repeat what the other metamodels already say: the entities it stores data in are
-// data-model entities, and the map and layer it opens with are map-viewer ones, all checked as references.
+// Modeled on @lbdudc/sensor-dsl and the JSON it produces for the product line. A sensor does not repeat what the
+// other metamodels already say: the entities it stores data in are data-model entities, and the map and layer it
+// opens with are GIS-model ones, all checked as references.
 entry SensorModel: 'sensors' name=ID?
-  product=SensorProduct?
   (sensors+=SensorDef | groups+=SensorGroup)*;
-
-// `data.basicData` and the feature selection. Languages, package and index have the DSL's defaults when left out.
-SensorProduct: 'product' name=ID ('srid' srid=INT)?
-  ('index' indexComponent=ID indexView=ID)?
-  ('languages' languages+=ID (',' languages+=ID)*)?
-  ('package' artifactId=ID 'group' groupId=STRING)?
-  ('database' 'at' dbHost=STRING 'schema' dbName=STRING 'login' dbUser=STRING 'password' dbPassword=STRING)?
-  ('features' features+=ID (',' features+=ID)*)?;
 
 // A sensor measures `measurements` into its `factTable` entity, one row per observation of an `entity`
 SensorDef: (moving?='moving')? 'sensor' name=ID

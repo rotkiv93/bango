@@ -144,7 +144,7 @@ export class ModelComposer {
       return set;
     };
 
-    const specFor = (name: string): SpecFn | undefined => {
+    const specFor = (name: string): { map: SpecFn; root: boolean } | undefined => {
       const code = this.specTexts.get(name);
       if (!code?.trim()) return undefined;
       try { return compileSpec(code); } catch (e) {
@@ -170,7 +170,13 @@ export class ModelComposer {
         metamodel = this.compileMetamodel(build, name, info);
         this.lastGood.set(name, metamodel);
       }
-      usable.push({ ...metamodel, constraints: metamodel.sources.map(constraintsFor).filter((c): c is ConstraintSet => !!c), spec: specFor(name) });
+      const spec = specFor(name);
+      usable.push({
+        ...metamodel,
+        constraints: metamodel.sources.map(constraintsFor).filter((c): c is ConstraintSet => !!c),
+        spec: spec?.map,
+        specRoot: spec?.root
+      });
     }
 
     return new Composition({ selection: names, grammars, problems, usable, unavailable, docs: build.docs });

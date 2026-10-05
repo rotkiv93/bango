@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
 import { openProject } from '../../../test-support/harness.js';
+import { COMBO_GRAMMAR } from '../../../test-support/combo.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 describe('project build', () => {
@@ -16,48 +17,49 @@ describe('project build', () => {
     const { bango } = await openProject('city');
     const result = await bango.build('city');
     expect(result.ok, result.errors.join('\n')).toBe(true);
-    const map = result.model!.instances.find(i => i.metamodel === 'mapviewer')!;
-    expect(map.extension).toBe('mapviewer');
+    const map = result.model!.instances.find(i => i.metamodel === 'gismodel')!;
+    expect(map.extension).toBe('gismodel');
     const layers = map.ast.children.layers as unknown as { refs: { entity: { resolved: boolean; targetMetamodel: string } } }[];
     expect(layers[0].refs.entity).toMatchObject({ resolved: true, targetMetamodel: 'datamodel' });
   });
 
   it('a map model without the data model fails and tells the user to add it', async () => {
-    const { bango } = await openProject('map-only');
+    const { bango } = await openProject('gismodel-only');
     const result = await bango.build('city');
     expect(result.ok).toBe(false);
     expect(result.model).toBeUndefined();
-    expect(result.errors.join('\n')).toMatch(/'mapviewer' needs 'datamodel': add 'datamodel' to this project/);
+    expect(result.errors.join('\n')).toMatch(/'gismodel' needs 'datamodel': add 'datamodel' to this project/);
   });
 
-  it('requirements are transitive: the composite metamodel needs both of the others', async () => {
-    const { bango } = await openProject('composite');
-    const info = await bango.compose(['app', 'datamodel']);
-    expect(info.grammars.find(g => g.name === 'app')!.requires.sort()).toEqual(['datamodel', 'mapviewer']);
-    expect(info.problems.map(p => p.missing)).toEqual(['mapviewer']);
-    const result = await bango.build('composite');
+  it('requirements are transitive: a composite metamodel needs everything it imports', async () => {
+    const { bango } = await openProject('city');
+    await bango.setGrammar('combo', COMBO_GRAMMAR);
+    const info = await bango.compose(['combo', 'datamodel']);
+    expect(info.grammars.find(g => g.name === 'combo')!.requires.sort()).toEqual(['datamodel', 'gismodel']);
+    expect(info.problems.map(p => p.missing)).toEqual(['gismodel']);
+    const result = await bango.build('combo');
     expect(result.ok).toBe(false);
-    expect(result.errors.join('\n')).toMatch(/'app' needs 'mapviewer'/);
+    expect(result.errors.join('\n')).toMatch(/'combo' needs 'gismodel'/);
   });
 
   it('an instance of a metamodel outside the project fails the build', async () => {
     const { bango, project } = await openProject('shop');
-    await bango.setText('mapviewer', 'mapviewer');
+    await bango.setText('gismodel', 'gismodel');
     const result = await bango.build('shop');
     expect(result.ok).toBe(false);
-    expect(result.errors.join('\n')).toMatch(/mapviewer: .*not part of this project/);
-    await bango.removeInstance('mapviewer');
+    expect(result.errors.join('\n')).toMatch(/gismodel: .*not part of this project/);
+    await bango.removeInstance('gismodel');
     expect((await bango.build('shop')).ok, JSON.stringify(project)).toBe(true);
   });
 
   it('fails on unresolved references and passes once fixed', async () => {
     const { bango, project } = await openProject('city');
-    await bango.setText('mapviewer', project.instances.mapviewer.replace('entity Road', 'entity Nope'));
+    await bango.setText('gismodel', project.instances.gismodel.replace('entity Road', 'entity Nope'));
     const failed = await bango.build('city');
     expect(failed.ok).toBe(false);
-    expect(failed.errors.join('\n')).toMatch(/mapviewer 3:\d+ .*Nope/);
+    expect(failed.errors.join('\n')).toMatch(/gismodel 3:\d+ .*Nope/);
 
-    await bango.setText('mapviewer', project.instances.mapviewer);
+    await bango.setText('gismodel', project.instances.gismodel);
     const fixed = await bango.build('city');
     expect(fixed.ok, fixed.errors.join('\n')).toBe(true);
   });
@@ -88,16 +90,17 @@ describe('project build', () => {
     for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
     const info = await bango.compose();
     expect(info.problems).toEqual([]);
-    expect(info.languages.map(l => l.name).sort()).toEqual(['app', 'datamodel', 'mapviewer', 'sensors']);
+    expect(info.languages.map(l => l.name).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
   });
 
   it.each([
     ['shop', true],
     ['city', true],
-    ['composite', true],
+    ['catalog', true],
     ['gresint', true],
-    ['map-only', false],
-    ['sensors-only', false]
+    ['gismodel-only', false],
+    ['sensors-only', false],
+    ['forms-only', false]
   ])('shipped example %s builds: %s', async (name, ok) => {
     const { bango } = await openProject(name);
     const result = await bango.build(name);

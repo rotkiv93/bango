@@ -29,7 +29,7 @@ describe('printer', () => {
     const composition = await composer.compose();
 
     let checked = 0;
-    for (const projectName of ['city', 'composite', 'gresint']) {
+    for (const projectName of ['city', 'gresint', 'catalog']) {
       const { bango, project } = await openProject(projectName);
       for (const [metamodel, text] of Object.entries(project.instances)) {
         const printer = new Printer(indexRules(composition.get(metamodel)!.grammar));
@@ -53,10 +53,10 @@ describe('printer', () => {
 describe('form schema', () => {
   it('has cross-metamodel reference types and concrete child types', async () => {
     const { bango } = await openProject('city');
-    const schema = (await bango.getFormSchema('mapviewer'))!;
-    expect(schema.root).toBe('Viewer');
+    const schema = (await bango.getFormSchema('gismodel'))!;
+    expect(schema.root).toBe('Gis');
     expect(schema.types.GeoJsonLayer.fields.find(f => f.name === 'entity')).toMatchObject({ kind: 'ref', refType: 'Entity', required: true });
-    expect(schema.types.Viewer.fields.find(f => f.name === 'layers')!.childTypes).toEqual(['TileLayer', 'GeoJsonLayer', 'WMSLayer']);
+    expect(schema.types.Gis.fields.find(f => f.name === 'layers')!.childTypes).toEqual(['TileLayer', 'GeoJsonLayer', 'WMSLayer']);
     expect(await bango.getFormSchema('nope')).toBeUndefined();
   });
 
@@ -95,7 +95,7 @@ describe('form edits', () => {
 
   it('adding a layer picks an existing entity from the other metamodel', async () => {
     const { bango } = await openProject('city');
-    const s = await bango.applyEdit('mapviewer', { kind: 'add', path: [], feature: 'layers', type: 'GeoJsonLayer' });
+    const s = await bango.applyEdit('gismodel', { kind: 'add', path: [], feature: 'layers', type: 'GeoJsonLayer' });
     expect(s.text).toMatch(/geojsonlayer newGeoJsonLayer entity (Road|Parcel) defaultStyle/);
   });
 
@@ -109,15 +109,15 @@ describe('form edits', () => {
     const removed = await bango.applyEdit('datamodel', { kind: 'remove', path: [...path, { feature: 'fields', index: 3 }] });
     expect(removed.text).toBe(project.instances.datamodel);
 
-    const styles = await bango.applyEdit('mapviewer', { kind: 'add', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', value: 'thin' });
+    const styles = await bango.applyEdit('gismodel', { kind: 'add', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', value: 'thin' });
     expect(styles.text).toMatch(/availableStyles thin, thin/);
     expect(errors(styles.problems)).toEqual([]);
   });
 
   it('removing a list item through its feature and index', async () => {
     const { bango } = await openProject('city');
-    await bango.applyEdit('mapviewer', { kind: 'add', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', value: 'thin' });
-    const s = await bango.applyEdit('mapviewer', { kind: 'remove', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', index: 1 });
+    await bango.applyEdit('gismodel', { kind: 'add', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', value: 'thin' });
+    const s = await bango.applyEdit('gismodel', { kind: 'remove', path: [{ feature: 'layers', index: 0 }], feature: 'availableStyles', index: 1 });
     expect(s.text).toMatch(/availableStyles thin\s*$/m);
   });
 
@@ -131,6 +131,6 @@ describe('form edits', () => {
 
   it('edits for a metamodel that is not available are rejected with the reason', async () => {
     const { bango } = await openProject('shop');
-    await expect(bango.applyEdit('mapviewer', { kind: 'add', path: [], feature: 'layers' })).rejects.toThrow(/not part of this project/);
+    await expect(bango.applyEdit('gismodel', { kind: 'add', path: [], feature: 'layers' })).rejects.toThrow(/not part of this project/);
   });
 });

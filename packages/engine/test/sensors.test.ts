@@ -8,16 +8,16 @@ describe('sensors metamodel', () => {
     const { bango } = await openProject('sensors-only');
     const s = await bango.getInstance('sensors');
     expect(s.available).toBe(false);
-    expect(errors(s.problems).join()).toMatch(/'sensors' needs 'datamodel', 'mapviewer'/);
+    expect(errors(s.problems).join()).toMatch(/'sensors' needs 'datamodel', 'gismodel'/);
     const check = await bango.checkSelection(['sensors']);
     expect(check.ok).toBe(false);
-    expect(check.problems.map(p => p.missing).sort()).toEqual(['datamodel', 'mapviewer']);
-    expect(check.suggested.sort()).toEqual(['datamodel', 'mapviewer', 'sensors']);
+    expect(check.problems.map(p => p.missing).sort()).toEqual(['datamodel', 'gismodel']);
+    expect(check.suggested.sort()).toEqual(['datamodel', 'gismodel', 'sensors']);
   });
 
   it('the gresint example is valid, without a single warning', async () => {
     const { bango } = await openProject('gresint');
-    for (const m of ['datamodel', 'mapviewer', 'sensors']) {
+    for (const m of ['basic', 'datamodel', 'gismodel', 'sensors']) {
       const s = await bango.getInstance(m);
       expect(errors(s.problems), m).toEqual([]);
       expect(warnings(s.problems), m).toEqual([]);
@@ -30,8 +30,8 @@ describe('sensors metamodel', () => {
     const sensor = (ast!.children.sensors as { refs: Record<string, { resolved: boolean; targetMetamodel: string; targetType: string; targetName: string }> }[])[0];
     expect(sensor.refs.entity).toMatchObject({ resolved: true, targetMetamodel: 'datamodel', targetType: 'Entity', targetName: 'StationObservationEntity' });
     expect(sensor.refs.factTable).toMatchObject({ targetMetamodel: 'datamodel', targetName: 'StationObservationMeasurement' });
-    expect(sensor.refs.defaultMap).toMatchObject({ targetMetamodel: 'mapviewer', targetType: 'MapDef' });
-    expect(sensor.refs.defaultLayer).toMatchObject({ targetMetamodel: 'mapviewer', targetType: 'GeoJsonLayer' });
+    expect(sensor.refs.defaultMap).toMatchObject({ targetMetamodel: 'gismodel', targetType: 'MapDef' });
+    expect(sensor.refs.defaultLayer).toMatchObject({ targetMetamodel: 'gismodel', targetType: 'GeoJsonLayer' });
   });
 
   it('an entity that does not exist in the data model is a linking error', async () => {
@@ -73,14 +73,8 @@ describe('sensors metamodel', () => {
       expect(errors(s.problems)).toEqual([]);
       expect(warnings(s.problems).join('\n')).toMatch(/says Point, but 'StationObservationEntity.geometry' is Polygon/);
 
-      await bango.setText('mapviewer', project.instances.mapviewer.replace('  use stationobservation-layer style grayPoint selected order 1\n', ''));
+      await bango.setText('gismodel', project.instances.gismodel.replace('  use stationobservation-layer style grayPoint selected order 1\n', ''));
       expect(warnings((await bango.getInstance('sensors')).problems).join('\n')).toMatch(/map 'stationobservation-map' does not show layer 'stationobservation-layer'/);
-    });
-
-    it('warns about a missing product', async () => {
-      const { bango, project } = await openProject('gresint');
-      const s = await bango.setText('sensors', project.instances.sensors.replace(/product gresint[\s\S]*?\n\nsensor/, 'sensor'));
-      expect(warnings(s.problems).join('\n')).toMatch(/should start with a product/);
     });
   });
 
@@ -153,14 +147,14 @@ describe('map viewer constraints', () => {
   ];
   it.each(cases)('reports %s', async (_what, from, to, pattern) => {
     const { bango, project } = await openProject('gresint');
-    expect(project.instances.mapviewer).toContain(from);
-    const s = await bango.setText('mapviewer', project.instances.mapviewer.replace(from, to));
+    expect(project.instances.gismodel).toContain(from);
+    const s = await bango.setText('gismodel', project.instances.gismodel.replace(from, to));
     expect(errors(s.problems).join('\n')).toMatch(pattern);
   });
 
   it('warns about a repeated order and a second base layer', async () => {
     const { bango, project } = await openProject('gresint');
-    const s = await bango.setText('mapviewer', project.instances.mapviewer.replace('use ZoneDimension style grayPolygon order 2', 'use ZoneDimension style grayPolygon baseLayer order 1'));
+    const s = await bango.setText('gismodel', project.instances.gismodel.replace('use ZoneDimension style grayPolygon order 2', 'use ZoneDimension style grayPolygon baseLayer order 1'));
     expect(warnings(s.problems).join('\n')).toMatch(/order 1 is used twice/);
     expect(warnings(s.problems).join('\n')).toMatch(/more than one base layer/);
   });

@@ -121,4 +121,6 @@ export interface ComposedMetamodel {
   constraints: ConstraintSet[];
   /** the metamodel's own JSON mapping, when it has one */
   spec?: SpecFn;
+  /** the mapping lays out the whole document and the others fill it in, so it is merged first */
+  specRoot?: boolean;
 }

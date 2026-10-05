@@ -1,0 +1,15 @@
+datamodel catalog
+
+entity Category display "$name" {
+  property id: Long autoinc required pk unique
+  property name: String required
+  relation products -> Product inverse category multiple
+}
+
+entity Product display "$name" {
+  property id: Long autoinc required pk unique
+  property name: String required
+  property price: Double
+  property inStock: Boolean
+  relation category -> Category inverse products owner
+}

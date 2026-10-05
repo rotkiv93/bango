@@ -1,4 +1,4 @@
-mapviewer
+gismodel
 
 tilelayer base label "base" url "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 

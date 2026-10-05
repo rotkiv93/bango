@@ -7,10 +7,10 @@ import { Bango } from '@bango/engine';          // composer + engine behind one 
 
 const bango = new Bango();
 await bango.setGrammar('datamodel', datamodelGrammar);
-await bango.setGrammar('mapviewer', mapviewerGrammar);
-await bango.compose(['datamodel', 'mapviewer']);
+await bango.setGrammar('gismodel', gismodelGrammar);
+await bango.compose(['datamodel', 'gismodel']);
 
-const state = await bango.setText('mapviewer', 'mapviewer\ngeojsonlayer roads entity Nope ...');
+const state = await bango.setText('gismodel', 'gismodel\ngeojsonlayer roads entity Nope ...');
 state.problems;    // [{ severity: 'error', message: "Could not resolve reference to Entity named 'Nope'.", ... }]
 ```
 
@@ -94,7 +94,7 @@ For building forms: `getFormSchema(metamodel)` describes every node type of a gr
 ```ts
 const result = await bango.build('gresint');
 result.ok;            // true only if every requirement is met, every instance belongs to the project and validates
-result.errors;        // otherwise, why: "mapviewer 3:22 Could not resolve reference ...", "'sensors' needs 'datamodel': ..."
+result.errors;        // otherwise, why: "gismodel 3:22 Could not resolve reference ...", "'sensors' needs 'datamodel': ..."
 result.warnings;      // constraint warnings, which do not block
 result.model;         // { project, metamodels, instances: [{ metamodel, extension, ast, spec }], spec }
 ```

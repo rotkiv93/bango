@@ -7,8 +7,8 @@ import { seedWorkspace } from './seed.js';
 import { monaco } from './monaco.js';
 import type { Workspace } from './types.js';
 
-// v4: the examples moved to the product-specification grammars, so older saved workspaces would not parse
-const STORAGE_KEY = 'bango-workspace-v4';
+// v5: the examples are now basic, datamodel, gismodel, sensors, forms and lists, so older saved workspaces would not parse
+const STORAGE_KEY = 'bango-workspace-v5';
 const THEME_KEY = 'bango-theme';
 
 /** The library, running in a worker. Everything Langium happens behind this object. */

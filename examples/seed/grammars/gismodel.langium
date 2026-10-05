@@ -1,9 +1,9 @@
-grammar MapViewer
+grammar GisModel
 import 'common'
 import 'datamodel'
 
-// Map viewer: maps, layers and styles. A GeoJSON layer must show a data-model entity.
-entry Viewer: 'mapviewer' (maps+=MapDef | layers+=Layer | styles+=Style)*;
+// GIS model: maps, layers and styles. A GeoJSON layer must show a data-model entity.
+entry Gis: 'gismodel' (maps+=MapDef | layers+=Layer | styles+=Style)*;
 
 // A map shows layers in an order; `center lat lng zoom N` is where it opens
 MapDef: 'map' name=ID ('label' label=STRING)? ('center' lat=SignedNumber lng=SignedNumber 'zoom' zoom=INT)? (sortable?='sortable')?

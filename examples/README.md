@@ -8,10 +8,12 @@ Used by the tests, the playground (it is its starting workspace) and the plain e
 seed/
   grammars/
     common.langium         shared terminals and data types (a library: no entry rule)
+    basic.*                the product's name, SRID, index, languages, package, database and features
     datamodel.*            entities with property and relationship fields
-    mapviewer.*            maps, layers and styles; a GeoJSON layer shows a data-model entity
-    sensors.*              the product and its sensors; needs datamodel and mapviewer
-    app.langium            a composite: data-model and map-viewer definitions in one document
+    gismodel.*             maps, layers and styles; a GeoJSON layer shows a data-model entity
+    sensors.*              the sensors with their measurements and dimensions; needs datamodel and gismodel
+    forms.*                data-entry forms over entities; needs datamodel
+    lists.*                tables of entities; needs datamodel
   projects/
     <project>/
       project.json         { "metamodels": [...] }
@@ -20,27 +22,34 @@ seed/
     sensors_gresint.json   the JSON the gresint project must produce
 ```
 
-Next to each grammar, `<name>.constraints.js` holds its extra validation and `<name>.spec.js` its [JSON mapping](../docs/json-spec.md). `common` and `app` have neither.
+Next to each grammar, `<name>.constraints.js` holds its extra validation and `<name>.spec.js` its [JSON mapping](../docs/json-spec.md). `common` has neither.
 
 ### The metamodels
 
-| Metamodel | Describes | JSON it owns |
-|---|---|---|
-| `datamodel` | entities with property fields (`Long autoinc required pk unique`) and relationship fields (`inverse`, `owner`, `multiple`) | `data.dataModel` |
-| `mapviewer` | maps (label, centre, layers in order), tile and GeoJSON layers, plain and interval styles | `data.mapViewer` |
-| `sensors` | the product (name, SRID, index, languages, package, database, features) and the sensors with their fact table, default map and layer, measurements, dimensions and groups | `features`, `data.basicData`, `data.dataWarehouse`, and the empty `forms`, `lists`, `menus`, `statics` |
+| Metamodel | Describes | Needs | JSON it owns |
+|---|---|---|---|
+| `basic` | the product: name, SRID, index page, languages, package, database, feature selection | nothing | `features`, `data.basicData`, and the skeleton of the document |
+| `datamodel` | entities with property fields (`Long autoinc required pk unique`) and relationship fields (`inverse`, `owner`, `multiple`) | nothing | `data.dataModel` |
+| `gismodel` | maps (label, centre, layers in order), tile and GeoJSON layers, plain and interval styles | datamodel | `data.mapViewer` |
+| `sensors` | sensors with their fact table, default map and layer, measurements, dimensions and groups | datamodel, gismodel | `data.dataWarehouse` |
+| `forms` | data-entry forms over entities: label, fields, read-only fields | datamodel | `data.forms` |
+| `lists` | tables of entities: label, columns, page size, sort order | datamodel | `data.lists` |
 
-`sensors` is modeled on the sensor DSL ([`@lbdudc/sensor-dsl`](https://www.npmjs.com/package/@lbdudc/sensor-dsl)) and on the JSON it produces for the product line. It **needs both other metamodels**: a sensor's `entity` and `factTable` are data-model entities, and its `map` and `layer` are map-viewer ones. Constraints verify what only the combination can say: every measurement is a property of the fact table with the same type, the fact table points at the sensor entity, the layer shows that entity, a bidirectional relationship has an owner on exactly one side, and a layer draws an existing geometry field.
+`basic` is the root of the product specification: its mapping lays out the whole document and the others fill it in. `forms` and `lists` are optional parts of a product, and need the data model when they are used.
+
+`sensors` is modeled on the sensor DSL ([`@lbdudc/sensor-dsl`](https://www.npmjs.com/package/@lbdudc/sensor-dsl)) and on the JSON it produces for the product line. A sensor's `entity` and `factTable` are data-model entities, and its `map` and `layer` are GIS-model ones. Constraints verify what only the combination can say: every measurement is a property of the fact table with the same type, the fact table points at the sensor entity, the layer shows that entity, a bidirectional relationship has an owner on exactly one side, a layer draws an existing geometry field, and the fields of a form or the columns of a list exist in their entity.
+
+The forms and lists JSON is not described by the sensor DSL or the given specification (which has `[]` for both), so its shape (`name`, `label`, `entity`, `fields` or `columns`, `pageSize`, `sortBy`) is this repository's own design.
 
 ### The projects
 
 | Project | Metamodels | |
 |---|---|---|
 | `shop` | datamodel | a small data model |
-| `city` | datamodel, mapviewer | roads and parcels, shown on a map |
-| `composite` | app, datamodel, mapviewer | one document that mixes both, through the `app` metamodel |
-| `gresint` | datamodel, mapviewer, sensors | a complete product; its three JSON pieces, merged, are **exactly** `expected/sensors_gresint.json` |
-| `map-only`, `sensors-only` | | fixtures with `"playground": false`: combinations the composer rejects, used by the tests and hidden in the playground |
+| `city` | datamodel, gismodel | roads and parcels, shown on a map |
+| `catalog` | datamodel, forms, lists | products and categories, with a form and a list for each |
+| `gresint` | basic, datamodel, gismodel, sensors | a complete product; its four JSON pieces, merged, are **exactly** `expected/sensors_gresint.json` |
+| `gismodel-only`, `sensors-only`, `forms-only` | | fixtures with `"playground": false`: combinations the composer rejects, used by the tests and hidden in the playground |
 
 `project.json` fields: `metamodels` (the selection) and, optionally, `"playground": false` to keep a project out of the playground's examples.
 

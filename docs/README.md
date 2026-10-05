@@ -27,16 +27,16 @@ const bango = new Bango();
 
 // 1. metamodels are Langium grammars (and optionally constraints and a JSON mapping)
 await bango.setGrammar('datamodel', datamodelGrammar);
-await bango.setGrammar('mapviewer', mapviewerGrammar);          // `import 'datamodel'` inside
+await bango.setGrammar('gismodel', gismodelGrammar);          // `import 'datamodel'` inside
 
 // 2. a project chooses the metamodels it uses; the composer checks that they fit together
-const check = await bango.checkSelection(['mapviewer']);
-check.errors;   // ["'mapviewer' needs 'datamodel': add 'datamodel' to this project"]
-await bango.compose(['datamodel', 'mapviewer']);
+const check = await bango.checkSelection(['gismodel']);
+check.errors;   // ["'gismodel' needs 'datamodel': add 'datamodel' to this project"]
+await bango.compose(['datamodel', 'gismodel']);
 
 // 3. a project holds one instance per metamodel; they validate against each other
 await bango.setText('datamodel', 'datamodel shop\nentity Road { property geometry: LineString }');
-await bango.setText('mapviewer', 'mapviewer\n...');
+await bango.setText('gismodel', 'gismodel\n...');
 
 // 4. read it back as data
 await bango.build('shop');               // the final model, or the reasons it cannot be built

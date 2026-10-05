@@ -30,8 +30,8 @@ How Bango reads it:
 - **The entry rule makes it a metamodel.** A grammar without an `entry` rule is a *library* (like `common`, with the shared terminals) and cannot be selected for a project.
 - **Instances use the extension `.<grammar name lowercased>`**: `grammar DataModel` gives `.datamodel`. Two grammars with the same declared name would share an extension, which the composer reports as an error.
 - **The first `//` comment is the description** shown when choosing metamodels for a project. Make it one clear line.
-- **`import` is how metamodels depend on each other.** Importing `datamodel` makes `mapviewer` *require* it: a project that selects `mapviewer` without `datamodel` is rejected, with the message `'mapviewer' needs 'datamodel': add 'datamodel' to this project`.
-- **A cross-reference to an imported type is a cross-metamodel reference.** `entity=[Entity:ID]` in `mapviewer` resolves to an entity in the *data-model instance*. Nothing else is needed.
+- **`import` is how metamodels depend on each other.** Importing `datamodel` makes `gismodel` *require* it: a project that selects `gismodel` without `datamodel` is rejected, with the message `'gismodel' needs 'datamodel': add 'datamodel' to this project`.
+- **A cross-reference to an imported type is a cross-metamodel reference.** `entity=[Entity:ID]` in `gismodel` resolves to an entity in the *data-model instance*. Nothing else is needed.
 - **Import `common` for terminals.** It defines `ID` (letters, digits, `_`, and `-` after the first character), `INT`, `FLOAT`, `STRING`, the `Double` and `SignedNumber` data types, whitespace and comments.
 
 ### Conventions that make the tooling better
@@ -84,9 +84,9 @@ Inside a check:
 - A reference is an object: `ref.ref` is the target node (or `undefined` if it does not resolve) and `ref.$refText` the text that was written. Cross-metamodel references need no special handling: `sensor.entity.ref.fields` reaches into the data model.
 - Check for `undefined` before using a reference target: while someone is typing, references do not resolve.
 
-A metamodel's constraints apply to its own instances and to the instances of any **composite** metamodel that imports it (like `app`, which mixes the data model and the map viewer in one document). If the file has a syntax error, or does not return an object of functions, the problem is reported on the metamodel (`<name>.constraints.js: ...`) and the other metamodels keep working.
+A metamodel's constraints apply to its own instances and to the instances of any **composite** metamodel that imports it (a grammar that imports `datamodel` and `gismodel` and mixes their rules in one document, say). If the file has a syntax error, or does not return an object of functions, the problem is reported on the metamodel (`<name>.constraints.js: ...`) and the other metamodels keep working.
 
-Example of a rule that crosses metamodels (`sensors`, which needs the data model and the map viewer):
+Example of a rule that crosses metamodels (`sensors`, which needs the data model and the GIS model):
 
 ```js
 // the layer that shows a sensor must show the entity the sensor stores into
@@ -126,6 +126,7 @@ return function (model, { refName }) {
 - `refName(ref)` returns the name a reference points at (or the written text when it does not resolve). Use it instead of `ref.ref.name`.
 - Return plain JSON. The result goes through `JSON.stringify`, so functions and `undefined` values disappear and nothing else can leak out.
 - Throwing is fine: the failure is reported as `The JSON mapping of '<name>' failed: ...` in the JSON views and fails a build.
+- Write `return { root: true, map(model, { refName }) { ... } }` instead of a bare function for the mapping that lays out the whole document: it is merged first, so its key order becomes the document's (see [Key order](json-spec.md#key-order)). `basic` does this.
 - Without a mapping file, a metamodel's JSON is the generic tree (and it is left out of the merged project document).
 
 ## 4. Trying it

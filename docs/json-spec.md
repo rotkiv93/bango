@@ -9,20 +9,26 @@ Every instance can be read as JSON, and so can a whole project. There are two fo
 
 A metamodel that has no mapping is read as the generic tree.
 
+A mapping is either a function, or `{ root: true, map(model, helpers) }` for the one that lays out the document (see [Key order](#key-order)).
+
 ## The mapping: one piece per metamodel
 
-Each metamodel owns **a part** of the project's document and says how to produce it. The three example metamodels split one product specification like this:
+Each metamodel owns **a part** of the project's document and says how to produce it. The example metamodels split one product specification like this:
 
 | Metamodel | Owns |
 |---|---|
+| `basic` | `features`, `data.basicData`, and the skeleton of the document (the empty `data.menus` and `data.statics`, and a slot for each of the others) |
 | `datamodel` | `data.dataModel` |
-| `mapviewer` | `data.mapViewer` |
-| `sensors` | `features`, `data.basicData`, `data.dataWarehouse`, and the still-empty `data.forms`, `data.lists`, `data.menus`, `data.statics` |
+| `gismodel` | `data.mapViewer` |
+| `sensors` | `data.dataWarehouse` |
+| `forms` | `data.forms` |
+| `lists` | `data.lists` |
 
 ```ts
 await bango.toJson('datamodel');   // { data: { dataModel: { entities: [...], enums: [] } } }
-await bango.toJson('mapviewer');   // { data: { mapViewer: { maps: [...], layers: [...], styles: [...] } } }
-await bango.toJson('sensors');     // { features: [...], data: { basicData: {...}, dataModel: {}, dataWarehouse: {...}, ... } }
+await bango.toJson('gismodel');    // { data: { mapViewer: { maps: [...], layers: [...], styles: [...] } } }
+await bango.toJson('sensors');     // { data: { dataWarehouse: { sensors: [...], sensorGroups: [...] } } }
+await bango.toJson('basic');       // { features: [...], data: { basicData: {...}, dataModel: {}, dataWarehouse: {}, forms: [], ... } }
 ```
 
 Writing the mapping is described in [Writing metamodels](writing-metamodels.md#3-the-json-mapping).
@@ -31,11 +37,11 @@ Writing the mapping is described in [Writing metamodels](writing-metamodels.md#3
 
 ```ts
 await bango.toProjectJson();                   // all pieces merged: one JSON document
-await bango.toProjectJson({ merge: false });   // { datamodel: {...}, mapviewer: {...}, sensors: {...} }
+await bango.toProjectJson({ merge: false });   // { datamodel: {...}, gismodel: {...}, sensors: {...} }
 (await bango.build('gresint')).model.spec;     // the merged document, for a project that builds
 ```
 
-The three instances of `examples/seed/projects/gresint`, merged, are **exactly** [`examples/seed/expected/sensors_gresint.json`](../examples/seed/expected/sensors_gresint.json): the same keys in the same order, so even the text is identical. A test (`packages/engine/test/spec.test.ts`) checks it.
+The four instances of `examples/seed/projects/gresint` (basic, datamodel, gismodel, sensors), merged, are **exactly** [`examples/seed/expected/sensors_gresint.json`](../examples/seed/expected/sensors_gresint.json): the same keys in the same order, so even the text is identical. A test (`packages/engine/test/spec.test.ts`) checks it.
 
 ### How merging works
 
@@ -43,24 +49,38 @@ The three instances of `examples/seed/projects/gresint`, merged, are **exactly**
 - **Arrays** are concatenated.
 - **Equal values** are kept.
 - **Two different values for the same path are an error** that names the path (`Cannot merge the specs: both define data.name ("a" and "b")`). Each metamodel is supposed to own its part, so a conflict means two mappings claim the same thing. A failed merge also fails `build()`.
-- **Metamodels without a mapping** (like the composite `app`) are left out of the merged document; with `merge: false` they are listed in the generic shape.
+- **Metamodels without a mapping** (a composite metamodel that mixes others, say) are left out of the merged document; with `merge: false` they are listed in the generic shape.
 - **Metamodels outside the project, and metamodels with no instance**, contribute nothing.
 
 ### Key order
 
-Merging is independent of the order of the pieces, but the *key order* of the result is not. The engine merges metamodels that **need others first**: `sensors` needs the data model and the map viewer, so it is the root of the document and its key order becomes the document's order. It leaves empty slots for the parts the others fill:
+Merging is independent of the order of the pieces, but the *key order* of the result is not. The mapping that **lays out the document** is merged first, so its key order becomes the document's order. It says so with `root: true`, and `basic` is the one that does:
 
 ```js
-// sensors.spec.js
-data.basicData = ...;
-data.dataModel = {};          // filled by datamodel
-data.dataWarehouse = ...;
-data.forms = []; data.lists = []; data.menus = [];
-data.mapViewer = {};          // filled by mapviewer
-data.statics = [];
+// basic.spec.js
+return {
+  root: true,
+  map(model) {
+    return {
+      features: [...model.features],
+      data: {
+        basicData: { ... },
+        dataModel: {},        // datamodel
+        dataWarehouse: {},    // sensors
+        forms: [],            // forms
+        lists: [],            // lists
+        menus: [],
+        mapViewer: {},        // gismodel
+        statics: []
+      }
+    };
+  }
+};
 ```
 
-An empty object merges with anything, so the slots cost nothing, and the merged text comes out in the order the specification expects.
+An empty object merges with anything and an empty array concatenates, so the slots cost nothing, and the merged text comes out in the order the specification expects. Without a root, the metamodels that need the most others are merged first.
+
+The slots of metamodels that are *not* in the project stay empty (`dataWarehouse: {}`), and a project without `basic` has no skeleton at all: its document has only what the other metamodels contribute.
 
 ## The generic format
 

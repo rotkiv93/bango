@@ -6,7 +6,6 @@ const relatedTo = (entity, other) =>
 
 return {
   SensorModel(model, accept) {
-    if (!model.product) accept('warning', 'a sensor specification should start with a product', { node: model, property: 'name' });
     const seen = new Set();
     for (const node of [...model.sensors, ...model.groups]) {
       if (seen.has(node.name)) accept('error', `duplicate sensor or group '${node.name}'`, { node, property: 'name' });

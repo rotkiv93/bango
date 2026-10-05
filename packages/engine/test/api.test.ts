@@ -26,7 +26,7 @@ describe('setInstances', () => {
 describe('createInstance', () => {
   it.each([
     ['datamodel', /^datamodel\s*$/],
-    ['mapviewer', /^mapviewer\s*$/]
+    ['gismodel', /^gismodel\s*$/]
   ])('starts a %s instance with its minimal valid root', async (metamodel, pattern) => {
     const { bango } = await openProject('city');
     await bango.removeInstance(metamodel);
@@ -43,14 +43,14 @@ describe('createInstance', () => {
 
   it('refuses a metamodel that is not available, with the reason', async () => {
     const { bango } = await openProject('shop');
-    await expect(bango.createInstance('mapviewer')).rejects.toThrow(/not part of this project/);
+    await expect(bango.createInstance('gismodel')).rejects.toThrow(/not part of this project/);
   });
 });
 
 describe('grammar AST', () => {
   it('exposes the AST of any grammar of the workspace, resolved references included', async () => {
     const { bango } = await openProject('city');
-    const ast = (await bango.getGrammarAst('mapviewer'))!;
+    const ast = (await bango.getGrammarAst('gismodel'))!;
     expect(ast.type).toBe('Grammar');
     const imports = ast.children.imports as { props: Record<string, unknown> }[];
     expect(imports.map(i => i.props.path)).toEqual(['common', 'datamodel']);
@@ -62,9 +62,9 @@ describe('Bango ordering', () => {
   it('overlapping compose calls apply in call order, so the last selection wins', async () => {
     const { bango } = await openProject('city');
     const calls = [
-      bango.compose(['datamodel', 'mapviewer']),
+      bango.compose(['datamodel', 'gismodel']),
       bango.compose(['datamodel']),
-      bango.compose(['datamodel', 'mapviewer']),
+      bango.compose(['datamodel', 'gismodel']),
       bango.compose(['datamodel'])
     ];
     const infos = await Promise.all(calls);

@@ -9,7 +9,7 @@ const generic = { format: 'generic' } as const;
 describe('generic JSON', () => {
   it('is plain JSON: it survives a stringify round trip unchanged, in both formats', async () => {
     const { bango } = await openProject('gresint');
-    for (const m of ['datamodel', 'mapviewer', 'sensors']) {
+    for (const m of ['datamodel', 'gismodel', 'sensors']) {
       for (const options of [{}, generic]) {
         const spec = (await bango.toJson(m, options))!;
         expect(JSON.parse(JSON.stringify(spec))).toEqual(spec);
@@ -39,8 +39,8 @@ describe('generic JSON', () => {
     const { bango } = await openProject('gresint');
     const sensor = (((await bango.toJson('sensors', generic)) as Obj).sensors as Obj[])[0];
     expect(sensor.entity).toEqual({ $ref: 'StationObservationEntity', $type: 'Entity', $in: 'datamodel' });
-    expect(sensor.defaultLayer).toEqual({ $ref: 'stationobservation-layer', $type: 'GeoJsonLayer', $in: 'mapviewer' });
-    expect(sensor.defaultMap).toEqual({ $ref: 'stationobservation-map', $type: 'MapDef', $in: 'mapviewer' });
+    expect(sensor.defaultLayer).toEqual({ $ref: 'stationobservation-layer', $type: 'GeoJsonLayer', $in: 'gismodel' });
+    expect(sensor.defaultMap).toEqual({ $ref: 'stationobservation-map', $type: 'MapDef', $in: 'gismodel' });
   });
 
   it('marks references that do not resolve', async () => {
@@ -64,7 +64,7 @@ describe('generic JSON', () => {
 
   it('leaves out empty lists and null values, keeps false flags', async () => {
     const { bango } = await openProject('gresint');
-    const layers = ((await bango.toJson('mapviewer', generic)) as Obj).layers as Obj[];
+    const layers = ((await bango.toJson('gismodel', generic)) as Obj).layers as Obj[];
     expect(layers[0].$type).toBe('TileLayer');
     const geo = layers[1];
     expect(geo.editable).toBe(false);
@@ -73,7 +73,7 @@ describe('generic JSON', () => {
 
   it('is undefined when the metamodel is not available or the instance does not exist', async () => {
     const { bango } = await openProject('shop');
-    expect(await bango.toJson('mapviewer')).toBeUndefined();
+    expect(await bango.toJson('gismodel')).toBeUndefined();
     expect(await bango.toJson('nope', generic)).toBeUndefined();
   });
 

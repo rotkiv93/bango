@@ -58,7 +58,7 @@ describe('ModelRenderer', () => {
   });
 
   it('reports a metamodel that is not available instead of crashing', async () => {
-    const { el } = await show('shop', 'mapviewer', 'form');
+    const { el } = await show('shop', 'gismodel', 'form');
     expect(el.textContent).toMatch(/not part of this project/);
   });
 
@@ -79,7 +79,7 @@ describe('ModelRenderer', () => {
 
 describe('ast view', () => {
   it('shows the tree with resolved references, and the JSON on demand', async () => {
-    const { el } = await show('city', 'mapviewer', 'ast');
+    const { el } = await show('city', 'gismodel', 'ast');
     expect(el.textContent).toContain('GeoJsonLayer');
     expect(el.textContent).toMatch(/entity → Road .*Entity Road in datamodel/);
     [...el.querySelectorAll('button')].find(b => b.textContent === 'JSON')!.click();
@@ -87,14 +87,14 @@ describe('ast view', () => {
   });
 
   it('marks unresolved references', async () => {
-    const { el, bango, project } = await show('city', 'mapviewer', 'ast');
-    await bango.setText('mapviewer', project.instances.mapviewer.replace('entity Road', 'entity Nope'));
+    const { el, bango, project } = await show('city', 'gismodel', 'ast');
+    await bango.setText('gismodel', project.instances.gismodel.replace('entity Road', 'entity Nope'));
     await vi.waitFor(() => expect(el.querySelector('.bango-unresolved')?.textContent).toMatch(/Nope.*unresolved/));
   });
 
   it('the project scope lists every instance', async () => {
     const { el } = await show('city', 'datamodel', 'project-ast');
-    expect(labels(el, '.bango-ast-filename')).toEqual(['datamodel', 'mapviewer']);
+    expect(labels(el, '.bango-ast-filename')).toEqual(['datamodel', 'gismodel']);
   });
 
   it('asks the host to show a node in its text', async () => {
@@ -147,7 +147,7 @@ describe('json view', () => {
     await vi.waitFor(() => expect(body(el).textContent).toContain('$range'));
 
     pick(el, 0, 'spec');
-    await vi.waitFor(() => expect(parsed(el).features).toBeDefined());
+    await vi.waitFor(() => expect(parsed(el).data).toBeDefined());
     expect(el.querySelectorAll('input[type=checkbox]')).toHaveLength(0);
   });
 
@@ -168,19 +168,19 @@ describe('json view', () => {
     const { el } = await show('gresint', 'datamodel', 'project-json');
     expect(el.querySelectorAll('select')).toHaveLength(2);
     pick(el, 1, 'split');
-    await vi.waitFor(() => expect(Object.keys(parsed(el)).sort()).toEqual(['datamodel', 'mapviewer', 'sensors']));
+    await vi.waitFor(() => expect(Object.keys(parsed(el)).sort()).toEqual(['basic', 'datamodel', 'gismodel', 'sensors']));
     expect(Object.keys(parsed(el).datamodel)).toEqual(['data']);
   });
 
   it('the generic project has no merged form: it lists the metamodels', async () => {
     const { el } = await show('gresint', 'datamodel', 'project-json');
     pick(el, 0, 'generic');
-    await vi.waitFor(() => expect(Object.keys(parsed(el)).sort()).toEqual(['datamodel', 'mapviewer', 'sensors']));
+    await vi.waitFor(() => expect(Object.keys(parsed(el)).sort()).toEqual(['basic', 'datamodel', 'gismodel', 'sensors']));
     expect(parsed(el).sensors.$type).toBe('SensorModel');
   });
 
   it('explains why there is nothing to show', async () => {
-    const { el } = await show('shop', 'mapviewer', 'json');
+    const { el } = await show('shop', 'gismodel', 'json');
     expect(el.textContent).toMatch(/not part of this project/);
     expect(el.querySelector('.bango-j-key')).toBeNull();
   });
@@ -203,45 +203,45 @@ describe('form view', () => {
     [...el.querySelectorAll('.bango-field')].filter(f => f.querySelector(':scope > label')?.textContent?.startsWith(label))[nth] as HTMLElement;
 
   it('is generated from the grammar: one fieldset per node, one field per feature', async () => {
-    const { el } = await show('city', 'mapviewer', 'form');
-    expect(labels(el, '.bango-node legend b')).toEqual(expect.arrayContaining(['Viewer', 'MapDef', 'GeoJsonLayer', 'GeoJSONLayerStyle']));
+    const { el } = await show('city', 'gismodel', 'form');
+    expect(labels(el, '.bango-node legend b')).toEqual(expect.arrayContaining(['Gis', 'MapDef', 'GeoJsonLayer', 'GeoJSONLayerStyle']));
     expect(field(el, 'entity').querySelector('select')).not.toBeNull();
     expect(field(el, 'editable').querySelector('input[type=checkbox]')).not.toBeNull();
   });
 
   it('offers the entities of the other metamodel as reference choices', async () => {
-    const { el } = await show('city', 'mapviewer', 'form');
+    const { el } = await show('city', 'gismodel', 'form');
     const options = [...field(el, 'entity').querySelectorAll('option')].map(o => o.textContent);
     expect(options).toEqual(expect.arrayContaining(['Road', 'Parcel']));
   });
 
   it('editing a value rewrites the text through the engine', async () => {
-    const { el, bango } = await show('city', 'mapviewer', 'form');
+    const { el, bango } = await show('city', 'gismodel', 'form');
     const layer = [...el.querySelectorAll('.bango-node')].find(n => n.querySelector('legend')?.textContent?.includes('GeoJsonLayer')) as HTMLElement;
     const name = field(layer, 'name').querySelector('input') as HTMLInputElement;
     name.value = 'highways';
     name.dispatchEvent(new Event('change'));
-    await vi.waitFor(async () => expect((await bango.getInstance('mapviewer')).text).toContain('geojsonlayer highways'));
+    await vi.waitFor(async () => expect((await bango.getInstance('gismodel')).text).toContain('geojsonlayer highways'));
   });
 
   it('picking another entity changes the reference', async () => {
-    const { el, bango } = await show('city', 'mapviewer', 'form');
+    const { el, bango } = await show('city', 'gismodel', 'form');
     const select = field(el, 'entity').querySelector('select') as HTMLSelectElement;
     select.value = 'Parcel';
     select.dispatchEvent(new Event('change'));
-    await vi.waitFor(async () => expect((await bango.getInstance('mapviewer')).text).toContain('entity Parcel'));
+    await vi.waitFor(async () => expect((await bango.getInstance('gismodel')).text).toContain('entity Parcel'));
   });
 
   it('toggling a checkbox and adding children work', async () => {
-    const { el, bango } = await show('city', 'mapviewer', 'form');
+    const { el, bango } = await show('city', 'gismodel', 'form');
     const box = field(el, 'editable').querySelector('input') as HTMLInputElement;
     box.checked = false;
     box.dispatchEvent(new Event('change'));
-    await vi.waitFor(async () => expect((await bango.getInstance('mapviewer')).text).not.toContain('editable'));
+    await vi.waitFor(async () => expect((await bango.getInstance('gismodel')).text).not.toContain('editable'));
 
     const add = [...el.querySelectorAll('.bango-add button')].find(b => b.textContent === '+ TileLayer') as HTMLButtonElement;
     add.click();
-    await vi.waitFor(async () => expect((await bango.getInstance('mapviewer')).text).toContain('tilelayer newTileLayer'));
+    await vi.waitFor(async () => expect((await bango.getInstance('gismodel')).text).toContain('tilelayer newTileLayer'));
     await vi.waitFor(() => expect(labels(el, '.bango-node legend b')).toContain('TileLayer'));
   });
 
@@ -310,7 +310,7 @@ describe('diagram view', () => {
     registerRenderer('diagram-flat', ctx => new DiagramRenderer(ctx, { layout: layeredLayout }));
     const { el, bango } = await show('city', 'datamodel', 'diagram-flat');
     await bango.setText('datamodel', '');
-    await bango.setText('mapviewer', '');
+    await bango.setText('gismodel', '');
     await vi.waitFor(() => expect(el.textContent).toMatch(/No named elements/));
   });
 });
@@ -329,11 +329,11 @@ describe('<bango-instance>', () => {
     el.setAttribute('view', 'form');
     await vi.waitFor(() => expect(el.querySelector('.bango-form')).not.toBeNull());
 
-    el.setAttribute('metamodel', 'mapviewer');
+    el.setAttribute('metamodel', 'gismodel');
     await vi.waitFor(() => expect(el.textContent).toContain('GeoJsonLayer'));
 
     el.remove();
-    await bango.setText('mapviewer', 'mapviewer');
+    await bango.setText('gismodel', 'gismodel');
     expect(el.querySelector('.bango-view')).toBeNull();
   });
 

@@ -80,7 +80,7 @@ export function ProjectsPage() {
 
       {projects.length === 0 ? (
         <EmptyState title="No projects yet" action={<button className="primary" onClick={() => setCreating(true)}>Create your first project</button>}>
-          Pick the metamodels you need, for example the data model and the map viewer.
+          Pick the metamodels you need, for example the data model and the GIS model.
         </EmptyState>
       ) : (
         <div className="cards">

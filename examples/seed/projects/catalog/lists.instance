@@ -1,0 +1,9 @@
+lists
+
+list Products label "Products" entity Product pageSize 20 sortBy name {
+  column name
+  column price label "Price (EUR)"
+  column category
+}
+
+list Categories entity Category sortBy name descending
