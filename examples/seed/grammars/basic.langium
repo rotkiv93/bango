@@ -1,5 +1,5 @@
 grammar Basic
-import 'common'
+import './common'
 
 // Basic: the product's name, SRID, index page, languages, package, database and feature selection.
 //

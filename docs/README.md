@@ -29,7 +29,7 @@ const bango = new Bango();
 
 // 1. metamodels are Langium grammars (and optionally constraints and a JSON mapping)
 await bango.setGrammar('datamodel', datamodelGrammar);
-await bango.setGrammar('gismodel', gismodelGrammar);          // `import 'datamodel'` inside
+await bango.setGrammar('gismodel', gismodelGrammar);          // `import './datamodel'` inside
 
 // 2. a project chooses the metamodels it uses; the composer checks that they fit together
 const check = await bango.checkSelection(['gismodel']);

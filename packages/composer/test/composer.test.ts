@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ModelComposer } from '../src/index.js';
 import { COMBO_GRAMMAR } from '../../../test-support/combo.js';
 import { composerWith, errors } from '../../../test-support/harness.js';
-import { METAMODELS } from '../../../test-support/seed.js';
+import { METAMODELS, loadSeed } from '../../../test-support/seed.js';
 
 describe('ModelComposer', () => {
   it('compiles the seed grammars; libraries are not metamodels', async () => {
@@ -13,6 +13,25 @@ describe('ModelComposer', () => {
     expect(c.grammars.find(g => g.name === 'common')!.extension).toBeUndefined();
     expect(c.metamodels.map(m => m.name).sort()).toEqual(METAMODELS);
     expect(c.get('gismodel')!.extension).toBe('gismodel');
+  });
+
+  it('an import is the same whether it is written `./name` (the standard form) or `name`', async () => {
+    const respell = (to: (n: string) => string) =>
+      Object.fromEntries(Object.entries(loadSeed().grammars).map(([name, text]) => [name, text.replace(/^import\s+['"](?:\.\/)?([\w-]+)['"]/gm, (_, n) => `import '${to(n)}'`)]));
+    const summary = async (grammars: Record<string, string>) => {
+      const composer = new ModelComposer();
+      for (const [name, text] of Object.entries(grammars)) composer.setGrammar(name, text);
+      const c = await composer.compose();
+      return {
+        ok: c.ok,
+        grammars: c.grammars.map(g => ({ name: g.name, requires: [...g.requires].sort(), problems: g.problems.map(p => p.message), extension: g.extension })),
+        metamodels: c.metamodels.map(m => [m.name, m.extension, m.sources, m.requires]),
+      };
+    };
+    const standard = await summary(respell(n => `./${n}`));
+    expect(standard.ok).toBe(true);
+    expect(await summary(respell(n => n))).toEqual(standard);
+    expect(await summary(loadSeed().grammars)).toEqual(standard);
   });
 
   it('requirements come from imports and are transitive', async () => {

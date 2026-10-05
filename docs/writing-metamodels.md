@@ -14,7 +14,7 @@ In the playground, all three are edited on the **Metamodels** page (*Grammar*, *
 
 ```langium
 grammar DataModel
-import 'common'
+import './common'
 
 // Data model: entities made of property fields and relationship fields
 entry Model: 'datamodel' name=ID? (entities+=Entity)*;
@@ -30,6 +30,7 @@ How Bango reads it:
 - **The entry rule makes it a metamodel.** A grammar without an `entry` rule is a *library* (like `common`, with the shared terminals) and cannot be selected for a project.
 - **Instances use the extension `.<grammar name lowercased>`**: `grammar DataModel` gives `.datamodel`. Two grammars with the same declared name would share an extension, which the composer reports as an error.
 - **The first `//` comment is the description** shown when choosing metamodels for a project. Make it one clear line.
+- **`import` is plain Langium**: `import './datamodel'` is the file of the same project, written the way Langium writes any relative import (no extension: Langium itself warns about one). The bare `import 'datamodel'` older grammars use is read the same way. Imports are transitive, and an import of something that does not exist, or a cycle, is reported on the grammar.
 - **`import` is how metamodels depend on each other.** Importing `datamodel` makes `gismodel` *require* it: a project that selects `gismodel` without `datamodel` is rejected, with the message `'gismodel' needs 'datamodel': add 'datamodel' to this project`.
 - **A cross-reference to an imported type is a cross-metamodel reference.** `entity=[Entity:ID]` in `gismodel` resolves to an entity in the *data-model instance*. Nothing else is needed.
 - **Import `common` for terminals.** It defines `ID` (letters, digits, `_`, and `-` after the first character), `INT`, `FLOAT`, `STRING`, the `Double` and `SignedNumber` data types, whitespace and comments.

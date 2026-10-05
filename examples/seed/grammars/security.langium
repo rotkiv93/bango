@@ -1,8 +1,8 @@
 grammar Security
-import 'common'
-import 'datamodel'
-import 'forms'
-import 'lists'
+import './common'
+import './datamodel'
+import './forms'
+import './lists'
 
 // Security: users, roles and what each role may do with entities, forms and lists. Needs the data model, the forms and the lists.
 //

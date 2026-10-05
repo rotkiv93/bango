@@ -1,6 +1,6 @@
 grammar Forms
-import 'common'
-import 'datamodel'
+import './common'
+import './datamodel'
 
 // Forms: data-entry forms over data-model entities. Optional in a product; needs the data model.
 entry FormModel: 'forms' (forms+=FormDef)*;

@@ -20,7 +20,7 @@ import { ModelRenderer } from '@bango/renderer';
 
 const bango = new Bango();
 await bango.setGrammar('datamodel', datamodelGrammar);
-await bango.setGrammar('gismodel', gismodelGrammar);           // `import 'datamodel'` inside it
+await bango.setGrammar('gismodel', gismodelGrammar);           // `import './datamodel'` inside it
 
 (await bango.checkSelection(['gismodel'])).errors;
 // ["'gismodel' needs 'datamodel': add 'datamodel' to this project"]

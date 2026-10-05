@@ -1,7 +1,7 @@
 grammar Sensors
-import 'common'
-import 'datamodel'
-import 'gismodel'
+import './common'
+import './datamodel'
+import './gismodel'
 
 // Sensors: the sensors of the product, with their measurements and dimensions. Needs the data model and the GIS model.
 //

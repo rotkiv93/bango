@@ -1,6 +1,6 @@
 grammar GisModel
-import 'common'
-import 'datamodel'
+import './common'
+import './datamodel'
 
 // GIS model: maps, layers and styles. A GeoJSON layer must show a data-model entity.
 entry Gis: 'gismodel' (maps+=MapDef | layers+=Layer | styles+=Style)*;

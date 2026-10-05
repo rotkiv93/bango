@@ -53,7 +53,7 @@ describe('grammar AST', () => {
     const ast = (await bango.getGrammarAst('gismodel'))!;
     expect(ast.type).toBe('Grammar');
     const imports = ast.children.imports as { props: Record<string, unknown> }[];
-    expect(imports.map(i => i.props.path)).toEqual(['common', 'datamodel']);
+    expect(imports.map(i => i.props.path)).toEqual(['./common', './datamodel']);
     expect(await bango.getGrammarAst('nope')).toBeUndefined();
   });
 });

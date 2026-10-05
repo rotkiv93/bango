@@ -9,7 +9,7 @@ import { ModelComposer } from '@bango/composer';
 
 const composer = new ModelComposer();
 composer.setGrammar('datamodel', datamodelGrammar);
-composer.setGrammar('gismodel', gismodelGrammar);   // contains: import 'datamodel'
+composer.setGrammar('gismodel', gismodelGrammar);   // contains: import './datamodel'
 
 const check = await composer.check(['gismodel']);
 check.ok;          // false

@@ -1,8 +1,8 @@
 grammar Menus
-import 'common'
-import 'forms'
-import 'lists'
-import 'gismodel'
+import './common'
+import './forms'
+import './lists'
+import './gismodel'
 
 // Menus: the navigation of the product, nested items that open forms, lists or maps. Needs the forms, the lists and the GIS model.
 //

@@ -1,5 +1,5 @@
 grammar DataModel
-import 'common'
+import './common'
 
 // Data model: entities made of property fields and relationship fields
 entry Model: 'datamodel' name=ID? (entities+=Entity)*;

@@ -41,7 +41,7 @@ return importer;
 export const grammarTemplate = (name: string) => {
   const pascal = name.charAt(0).toUpperCase() + name.slice(1);
   return `grammar ${pascal}
-import 'common'
+import './common'
 
 // ${pascal}: describe this metamodel in one line (shown when choosing metamodels for a project)
 entry Model: '${name}' name=ID?;
