@@ -98,15 +98,6 @@ describe('ModelComposer', () => {
     expect(c.explainUnavailable('datamodel')).toMatch(/has errors/);
   });
 
-  it('warns when two metamodels declare the same rule', async () => {
-    const { composer } = composerWith({
-      other: "grammar Other\nimport 'common'\nentry Top: 'other' items+=Entity*;\nEntity: 'e' name=ID;"
-    });
-    const c = await composer.compose();
-    const warnings = c.grammars.find(g => g.name === 'other')!.problems.filter(p => p.severity === 'warning');
-    expect(warnings.map(w => w.message).join()).toMatch(/Rule 'Entity' is also declared in/);
-  });
-
   it('two grammars with the same name would share an extension: both are errors', async () => {
     const { composer } = composerWith({ datamodel2: 'grammar DataModel\nimport \'common\'\nentry M: \'x\' name=ID;' });
     const c = await composer.compose();

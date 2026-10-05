@@ -49,7 +49,7 @@ How Bango reads it:
 ### Pitfalls
 
 - **Keywords are reserved words.** `'entity'` in a grammar means no instance can have an identifier called `entity`. Prefer specific keywords (`baseLayer` rather than `base`) so ordinary names stay free.
-- **Rule names are global** across metamodels (they share one index). Don't reuse `Entity` or `Layer` in another grammar; the composer warns if you do.
+- **Type names are global within a project** (the metamodels share one index), but you do not have to avoid clashes: see [When two metamodels use the same type name](#when-two-metamodels-use-the-same-type-name).
 - **Reference names are looked up globally by type.** Two `Entity` nodes with the same name in one project collide. Fields nested inside an entity are not global, so `id` in every entity is fine.
 - **A `?=` flag that is not written is `false`, but may be absent from the node.** In constraints and mappings, use `!!node.flag`.
 - **Whitespace is insignificant.** Use blocks (`{ ... }`) or keywords to delimit lists, not newlines.
@@ -102,6 +102,27 @@ SensorDef(sensor, accept) {
 }
 ```
 
+## When two metamodels use the same type name
+
+Independent metamodels tend to pick the same names (`Entity`, `Layer`, `Field`, `Model`). The metamodels of one project share one index and one merged type reflection, both keyed by type name, so two different `Entity` types would mix their scopes and overwrite each other's properties. **The composer works around it, so you don't have to coordinate names.**
+
+When a selection of metamodels declares the same type name in different grammar files, one keeps the name and the others get a new one:
+
+- **Who keeps it**: the grammar included by the most metamodels of the project (the data model that others import, say). Ties go to the first by name.
+- **The new name** is the grammar's name in PascalCase in front of the old one: `other`'s `Entity` becomes `OtherEntity` (`OtherEntity2` if that is taken too).
+- **What counts as a type**: parser rules (or the name they `infer`), `interface` and `type` declarations. Terminals, data type rules (`returns number`) and fragments declare no AST type, and a rule that `returns` an existing type does not declare one either.
+- **Everywhere in the composition**: the declaration and every reference to it, including in grammars that import it (`[Entity:ID]` in an importer becomes `[OtherEntity:ID]`). Only identifiers change, so the grammar means the same thing.
+- **Only when both are in the project.** A metamodel alone, or with metamodels it does not clash with, keeps the names it was written with, and a project's names do not leak into another.
+
+What does **not** change: the text of your grammars and instances (you keep writing `e Foo`, not `OtherEntity`), their error positions, and the keywords. What does: the `$type` of the renamed nodes (`OtherEntity`), which shows in the form view, the generic JSON and the AST view.
+
+In constraints and JSON mappings:
+
+- **Constraint keys** are translated for you: `Entity(node, accept) { ... }` in `other.constraints.js` checks `other`'s `Entity` (now `OtherEntity`), and never the data model's.
+- **`typeName(node)`** returns the name of a node's type as its author wrote it. Use it instead of `node.$type` when you test the type (`typeName(field) === 'PropertyField'`), so your code does not care whether a name was changed.
+
+It is reported, not hidden: the grammar that was renamed gets an *info* (`Type 'Entity' is also declared by 'datamodel': in a project that uses both it is called 'OtherEntity'`), the composition lists them in `renames`, and the playground's project overview shows a notice.
+
 ## 3. The JSON mapping
 
 The mapping turns an instance into the piece of the project's JSON that the metamodel owns. See [The JSON specification](json-spec.md) for the whole picture; the file itself is a function:
@@ -123,6 +144,7 @@ return function (model, { refName }) {
 ```
 
 - `model` is the root node of the instance (the entry rule's node).
+- `typeName(node)` is available too (see [type name clashes](#when-two-metamodels-use-the-same-type-name)).
 - `refName(ref)` returns the name a reference points at (or the written text when it does not resolve). Use it instead of `ref.ref.name`.
 - Return plain JSON. The result goes through `JSON.stringify`, so functions and `undefined` values disappear and nothing else can leak out.
 - Throwing is fine: the failure is reported as `The JSON mapping of '<name>' failed: ...` in the JSON views and fails a build.

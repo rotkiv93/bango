@@ -69,6 +69,20 @@ function Overview() {
         <Banner key={i} tone="err" actions={<button onClick={() => void s.setProjectMetamodels([...project.metamodels, p.missing])}>Add '{p.missing}'</button>}>{p.message}</Banner>
       ))}
 
+      {s.composition && s.composition.renames.length > 0 && (
+        <Banner tone="info">
+          <strong>Some type names clash between the metamodels of this project</strong>, so the composer renamed them here:
+          <ul>
+            {s.composition.renames.map(r => (
+              <li key={`${r.file}.${r.original}`}>
+                <code>{r.file}</code>'s <code>{r.original}</code> is called <code>{r.renamed}</code> ({r.keeper} keeps <code>{r.original}</code>)
+              </li>
+            ))}
+          </ul>
+          Instances are written the same way; only type names change. In constraints and JSON mappings use <code>typeName(node)</code> for the name the author wrote.
+        </Banner>
+      )}
+
       <div className="cards">
         {project.metamodels.map(m => {
           const inst = s.instances.find(i => i.metamodel === m);

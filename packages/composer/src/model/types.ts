@@ -69,6 +69,16 @@ export interface CompositionProblem {
   message: string;
 }
 
+/** A type name that clashed between metamodels of a project, and what it was renamed to there. */
+export interface TypeRename {
+  /** the grammar whose type was renamed */
+  file: string;
+  original: string;
+  renamed: string;
+  /** the grammar that keeps the name */
+  keeper: string;
+}
+
 export interface CompositionInfo {
   /** metamodels the project asked for */
   selection: string[];
@@ -76,6 +86,8 @@ export interface CompositionInfo {
   /** metamodels of the selection that can be used right now */
   languages: LanguageInfo[];
   problems: CompositionProblem[];
+  /** type names that clash between the metamodels of the selection, and what they are called in it */
+  renames: TypeRename[];
 }
 
 /** Can this selection of metamodels be used as a project? Answered without loading anything. */

@@ -2,7 +2,7 @@ import { AstUtils, GrammarAST, type AstReflection, type LangiumDocument } from '
 import { toAstDto } from '../model/ast-dto.js';
 import { bundleText } from '../grammar/flatten.js';
 import { CompositeAstReflection } from '../grammar/reflection.js';
-import type { AstDto, ComposedMetamodel, CompositionInfo, CompositionProblem, GrammarInfo } from '../model/types.js';
+import type { AstDto, ComposedMetamodel, CompositionInfo, CompositionProblem, GrammarInfo, TypeRename } from '../model/types.js';
 
 export interface CompositionParts {
   selection: string[];
@@ -13,6 +13,8 @@ export interface CompositionParts {
   unavailable: Map<string, string>;
   /** the parsed grammar documents, by grammar name */
   docs: Map<string, LangiumDocument>;
+  /** type names that had to be renamed because metamodels of the selection declare the same one */
+  renames: TypeRename[];
 }
 
 /**
@@ -24,6 +26,8 @@ export class Composition {
   readonly grammars: GrammarInfo[];
   readonly problems: CompositionProblem[];
   readonly metamodels: ComposedMetamodel[];
+  /** type names renamed in this composition (empty when no two metamodels declare the same type) */
+  readonly renames: TypeRename[];
   /** all usable metamodels merged, so cross-metamodel references type-check */
   readonly reflection: AstReflection;
   private readonly unavailable: Map<string, string>;
@@ -36,6 +40,7 @@ export class Composition {
     this.metamodels = parts.usable;
     this.unavailable = parts.unavailable;
     this.docs = parts.docs;
+    this.renames = parts.renames;
     this.reflection = new CompositeAstReflection(parts.usable.map(m => m.reflection));
   }
 
@@ -67,6 +72,12 @@ export class Composition {
     return this.unavailable.get(name) ?? `Metamodel '${name}' has errors, fix it to use it`;
   }
 
+  /** The type of a node as its metamodel's author wrote it: `node.$type` without the renames of this composition. */
+  typeName(node: { $type?: string } | undefined): string | undefined {
+    const type = node?.$type;
+    return this.renames.find(r => r.renamed === type)?.original ?? type;
+  }
+
   /** The AST of a grammar itself (what the metamodel text parses to), for any grammar of the workspace. */
   grammarAst(name: string): AstDto | undefined {
     const doc = this.docs.get(name);
@@ -86,6 +97,7 @@ export class Composition {
       selection: this.selection,
       grammars: this.grammars,
       problems: this.problems,
+      renames: this.renames,
       languages: this.metamodels.map(m => ({
         name: m.name,
         extension: m.extension,

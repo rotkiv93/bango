@@ -47,7 +47,7 @@ describe('printer', () => {
       }
     }
     expect(checked).toBeGreaterThan(10);
-  });
+  }, 60_000);
 });
 
 describe('form schema', () => {

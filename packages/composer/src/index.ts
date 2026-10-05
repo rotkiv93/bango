@@ -1,7 +1,8 @@
 export { ModelComposer } from './compose/composer.js';
 export { Composition } from './compose/composition.js';
 export { CompositeAstReflection } from './grammar/reflection.js';
-export { compileConstraints, compileSpec } from './scripts/compile.js';
+export { compileConstraints, compileSpec, type ScriptHelpers } from './scripts/compile.js';
+export { planRenames, rewriteTexts, declarationsOf } from './compose/collisions.js';
 export { toAstDto, metamodelOfDocument, metamodelOfPath } from './model/ast-dto.js';
 export { toProblem, wholeFile } from './model/problems.js';
 export { flatten, bundleText, hasEntryRule } from './grammar/flatten.js';
@@ -15,6 +16,7 @@ export type {
   ConstraintFn,
   ConstraintSet,
   SpecFn,
+  TypeRename,
   SpecHelpers,
   GrammarInfo,
   SelectionCheck,

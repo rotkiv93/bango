@@ -31,7 +31,8 @@ Each only depends on the one before it. The renderer depends on the engine **as 
 2. **Requirements come from imports.** A metamodel *requires* every metamodel it imports, directly or not. A selection that leaves one out is not valid, and the composition says which metamodel is missing and what to add.
 3. **Only the selection becomes languages.** Metamodels outside the project do not exist for it.
 4. **Broken grammars degrade, they do not disappear.** If a grammar has errors, the last version that compiled keeps serving, and its instances are marked `stale`.
-5. **User code is compiled once.** Constraints (`<metamodel>.constraints.js`) and JSON mappings (`<metamodel>.spec.js`) are compiled here; a syntax error is reported as a problem of the metamodel.
+5. **Clashing type names are renamed** (see below), in a copy of the grammars made for the selection.
+6. **User code is compiled once.** Constraints (`<metamodel>.constraints.js`) and JSON mappings (`<metamodel>.spec.js`) are compiled here; a syntax error is reported as a problem of the metamodel.
 
 `ModelComposer.check(selection)` answers "can this be a project?" without loading anything, which is what a *New project* form needs.
 
@@ -59,7 +60,7 @@ Langium is heavy, so it can run off the UI thread. Langium objects cannot cross 
 ## Decisions and trade-offs
 
 - **Langium is a peer dependency**, not bundled: Langium's AST types and `instanceof` checks break with two copies. (The self-contained browser builds inline it, because there it is the only copy.)
-- **Rule names are global.** All metamodels share one index, so two grammars declaring the same rule name would mix their scopes. The composer warns when it sees one.
+- **Type names are global, so the composer makes them unique.** All metamodels of a project share one index and one merged reflection keyed by type name; two grammars declaring the same name would mix scopes and overwrite each other's properties. The composer renames the clashing declarations (`Entity` of `other` becomes `OtherEntity`) in a copy of the grammars made for that selection, rewriting the declaration and every reference, and translates constraint keys. The user's grammar text, instance text and error positions are untouched.
 - **Grammars are interpreted, not generated.** The playground builds parsers at runtime from the grammar (`interpretAstReflection` and a runtime parser), so no code generation step is needed; the price is slower start-up than generated parsers.
 - **Identifiers may contain hyphens** in the shared `common` grammar, because the example data uses names like `stationobservation-layer`. A hyphen inside a name is part of it; negative numbers are unaffected because they start with `-`.
 - **Diagram without a framework.** The diagram is plain SVG with [elkjs](https://github.com/kieler/elkjs) for layout (loaded lazily; a built-in layered layout is the fallback), so it works in any page.

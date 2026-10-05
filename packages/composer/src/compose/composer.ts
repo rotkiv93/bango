@@ -6,6 +6,7 @@ import {
   resolveTransitiveImports
 } from 'langium/grammar';
 import { compileConstraints, compileSpec } from '../scripts/compile.js';
+import { planRenames, rewriteTexts, type RenamePlan } from './collisions.js';
 import { Composition } from './composition.js';
 import { flatten, hasEntryRule } from '../grammar/flatten.js';
 import { toProblem, wholeFile } from '../model/problems.js';
@@ -39,6 +40,8 @@ export class ModelComposer {
   private specTexts = new Map<string, string>();
   private lastGood = new Map<string, ComposedMetamodel>();
   private build?: Build;
+  /** grammar workspaces built from texts with renamed types, by plan (one per distinct set of collisions) */
+  private renamedBuilds = new Map<string, Build>();
   private version = 0;
 
   /** Add or replace a metamodel. `name` is the grammar file name without extension. */
@@ -105,8 +108,8 @@ export class ModelComposer {
 
   /** Compose a selection of metamodels (every metamodel when omitted). */
   async compose(selection?: string[]): Promise<Composition> {
-    const build = await this.ensureBuild();
-    const grammars: GrammarInfo[] = build.infos.map(i => ({ ...i, requires: [...i.requires], problems: [...i.problems] }));
+    const base = await this.ensureBuild();
+    const grammars: GrammarInfo[] = base.infos.map(i => ({ ...i, requires: [...i.requires], problems: [...i.problems] }));
     const names = [...new Set(selection ?? grammars.filter(g => g.extension).map(g => g.name))];
     const enabled = new Set(names);
 
@@ -130,13 +133,43 @@ export class ModelComposer {
       }
     }
 
+    // Metamodels of one project share one index and one reflection keyed by type name. When two of them declare the
+    // same type name, one keeps it and the others get a new one, in a copy of the grammars made for this selection.
+    const files = (name: string) => this.filesOf(base, name);
+    const usage = new Map<string, number>();
+    for (const name of names) {
+      const info = grammars.find(g => g.name === name);
+      if (!info?.extension || unavailable.has(name) || hasErrors(info)) continue;
+      for (const file of files(name)) usage.set(file, (usage.get(file) ?? 0) + 1);
+    }
+    const plan = planRenames(base.docs, usage);
+    const build = plan.renames.length ? await this.renamedBuild(base, plan, usage) : base;
+    for (const r of plan.renames) {
+      grammars.find(g => g.name === r.file)?.problems.push(wholeFile('info',
+        `Type '${r.original}' is also declared by '${r.keeper}': in a project that uses both it is called '${r.renamed}'`));
+    }
+    const typeNames = new Map(plan.renames.map(r => [r.renamed, r.original]));
+    const helpers = { typeName: (node: unknown) => { const t = (node as { $type?: string } | undefined)?.$type; return t === undefined ? t : typeNames.get(t) ?? t; } };
+
+    // a constraint is written against the names its author knows: a key that names a renamed type means the renamed one
+    const translate = (source: string, set: ConstraintSet): ConstraintSet => {
+      if (!plan.renames.length) return set;
+      const visible = [source, ...this.importsOf(base, source)];
+      const out: ConstraintSet = {};
+      for (const [key, fn] of Object.entries(set)) {
+        const declared = visible.flatMap(f => plan.declarations.get(f) ?? []).find(d => d.name === key);
+        out[(declared && plan.nodes.get(declared.node)) ?? key] = fn;
+      }
+      return out;
+    };
+
     const compiled = new Map<string, ConstraintSet | undefined>();
     const constraintsFor = (source: string): ConstraintSet | undefined => {
       if (compiled.has(source)) return compiled.get(source);
       const code = this.constraintTexts.get(source);
       let set: ConstraintSet | undefined;
       if (code?.trim()) {
-        try { set = compileConstraints(code); } catch (e) {
+        try { set = translate(source, compileConstraints(code, helpers)); } catch (e) {
           grammars.find(g => g.name === source)?.problems.push(wholeFile('error', `${source}.constraints.js: ${(e as Error).message}`));
         }
       }
@@ -147,7 +180,7 @@ export class ModelComposer {
     const specFor = (name: string): { map: SpecFn; root: boolean } | undefined => {
       const code = this.specTexts.get(name);
       if (!code?.trim()) return undefined;
-      try { return compileSpec(code); } catch (e) {
+      try { return compileSpec(code, helpers); } catch (e) {
         grammars.find(g => g.name === name)?.problems.push(wholeFile('error', `${name}.spec.js: ${(e as Error).message}`));
         return undefined;
       }
@@ -179,7 +212,8 @@ export class ModelComposer {
       });
     }
 
-    return new Composition({ selection: names, grammars, problems, usable, unavailable, docs: build.docs });
+    // the grammars as the user wrote them (not the renamed copies) are what is shown and inspected
+    return new Composition({ selection: names, grammars, problems, usable, unavailable, docs: base.docs, renames: plan.renames });
   }
 
   // ------------------------------------------------------------------ internals
@@ -187,6 +221,30 @@ export class ModelComposer {
   private invalidate() {
     this.version++;
     this.build = undefined;
+    this.renamedBuilds.clear();
+  }
+
+  /** The grammar files a metamodel includes: its own and everything it imports. */
+  private filesOf(build: Build, name: string): string[] {
+    const doc = build.docs.get(name);
+    return doc ? [name, ...this.importsOf(build, name)] : [];
+  }
+
+  private importsOf(build: Build, name: string): string[] {
+    const doc = build.docs.get(name);
+    return doc ? resolveTransitiveImports(build.documents, doc.parseResult.value).map(g => nameOf(AstUtils.getDocument(g))) : [];
+  }
+
+  /** The grammars again, from texts in which the planned type names replace the clashing ones. Cached per plan. */
+  private async renamedBuild(base: Build, plan: RenamePlan, usage: Map<string, number>): Promise<Build> {
+    const key = JSON.stringify(plan.renames.map(r => [r.file, r.original, r.renamed]));
+    const cached = this.renamedBuilds.get(key);
+    if (cached) return cached;
+    const texts = new Map(this.grammarTexts);
+    for (const [file, text] of rewriteTexts(base.docs, usage.keys(), plan.nodes, this.grammarTexts)) texts.set(file, text);
+    const build = await this.runBuild(texts);
+    this.renamedBuilds.set(key, build);
+    return build;
   }
 
   private compileMetamodel(build: Build, name: string, info: GrammarInfo): ComposedMetamodel {
@@ -214,26 +272,21 @@ export class ModelComposer {
     }
   }
 
-  private async runBuild(): Promise<Build> {
+  private async runBuild(texts: Map<string, string> = this.grammarTexts): Promise<Build> {
     // fresh grammar workspace on every change: grammars are small and this keeps import resolution trivial
     const { shared } = createLangiumGrammarServices(EmptyFileSystem).grammar;
     const { LangiumDocuments, LangiumDocumentFactory, DocumentBuilder } = shared.workspace;
-    const parsed = [...this.grammarTexts].map(([name, text]) =>
+    const parsed = [...texts].map(([name, text]) =>
       LangiumDocumentFactory.fromString<Grammar>(text, URI.parse(`memory:/${name}.langium`))
     );
     parsed.forEach(d => LangiumDocuments.addDocument(d));
     await DocumentBuilder.build(parsed, { validation: true });
 
     const infos: GrammarInfo[] = [];
-    const filesByRule = new Map<string, string[]>();
     for (const doc of parsed) {
       const grammar = doc.parseResult.value;
       const name = nameOf(doc);
       const isMetamodel = hasEntryRule(grammar);
-      for (const r of grammar.rules) {
-        if (r.$type !== 'ParserRule' || r.fragment) continue;
-        filesByRule.set(r.name, [...(filesByRule.get(r.name) ?? []), name]);
-      }
       infos.push({
         name,
         extension: isMetamodel ? (grammar.name ?? name).toLowerCase() : undefined,
@@ -245,15 +298,6 @@ export class ModelComposer {
         // grammars without an entry rule are libraries (e.g. shared terminals), not metamodels
         problems: (doc.diagnostics ?? []).map(toProblem).filter(p => isMetamodel || !/missing an entry parser rule/.test(p.message))
       });
-    }
-
-    // rule names are global in the shared index: two metamodels declaring the same rule would silently merge scopes
-    for (const [rule, files] of filesByRule) {
-      if (files.length < 2) continue;
-      for (const info of infos.filter(i => files.includes(i.name))) {
-        info.problems.push(wholeFile('warning',
-          `Rule '${rule}' is also declared in ${files.filter(f => f !== info.name).join(', ')}; metamodels share one index, so references would mix`));
-      }
     }
 
     // the language registry maps one file extension to one language

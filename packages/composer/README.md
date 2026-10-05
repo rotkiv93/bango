@@ -30,7 +30,8 @@ composition.get('gismodel')?.extension;     // 'gismodel'
 - **Checks selections.** A selection is a valid project when it is not empty, names existing metamodels, includes everything each one requires, and none of them has grammar errors.
 - **Keeps serving broken grammars.** If a grammar has errors, its last good version keeps being used and is marked `stale`.
 - **Compiles user code once.** Constraints (`<name>.constraints.js`) and JSON mappings (`<name>.spec.js`), reporting syntax errors as problems of the metamodel.
-- **Reports clashes.** Two metamodels declaring the same rule name (they share one index), or two grammars with the same declared name (they would share a file extension).
+- **Resolves type name clashes.** The metamodels of a project share one index, so two metamodels declaring the same type name (`Entity`, say) would mix. The composer renames the clashing ones for that selection, in a copy of the grammars: the grammar that most metamodels include keeps the name, the others get the grammar's name in front (`other`'s `Entity` becomes `OtherEntity`). Declarations, references (also in importers) and constraint keys are all updated, and instance text and error positions are untouched. [Details](../../docs/writing-metamodels.md#when-two-metamodels-use-the-same-type-name).
+- **Reports** two grammars with the same declared name (they would share a file extension).
 
 ## API
 
@@ -70,18 +71,21 @@ interface SelectionCheck {
 | `get(name)`, `byExtension(ext)` | one usable metamodel |
 | `explainUnavailable(name)` | why a metamodel cannot be used (not in the project, a missing requirement, grammar errors), or `undefined` |
 | `reflection` | all usable metamodels merged, so references between them type-check |
+| `renames: TypeRename[]` | the type names renamed in this composition: `{ file, original, renamed, keeper }` |
+| `typeName(node)` | a node's type as its author wrote it (`node.$type` without this composition's renames) |
 | `bundleText(name)` | one self-contained `.langium` for the metamodel, imports inlined (valid input for `langium generate`) |
 | `grammarAst(name)` | the AST of a grammar itself, as plain data |
 | `info(): CompositionInfo` | a serializable summary (no Langium objects): `{ selection, grammars, languages, problems }` |
 
-`GrammarInfo` is `{ name, extension?, description?, imports, requires, problems }`; `LanguageInfo` is `{ name, extension, keywords, stale }`.
+`GrammarInfo` is `{ name, extension?, description?, imports, requires, problems }`; `LanguageInfo` is `{ name, extension, keywords, stale }`. `info()` also carries `renames`.
 
 ### Helpers
 
 | | |
 |---|---|
 | `toAstDto(node)` | any Langium AST as a plain tree (`AstDto`): `{ type, name?, range?, props, refs, children }` |
-| `compileConstraints(code)`, `compileSpec(code)` | what the composer uses to compile user code |
+| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. `helpers.typeName` is what scripts call as `typeName(node)` |
+| `planRenames`, `rewriteTexts`, `declarationsOf` | the pieces behind the type name renaming |
 | `flatten(grammar, documents)`, `bundleText(flat)`, `hasEntryRule(grammar)` | the grammar utilities behind `compose` |
 | `CompositeAstReflection` | merges the reflections of several metamodels |
 | `toProblem`, `wholeFile`, `metamodelOfDocument`, `metamodelOfPath` | small conversions shared with the engine |
@@ -89,7 +93,7 @@ interface SelectionCheck {
 ## Source layout
 
 ```
-src/compose/   ModelComposer, Composition
+src/compose/   ModelComposer, Composition, type-name clash planning and rewriting
 src/grammar/   import inlining, merged reflection, self-contained grammar text
 src/scripts/   compiles constraints and JSON mappings
 src/model/     shared types, AST -> plain tree, problems
