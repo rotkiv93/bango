@@ -22,9 +22,31 @@ export const DEFAULT_HELPERS: ScriptHelpers = {
   refName, duplicates, n: (type, fields) => ({ $node: type, fields }), typeName: node => (node as { $type?: string } | undefined)?.$type
 };
 
-/** User code on purpose: the author's own validation rules and JSON mappings are function bodies that see the helpers as variables. */
+/**
+ * What a script cannot reach, whatever the page or worker it runs in: the network, storage, other threads, the global object, and the
+ * ways to make new code from text. They are shadowed by parameters that are `undefined`, so `fetch(...)` is a plain TypeError.
+ *
+ * This is defence in depth, **not a sandbox**: a script is the code of the person who writes the metamodel, run in the worker (no DOM, no
+ * page storage). Someone determined can still get to the global object through a function's `constructor`. What it stops is the accident
+ * and the casual: a mapping that tries to `fetch` something, or reads `self`.
+ */
+const SHADOWED = [
+  'self', 'globalThis', 'window', 'document', 'fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource', 'importScripts', 'postMessage',
+  'Worker', 'SharedWorker', 'indexedDB', 'caches', 'localStorage', 'sessionStorage', 'Function', 'eval', 'setTimeout', 'setInterval', 'queueMicrotask'
+] as const;
+
+/**
+ * User code on purpose: the author's own validation rules and JSON mappings are function bodies that see the helpers as variables.
+ * The body is strict (`this` is undefined, no accidental globals) and runs inside an outer function whose parameters hide `SHADOWED`
+ * (a parameter named `eval` is not allowed in strict code, which is why the strict part is a nested function).
+ */
 const run = (code: string, helpers: ScriptHelpers): any =>
-  new Function('typeName', 'refName', 'duplicates', 'n', `"use strict";\n${code}`)(helpers.typeName, helpers.refName, helpers.duplicates, helpers.n);
+  new Function('typeName', 'refName', 'duplicates', 'n', ...SHADOWED, `return (function () { "use strict";\n${code}\n}).call(undefined);`)(
+    helpers.typeName, helpers.refName, helpers.duplicates, helpers.n, ...SHADOWED.map(() => undefined)
+  );
+
+/** What a script receives as its second argument: the helpers, which it cannot change for the next script. */
+const frozen = (helpers: ScriptHelpers): ScriptHelpers => Object.freeze({ ...helpers });
 
 const CATEGORIES: ValidationCategory[] = ['fast', 'slow', 'built-in'];
 
@@ -69,8 +91,8 @@ export function compileConstraints(code: string, helpers: ScriptHelpers = DEFAUL
  */
 export function compileSpec(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): { map: SpecFn; root: boolean } {
   const result = run(code, helpers);
-  if (typeof result === 'function') return { map: root => result(root, helpers), root: false };
-  if (result && typeof result === 'object' && typeof result.map === 'function') return { map: root => result.map(root, helpers), root: !!result.root };
+  if (typeof result === 'function') return { map: root => result(root, frozen(helpers)), root: false };
+  if (result && typeof result === 'object' && typeof result.map === 'function') return { map: root => result.map(root, frozen(helpers)), root: !!result.root };
   throw new Error('a JSON mapping must `return function (model, { refName }) { ... }` or `return { root: true, map(model, { refName }) { ... } }`');
 }
 
@@ -82,5 +104,5 @@ export function compileSpec(code: string, helpers: ScriptHelpers = DEFAULT_HELPE
 export function compileImport(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): ImportFn {
   const result = run(code, helpers);
   if (typeof result !== 'function') throw new Error('an import mapping must `return function (json, { n }) { return n(\'Type\', { ... }) }`');
-  return json => result(json, helpers);
+  return json => result(json, frozen(helpers));
 }

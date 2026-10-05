@@ -1,5 +1,5 @@
 import type {
-  BangoApi, BuildResult, CaseResult, CompositionInfo, GrammarInfo, ImportResult, InstanceState, JsonValue, MetamodelCase, SelectionCheck
+  BangoApi, BuildResult, CaseResult, CompositionInfo, GrammarInfo, ImportResult, InstanceState, JsonValue, MetamodelCase, RestartInfo, ScriptRef, SelectionCheck
 } from '@bango/core';
 import { emptyWorkspace, migrateWorkspace, type WorkspaceData, type WorkspaceStorage } from './data.js';
 import { KeyedDebouncer } from './debounce.js';
@@ -28,6 +28,8 @@ export interface WorkspaceState {
   ready: boolean;
   build?: { result: BuildResult; project: string };
   building: boolean;
+  /** scripts that are switched off because the engine stopped answering while they were on (see `connectBango`); empty unless that happened */
+  quarantined: ScriptRef[];
 }
 
 /** Why a project could not be created or changed: the composer's answer, in plain language. */
@@ -51,13 +53,14 @@ export interface WorkspaceOptions {
  * the engine can be in the page or in a worker, and it has no UI: an app subscribes and renders `state`.
  */
 export class WorkspaceController {
-  private current: WorkspaceState = { workspace: emptyWorkspace(), catalog: [], instances: [], ready: false, building: false };
+  private current: WorkspaceState = { workspace: emptyWorkspace(), catalog: [], instances: [], ready: false, building: false, quarantined: [] };
   private listeners = new Set<(state: WorkspaceState) => void>();
   private loadedGrammars = new Set<string>();
   private loadedScripts: Record<ScriptKind, Set<string>> = { constraints: new Set(), spec: new Set(), import: new Set() };
   private readonly delay: Required<NonNullable<WorkspaceOptions['delays']>>;
   private readonly timers: KeyedDebouncer;
   private unsubscribe?: () => void;
+  private offRestart?: () => void;
 
   constructor(private bango: BangoApi, private options: WorkspaceOptions = {}) {
     this.delay = { push: 350, refresh: 120, persist: 400, ...options.delays };
@@ -91,6 +94,7 @@ export class WorkspaceController {
   dispose() {
     this.timers.cancel();
     this.unsubscribe?.();
+    this.offRestart?.();
     this.listeners.clear();
   }
 
@@ -160,6 +164,12 @@ export class WorkspaceController {
     this.set({ workspace, activeProject: project, composition, catalog, instances, ready: true, build: undefined });
   }
 
+  /** The engine was replaced because it stopped answering: show which scripts were switched off, and read everything again. */
+  private async engineRestarted(info: RestartInfo) {
+    this.set({ quarantined: info.quarantined });
+    try { await this.recompose(); } catch (e) { this.options.onError?.(e); }
+  }
+
   // ---------------------------------------------------------------- lifecycle
 
   /** Load the saved workspace (or the examples) and bring the engine up to date with it. */
@@ -171,6 +181,9 @@ export class WorkspaceController {
     this.unsubscribe = undefined;
     const off = await this.bango.subscribe(() => this.timers.schedule('refresh', this.delay.refresh, () => this.refreshInstances()));
     this.unsubscribe = () => { void off(); };
+    // an engine that can be restarted (a connection made from a worker factory) says so when it was: what it lost is read again
+    const restartable = this.bango as Partial<{ onRestart(listener: (info: RestartInfo) => void): () => void }>;
+    this.offRestart = restartable.onRestart?.(info => void this.engineRestarted(info));
     await this.open(workspace, undefined, true);
   }
 
@@ -296,10 +309,18 @@ export class WorkspaceController {
     const { workspace } = this.current;
     const { files } = SCRIPTS[kind];
     this.commit({ ...workspace, [files]: { ...workspace[files], [metamodel]: code } });
+    // sending a script again is a new chance for it
+    this.set({ quarantined: this.current.quarantined.filter(q => !(q.kind === kind && q.metamodel === metamodel)) });
     this.timers.schedule(`${kind}:${metamodel}`, this.delay.push, async () => {
       await this.send(kind, metamodel, code);
       await this.recompose();
     });
+  }
+
+  /** Switch a quarantined script back on, as it is: the next time the engine stops answering with it, it is switched off again. */
+  reenableScript(kind: ScriptKind, metamodel: string) {
+    const code = this.current.workspace[SCRIPTS[kind].files][metamodel];
+    if (code !== undefined) this.editScript(kind, metamodel, code);
   }
 
   /** The first visit to a script creates the metamodel's (template) script. */

@@ -66,6 +66,8 @@ export interface WorkspaceSlice extends WorkspaceState {
   applyImport(texts: Record<string, string>): Promise<void>;
   /** the first visit to a script view creates the metamodel's (template) script */
   ensureScript(kind: ScriptKind, metamodel: string): void;
+  /** switch a script that made the engine stop answering back on */
+  reenableScript(kind: ScriptKind, metamodel: string): void;
   addGrammar(name: string): Promise<void>;
   reset(): Promise<void>;
 }

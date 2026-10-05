@@ -3,6 +3,7 @@ import { MetamodelsPage } from './MetamodelsPage.js';
 import { ProjectPage } from './ProjectPage.js';
 import { ProjectsPage } from './ProjectsPage.js';
 import { useWorkspace, type Page } from './store.js';
+import { Banner } from './ui.js';
 import './app.css';
 
 function Header() {
@@ -34,6 +35,29 @@ function Header() {
   );
 }
 
+/** Scripts that made the engine stop answering, and were switched off so that the rest keeps working. */
+function Quarantine() {
+  const quarantined = useWorkspace(s => s.quarantined);
+  const reenable = useWorkspace(s => s.reenableScript);
+  if (!quarantined.length) return null;
+  const names = { constraints: 'constraints', spec: 'JSON mapping', import: 'import mapping' } as const;
+  return (
+    <div className="quarantine">
+      <Banner tone="err">
+        <strong>The engine stopped answering and was restarted.</strong> These scripts are probably in an endless loop, so they are switched off:
+        <ul>
+          {quarantined.map(q => (
+            <li key={`${q.kind}:${q.metamodel}`}>
+              the {names[q.kind]} of <code>{q.metamodel}</code> <button className="link" onClick={() => reenable(q.kind, q.metamodel)}>switch back on</button>
+            </li>
+          ))}
+        </ul>
+        Fix the script, or switch it on as it is: if the engine stops again it is switched off again.
+      </Banner>
+    </div>
+  );
+}
+
 function Toasts() {
   const { toasts, dismissToast } = useWorkspace();
   return (
@@ -56,6 +80,7 @@ export function App() {
   return (
     <div className="app">
       <Header />
+      <Quarantine />
       <main className="content">
         {s.page === 'projects' && <ProjectsPage />}
         {s.page === 'project' && <ProjectPage />}

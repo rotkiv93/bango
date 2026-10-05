@@ -13,8 +13,8 @@ const bango = connectBango(new Worker(new URL('./engine.worker.ts', import.meta.
 | Import | |
 |---|---|
 | `@bango/core` | the types (`AstDto`, `Problem`, `InstanceState`, `FormSchema`, `EditOp`, `CompositionInfo`, `EngineApi`, `BangoApi`, ...) and `toJsonSpec`, `mergeJson` |
-| `@bango/core/client` | `connectBango(worker)`: the same async API as a local `Bango`, over a Comlink endpoint |
-| `@bango/core/bundle/client` | a self-contained ES module (Comlink inlined, ~6 KB) for pages without a bundler |
+| `@bango/core/client` | `connectBango(worker)`: the same async API as a local `Bango`, over a Comlink endpoint. Given `() => new Worker(...)` it also restarts an engine that stops answering and quarantines the script that did it (`onRestart`, `quarantined()`) |
+| `@bango/core/bundle/client` | a self-contained ES module (Comlink inlined, ~12 KB) for pages without a bundler |
 
 The other packages re-export the types they use (`import type { InstanceState } from '@bango/engine'` still works), so most code never imports `core` directly. The worker side, `serveBango()`, is in [`@bango/engine/worker`](../engine/README.md).
 
@@ -24,5 +24,6 @@ The other packages re-export the types they use (`import type { InstanceState } 
 src/types.ts    DTOs and the EngineApi / BangoApi interfaces
 src/json.ts     toJsonSpec (generic JSON of an AST) and mergeJson
 src/client.ts   connectBango
+src/managed-client.ts   the watchdog: journal, restart, replay, quarantine
 src/bundle/     entry of the self-contained client
 ```

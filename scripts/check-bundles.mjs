@@ -23,7 +23,7 @@ const importsOf = text => [...withoutStrings(text).matchAll(/(?:^|[;\n])\s*(?:im
 // 1. the worker client is small and self-contained
 const client = read(join(root, 'packages/core/dist/bundle/client.js'));
 if (client) {
-  check(client.length < 10 * 1024, `core/bundle/client.js is ${kb(client.length)} (budget 10 KB)`);
+  check(client.length < 16 * 1024, `core/bundle/client.js is ${kb(client.length)} (budget 16 KB)`);
   check(!/langium/i.test(client), 'core/bundle/client.js has no Langium');
 }
 

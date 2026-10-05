@@ -150,6 +150,14 @@ SensorDef(sensor, accept) {
 }
 ```
 
+### What scripts can reach, and what happens when one never finishes
+
+Constraints, JSON mappings and import mappings run in the engine (in a worker, in the playground). Three things to know:
+
+- **They are strict function bodies** (`this` is undefined, a typo does not make a global), and what could take them out of the engine is not there: `fetch`, `XMLHttpRequest`, `WebSocket`, `importScripts`, `postMessage`, `self`, `globalThis`, `window`, `document`, `indexedDB`, `localStorage`, `Function`, `eval` and the timers are `undefined`. The helpers they are given are frozen. This is **defence in depth, not a sandbox**: a script is the code of whoever writes the metamodel, and the global object can still be reached through a function's `constructor`. Do not run metamodels from people you do not trust.
+- **A script that never finishes does not freeze the app.** With the engine in a worker made by a function (as the playground does), an engine that stops answering for 10 s is replaced, the scripts are switched back on one at a time, and the one that makes it stop again is switched off and reported (a banner in the playground, `bango.quarantined()` in code). Edit it, or switch it back on as it is. A loop in a *check* (that runs for every node) or at the top of a script (that runs when the project is composed) are both caught.
+- An in-process `Bango` cannot interrupt synchronous code from its own thread: use a worker for anything that runs scripts you did not just write.
+
 ## When two metamodels use the same type name
 
 Independent metamodels tend to pick the same names (`Entity`, `Layer`, `Field`, `Model`). The metamodels of one project share one index and one merged type reflection, both keyed by type name, so two different `Entity` types would mix their scopes and overwrite each other's properties. **The composer works around it, so you don't have to coordinate names.**

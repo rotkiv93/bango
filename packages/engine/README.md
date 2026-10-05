@@ -187,6 +187,16 @@ await bango.compose([...]);          // same API as a local Bango
 bango.disconnect();                  // stop talking to it (does not terminate the worker)
 ```
 
+Give `connectBango` **a function that makes the worker** instead and it also notices an engine that stops answering (a constraint or mapping in an endless loop), replaces it, and switches the culprit script off; see [When a script never finishes](../../docs/architecture.md#when-a-script-never-finishes).
+
+```ts
+const bango = connectBango(
+  () => new Worker(new URL('./engine.worker.ts', import.meta.url), { type: 'module' }),
+  { timeoutMs: 10_000, onRestart: ({ call, quarantined }) => warn(call, quarantined) }
+);
+bango.quarantined();                 // [{ kind: 'constraints', metamodel: 'datamodel' }]
+```
+
 The composer and the engine run together inside the worker; only plain data crosses. See [Architecture](../../docs/architecture.md#worker-boundary).
 
 ## Without a bundler

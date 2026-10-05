@@ -24,7 +24,7 @@ npm run e2e          # the browser tests (needs a browser, see below)
 | `npm run lint` / `npm run knip` | oxlint (correctness; hook warnings are warnings), and unused files, exports and dependencies |
 | `npm test` | about 390 tests (see [How Bango is tested](docs/testing.md)); `FUZZ_SEEDS`/`FUZZ_STEPS` run the random edits deeper |
 | `npm run build` | the libraries (their bundles and declarations) and the playground |
-| `npm run check:bundles` | the promises about what a page loads: a 6 KB worker client, no Langium in the workspace entry or in the playground's own code |
+| `npm run check:bundles` | the promises about what a page loads: a worker client under 16 KB, no Langium in the workspace entry or in the playground's own code |
 | `npm run pack:smoke` | packs every package, installs the tarballs into an empty project, imports every entry point, composes/edits/builds, and type-checks a consumer. Run `npm run build:libs` first |
 | `npm run e2e` | Playwright against the built playground (`npm run build` first). CI uses Playwright's Chromium (`npx playwright install chromium`); locally `PW_CHANNEL=msedge` (or `chrome`) uses a browser you already have |
 

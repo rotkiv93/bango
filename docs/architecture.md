@@ -58,6 +58,17 @@ A renderer is a small object (`mount`, `update`, `reveal`, `dispose`) that reads
 
 Langium is heavy, so it can run off the UI thread. Langium objects cannot cross a worker boundary, so the **composer and the engine run together** in the worker (`Bango` is the pair behind one object) and everything that crosses is plain data: `CompositionInfo`, `InstanceState`, `AstDto`, JSON. `serveBango()` (`@bango/engine/worker`, runs in the worker) exposes a `Bango`; `connectBango(worker)` (`@bango/core/client`, runs in the page) returns an object with the same async API. The engine's methods are all async for exactly this reason, so a renderer cannot tell the two apart.
 
+### When a script never finishes
+
+Constraints, JSON mappings and import mappings are user code, and code can loop. In a worker that would freeze the engine for good, so `connectBango` takes **a function that makes the worker** and watches it: if no call finishes for `timeoutMs` (10 s) while one is waiting, it
+
+1. rejects the calls in flight (`ScriptTimeoutError` for the oldest, `EngineRestartedError` for the others, once the new engine is ready),
+2. terminates the worker and starts a new one,
+3. puts back what it knows, *without any script*: the grammars, the last composition, the instance texts, the subscriptions (what is lost: the undo history),
+4. switches the scripts on again **one at a time**, each followed by a short check (compose, set the instances, export, import); the one after which the engine stops answering again is **quarantined**, and everything else is back.
+
+`onRestart` and `quarantined()` say what happened; `WorkspaceController` exposes it as `state.quarantined`, re-reads the project from the new engine, and takes a script off the list when it is edited (or switched back on with `reenableScript`). The playground shows a banner. A connection made from the worker itself, and an in-process `Bango`, have no watchdog: synchronous code cannot be interrupted from the same thread, so use a worker in anything that runs other people's metamodels.
+
 ## Decisions and trade-offs
 
 - **Langium is a peer dependency**, not bundled: Langium's AST types and `instanceof` checks break with two copies. (The self-contained browser builds inline it, because there it is the only copy.)

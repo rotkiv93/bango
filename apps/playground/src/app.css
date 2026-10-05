@@ -209,3 +209,7 @@ input[type=checkbox] { accent-color: var(--accent); }
 .import-result { display: flex; flex-direction: column; gap: 6px; }
 .import-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface2); }
 .import-row .err { color: var(--err); font-size: 13px; }
+
+/* scripts switched off after the engine stopped answering */
+.quarantine { padding: 8px 16px 0; }
+.quarantine ul { margin: 6px 0; padding-left: 20px; }

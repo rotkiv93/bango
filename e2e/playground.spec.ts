@@ -97,6 +97,32 @@ test.describe('metamodels and their scripts', () => {
   });
 });
 
+test.describe('a script that never finishes', () => {
+  test('does not freeze the playground: the engine is replaced, the script is switched off, the rest keeps working', async ({ page }) => {
+    test.setTimeout(180_000);
+    await start(page);
+    // a script only runs when a project that uses its metamodel is open
+    await openProject(page, 'office');
+    await page.locator('.topbar nav button', { hasText: 'Metamodels' }).click();
+    await page.locator('.mm-item', { has: page.locator('strong:text-is("datamodel")') }).click();
+    await view(page, 'Constraints');
+    await expect(page.locator('.mm-editor .monaco-editor')).toBeVisible();
+    await page.locator('.mm-editor .monaco-editor .view-lines').click();
+    await page.keyboard.press('Control+A');
+    await page.keyboard.press('Delete');
+    await page.keyboard.type('while (true) {}\nreturn {};');
+
+    // the engine runs the loop in its worker until the watchdog gives up on it, replaces it, and finds which script it was
+    await expect(page.locator('.quarantine')).toContainText('constraints of datamodel', { timeout: 120_000 });
+    await expect(page.locator('.quarantine')).toContainText('switch back on');
+
+    // and the app answers again, with everything else in place
+    await openProject(page, 'office');
+    await page.getByRole('button', { name: 'Build model' }).click();
+    await expect(page.locator('.banner.ok')).toContainText('Build succeeded');
+  });
+});
+
 test.describe('projects', () => {
   test('a project is created only when the metamodels fit, and the dialog says what to add', async ({ page }) => {
     await start(page);
