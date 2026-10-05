@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ModelComposer } from '../src/index.js';
 import { COMBO_GRAMMAR } from '../../../test-support/combo.js';
 import { composerWith, errors } from '../../../test-support/harness.js';
+import { METAMODELS } from '../../../test-support/seed.js';
 
 describe('ModelComposer', () => {
   it('compiles the seed grammars; libraries are not metamodels', async () => {
@@ -10,7 +11,7 @@ describe('ModelComposer', () => {
     for (const g of c.grammars) expect(errors(g.problems), g.name).toEqual([]);
     expect(c.ok).toBe(true);
     expect(c.grammars.find(g => g.name === 'common')!.extension).toBeUndefined();
-    expect(c.metamodels.map(m => m.name).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(c.metamodels.map(m => m.name).sort()).toEqual(METAMODELS);
     expect(c.get('gismodel')!.extension).toBe('gismodel');
   });
 
@@ -180,7 +181,7 @@ describe('selection check and catalogue', () => {
   it('lists every grammar with a one-line description, libraries included', async () => {
     const { composer } = composerWith();
     const all = await composer.metamodels();
-    expect(all.map(g => g.name).sort()).toEqual(['basic', 'common', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(all.map(g => g.name).sort()).toEqual(['common', ...METAMODELS].sort());
     expect(all.find(g => g.name === 'datamodel')!.description).toMatch(/^Data model:/);
     expect(all.find(g => g.name === 'sensors')!.description).toMatch(/^Sensors:/);
     expect(all.find(g => g.name === 'common')!.extension).toBeUndefined();

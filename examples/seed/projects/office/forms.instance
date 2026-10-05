@@ -1,0 +1,8 @@
+forms
+
+form CustomerForm label "Customer" entity Customer {
+  field name
+  field email
+}
+
+form InvoiceForm entity Invoice

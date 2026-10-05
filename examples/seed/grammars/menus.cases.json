@@ -1,0 +1,148 @@
+[
+  {
+    "name": "a valid nested menu",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main position top {\n  item data label \"Data\" {\n    item roads opens Roads\n    item edit opens RoadForm\n  }\n  item overview opens main\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an item can open a form, a list or a map, and a menu can have the name of a map",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item a opens RoadForm\n  item b opens Roads\n  item c opens main\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an item has to do something",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item idle\n}\n",
+    "expect": {
+      "warnings": [
+        "item 'idle' opens nothing and has no items"
+      ]
+    }
+  },
+  {
+    "name": "item names are unique in a menu, at any depth",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item a {\n    item b opens Roads\n  }\n  item b opens RoadForm\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate item 'b' in menu 'main'"
+      ]
+    }
+  },
+  {
+    "name": "the same item name in two menus is fine",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu one {\n  item a opens Roads\n}\nmenu two {\n  item a opens Roads\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "menus nested deeper than three levels warn",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item a {\n    item b {\n      item c {\n        item d opens Roads\n      }\n    }\n  }\n}\n",
+    "expect": {
+      "warnings": [
+        "item 'd' is 4 levels deep"
+      ]
+    }
+  },
+  {
+    "name": "an item opens a screen that exists",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item x opens Nowhere\n}\n",
+    "expect": {
+      "errors": [
+        "Nowhere"
+      ]
+    }
+  },
+  {
+    "name": "an entity is not a screen",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item x opens Road\n}\n",
+    "expect": {
+      "errors": [
+        "Road"
+      ]
+    }
+  },
+  {
+    "name": "two items for one screen is only a hint",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item a opens Roads\n  item b opens Roads\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a menu cannot be declared twice",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property name: String pk\n  property geometry: LineString\n}\n",
+      "forms": "forms\nform RoadForm entity Road\n",
+      "lists": "lists\nlist Roads entity Road\n",
+      "gismodel": "gismodel\ngeojsonstyle thin fillColor \"#fff\" strokeColor \"#000\" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonlayer roads entity Road defaultStyle thin availableStyles thin\nmap main center 40.4 -3.7 zoom 12 {\n  use roads style thin selected order 1\n}\n"
+    },
+    "text": "menus m\nmenu main {\n  item a opens Roads\n}\nmenu main {\n  item b opens Roads\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate menu 'main'"
+      ]
+    }
+  }
+]

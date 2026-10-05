@@ -1,0 +1,49 @@
+gismodel
+
+tilelayer base label "base" url "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+geojsonlayer stationobservation-layer label "StationObservationEntity"
+  entity StationObservationEntity
+  defaultStyle grayPoint
+  availableStyles grayPoint, value, quality
+
+geojsonlayer ZoneDimension label "ZoneDimension"
+  entity ZoneDimension
+  defaultStyle grayPolygon
+  availableStyles grayPolygon, value, value_POLYGON, quality, quality_POLYGON
+
+geojsonstyle redPoint fillColor "#FF0000" strokeColor "#FF0000" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle greenPoint fillColor "#008000" strokeColor "#008000" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle grayPoint fillColor "#808080" strokeColor "#808080" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle orangePoint fillColor "#FFA500" strokeColor "#FFA500" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle redPolygon fillColor "#FF0000" strokeColor "#FF0000" fillOpacity 0.5 strokeOpacity 1 radius 3
+geojsonstyle greenPolygon fillColor "#008000" strokeColor "#008000" fillOpacity 0.5 strokeOpacity 1 radius 3
+geojsonstyle grayPolygon fillColor "#808080" strokeColor "#808080" fillOpacity 0.5 strokeOpacity 1 radius 3
+geojsonstyle orangePolygon fillColor "#FFA500" strokeColor "#FFA500" fillOpacity 0.5 strokeOpacity 1 radius 3
+
+intervalstyle value property "data.value"
+  from -Infinity to 20 style greenPoint
+  from 20 to 40 style orangePoint
+  from 40 to Infinity style redPoint
+  defaultStyle grayPoint
+intervalstyle value_POLYGON property "data.value"
+  from -Infinity to 20 style greenPolygon
+  from 20 to 40 style orangePolygon
+  from 40 to Infinity style redPolygon
+  defaultStyle grayPolygon
+intervalstyle quality property "data.quality"
+  from -Infinity to 20 style greenPoint
+  from 20 to 40 style orangePoint
+  from 40 to Infinity style redPoint
+  defaultStyle grayPoint
+intervalstyle quality_POLYGON property "data.quality"
+  from -Infinity to 20 style greenPolygon
+  from 20 to 40 style orangePolygon
+  from 40 to Infinity style redPolygon
+  defaultStyle grayPolygon
+
+map stationobservation-map label "StationObservation Map" center 42.7 -8.1 zoom 9 {
+  use base baseLayer selected order 0
+  use stationobservation-layer style grayPoint selected order 1
+  use ZoneDimension style grayPolygon order 2
+}

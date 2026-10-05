@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
 import { errors, openProject } from '../../../test-support/harness.js';
-import { loadSeed } from '../../../test-support/seed.js';
+import { METAMODELS, loadSeed } from '../../../test-support/seed.js';
 
 const GRESINT = ['basic', 'datamodel', 'gismodel', 'sensors'];
 
@@ -114,6 +114,6 @@ describe('importing a project from its JSON', () => {
     expect(JSON.parse(JSON.stringify(result))).toEqual(result);
     expect(await bango.getInstances()).toEqual(before);
     // and through the worker boundary, the methods exist
-    expect(Object.keys(loadSeed().imports).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(Object.keys(loadSeed().imports).sort()).toEqual(METAMODELS);
   });
 });

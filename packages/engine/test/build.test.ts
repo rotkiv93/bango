@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
 import { openProject } from '../../../test-support/harness.js';
 import { COMBO_GRAMMAR } from '../../../test-support/combo.js';
-import { loadSeed } from '../../../test-support/seed.js';
+import { METAMODELS, loadSeed } from '../../../test-support/seed.js';
 
 describe('project build', () => {
   it('a data-model-only project builds into a final model', async () => {
@@ -90,7 +90,7 @@ describe('project build', () => {
     for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
     const info = await bango.compose();
     expect(info.problems).toEqual([]);
-    expect(info.languages.map(l => l.name).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(info.languages.map(l => l.name).sort()).toEqual(METAMODELS);
   });
 
   it.each([
@@ -98,9 +98,14 @@ describe('project build', () => {
     ['city', true],
     ['catalog', true],
     ['gresint', true],
+    ['office', true],
+    ['portal', true],
+    ['everything', true],
     ['gismodel-only', false],
     ['sensors-only', false],
-    ['forms-only', false]
+    ['forms-only', false],
+    ['security-only', false],
+    ['menus-only', false]
   ])('shipped example %s builds: %s', async (name, ok) => {
     const { bango } = await openProject(name);
     const result = await bango.build(name);

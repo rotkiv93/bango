@@ -48,7 +48,8 @@ How Bango reads it:
 
 ### Pitfalls
 
-- **Keywords are reserved words.** `'entity'` in a grammar means no instance can have an identifier called `entity`. Prefer specific keywords (`baseLayer` rather than `base`) so ordinary names stay free.
+- **Keywords are reserved words.** `'entity'` in a grammar means no instance can have an identifier called `entity`. Prefer specific keywords (`baseLayer` rather than `base`) so ordinary names stay free. This includes the keywords of every grammar you import, and of your own values: a menu called `side` fails to parse when `side` is one of the `position` keywords (`Expecting token of type 'ID' but found 'side'`).
+- **A union that is only used by a cross-reference is a `type`, not a rule.** `type Resource = Entity | FormDef | ListDef;` (Langium's own recommendation: a rule that nothing parses is flagged). The members may come from different grammars: `security` does exactly that, and the composer keeps `Entity ⊂ Resource` true even when other metamodels, that know nothing of `Resource`, are composed with it.
 - **Type names are global within a project** (the metamodels share one index), but you do not have to avoid clashes: see [When two metamodels use the same type name](#when-two-metamodels-use-the-same-type-name).
 - **Reference names are looked up globally by type.** Two `Entity` nodes with the same name in one project collide. Fields nested inside an entity are not global, so `id` in every entity is fine.
 - **A `?=` flag that is not written is `false`, but may be absent from the node.** In constraints and mappings, use `!!node.flag`.

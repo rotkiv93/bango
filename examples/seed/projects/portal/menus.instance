@@ -1,0 +1,13 @@
+menus portal
+
+menu main position top {
+  item data label "Data" {
+    item roads label "Roads" opens Roads
+    item edit opens RoadForm
+  }
+  item overview opens main
+}
+
+menu sidebar position side {
+  item places opens main
+}

@@ -21,3 +21,9 @@ export function loadSeed(): Seed {
   }
   return { ...parseSeed(files), expected: { gresint: JSON.parse(files['expected/sensors_gresint.json']) } };
 }
+
+/** The metamodels that ship in `examples/seed/grammars` (the ones with an entry rule), sorted. Update it when one is added. */
+export const METAMODELS = ['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors'];
+
+/** The projects the playground offers as examples, sorted. */
+export const EXAMPLE_PROJECTS = ['catalog', 'city', 'everything', 'gresint', 'office', 'portal', 'shop'];

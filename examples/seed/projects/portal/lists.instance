@@ -1,0 +1,6 @@
+lists
+
+list Roads entity Road sortBy name {
+  column name
+  column lanes
+}

@@ -1,0 +1,16 @@
+security gresint
+
+role viewer
+role operator extends viewer
+role manager extends operator
+
+user ana email "ana@example.org" roles manager
+user luis roles operator, viewer
+
+grant viewer read on StationObservationEntity
+grant viewer read on ZoneDimension
+grant viewer read on Stations
+grant viewer read on Zones
+grant operator write on StationForm
+grant operator write on ZoneForm
+grant manager admin on StationObservationEntity

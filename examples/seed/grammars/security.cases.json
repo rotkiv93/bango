@@ -1,0 +1,156 @@
+[
+  {
+    "name": "a valid security model",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\nrole clerk extends viewer\nuser ana roles clerk\ngrant viewer read on Invoice\ngrant viewer read on Invoices\ngrant clerk write on InvoiceForm\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a role cannot extend itself",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole a extends a\n",
+    "expect": {
+      "errors": [
+        "role 'a' extends itself"
+      ]
+    }
+  },
+  {
+    "name": "nor indirectly, through other roles",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole a extends b\nrole b extends c\nrole c extends a\n",
+    "expect": {
+      "errors": [
+        "role 'a' extends itself",
+        "role 'b' extends itself",
+        "role 'c' extends itself"
+      ]
+    }
+  },
+  {
+    "name": "a role may extend one declared later",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole clerk extends viewer\nrole viewer\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a role cannot be declared twice, nor a user",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\nrole viewer\nuser u roles viewer\nuser u roles viewer\n",
+    "expect": {
+      "errors": [
+        "duplicate role 'viewer'",
+        "duplicate user 'u'"
+      ]
+    }
+  },
+  {
+    "name": "a grant needs a resource that exists, in any of the three metamodels",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\ngrant viewer read on Nowhere\n",
+    "expect": {
+      "errors": [
+        "Nowhere"
+      ]
+    }
+  },
+  {
+    "name": "an entity, a form and a list can all be granted",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole r\ngrant r admin on Customer\ngrant r read on Invoice\ngrant r write on InvoiceForm\ngrant r read on Invoices\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a form needs access to its entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole clerk\ngrant clerk write on InvoiceForm\n",
+    "expect": {
+      "warnings": [
+        "role 'clerk' can use 'InvoiceForm' but has no access to its entity 'Invoice'"
+      ]
+    }
+  },
+  {
+    "name": "the access can come from a role it extends",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\nrole clerk extends viewer\ngrant viewer read on Invoice\ngrant clerk write on InvoiceForm\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a list can only be read",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\ngrant viewer read on Invoice\ngrant viewer write on Invoices\n",
+    "expect": {
+      "warnings": [
+        "a list can only be read, not 'write'"
+      ]
+    }
+  },
+  {
+    "name": "repeated roles and grants are warnings",
+    "with": {
+      "datamodel": "datamodel d\nentity Invoice {\n  property id: Long pk\n  property total: Double\n}\nentity Customer {\n  property id: Long pk\n}\n",
+      "forms": "forms\nform InvoiceForm entity Invoice\n",
+      "lists": "lists\nlist Invoices entity Invoice\n"
+    },
+    "text": "security s\nrole viewer\nuser u roles viewer, viewer\ngrant viewer read on Invoice\ngrant viewer read on Invoice\n",
+    "expect": {
+      "warnings": [
+        "user 'u' has role 'viewer' twice",
+        "'viewer read on Invoice' is granted twice"
+      ]
+    }
+  }
+]

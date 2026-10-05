@@ -12,7 +12,7 @@ import {
   KeyedDebouncer, MemoryStorage, WorkspaceController, validateMetamodelName, validateProjectName, workspaceFromSeed, type WorkspaceData
 } from '../src/workspace/index.js';
 import { errors } from '../../../test-support/harness.js';
-import { loadSeed } from '../../../test-support/seed.js';
+import { EXAMPLE_PROJECTS, METAMODELS, loadSeed } from '../../../test-support/seed.js';
 
 const DELAYS = { push: 10, refresh: 10, persist: 10 };
 
@@ -35,8 +35,8 @@ describe('workspace controller: lifecycle', () => {
     const { controller, bango } = await ready();
     const s = controller.state;
     expect(s.ready).toBe(true);
-    expect(Object.keys(s.workspace.projects).sort()).toEqual(['catalog', 'city', 'gresint', 'shop']);
-    expect(s.catalog.filter(g => g.extension).map(g => g.name).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(Object.keys(s.workspace.projects).sort()).toEqual(EXAMPLE_PROJECTS);
+    expect(s.catalog.filter(g => g.extension).map(g => g.name).sort()).toEqual(METAMODELS);
     // no project is open yet: nothing is composed
     expect(s.activeProject).toBeUndefined();
     expect(s.instances).toEqual([]);
@@ -284,7 +284,7 @@ describe('workspace controller: saving', () => {
     old.grammars = { ...old.grammars, mine: 'grammar Mine\nimport \'common\'\nentry Model: \'mine\' name=ID?;\n' };
     const { controller } = await ready({ storage: new MemoryStorage(old as WorkspaceData) });
     const { workspace } = controller.state;
-    expect(Object.keys(workspace.imports).sort()).toEqual(['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'sensors']);
+    expect(Object.keys(workspace.imports).sort()).toEqual(METAMODELS);
     expect(Object.keys(workspace.cases).length).toBeGreaterThan(0);
     expect(workspace.specs).toEqual({});
     // what the user had is kept

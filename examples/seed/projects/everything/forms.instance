@@ -1,0 +1,8 @@
+forms
+
+form StationForm label "Station" entity StationObservationEntity {
+  field name
+  field geometry
+}
+
+form ZoneForm entity ZoneDimension
