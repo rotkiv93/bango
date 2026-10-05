@@ -34,7 +34,10 @@ export class Bango implements BangoApi {
   readonly engine = new ModelEngine();
   private composition?: Composition;
 
-  /** Composer operations run one at a time and in call order, so overlapping `compose` calls cannot apply out of order. */
+  /**
+   * Every call runs one at a time, in the order it was made: the composer's and the engine's together. An app may fire `compose(...)` and then
+   * `applyEdit(...)` without waiting, and the edit still sees the composition. (The engine orders its own calls; this orders them against the composer's.)
+   */
   private queue = new SerialQueue();
   private run<T>(fn: () => Promise<T> | T): Promise<T> {
     return this.queue.run(fn);
@@ -96,29 +99,29 @@ export class Bango implements BangoApi {
     return this.run(() => this.composition?.grammarAst(name));
   }
 
-  getInstance(metamodel: string): Promise<InstanceState> { return this.engine.getInstance(metamodel); }
-  getInstances(): Promise<InstanceState[]> { return this.engine.getInstances(); }
-  getComposition(): Promise<CompositionInfo | undefined> { return this.engine.getComposition(); }
-  setText(metamodel: string, text: string): Promise<InstanceState> { return this.engine.setText(metamodel, text); }
-  setInstances(texts: Record<string, string>): Promise<InstanceState[]> { return this.engine.setInstances(texts); }
-  createInstance(metamodel: string): Promise<InstanceState> { return this.engine.createInstance(metamodel); }
-  removeInstance(metamodel: string): Promise<void> { return this.engine.removeInstance(metamodel); }
-  applyEdit(metamodel: string, op: EditOp): Promise<InstanceState> { return this.engine.applyEdit(metamodel, op); }
-  getFormSchema(metamodel: string): Promise<FormSchema | undefined> { return this.engine.getFormSchema(metamodel); }
-  toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined> { return this.engine.toJson(metamodel, options); }
-  toProjectJson(options?: JsonSpecOptions): Promise<JsonValue> { return this.engine.toProjectJson(options); }
-  getRefCandidates(refType: string): Promise<RefCandidate[]> { return this.engine.getRefCandidates(refType); }
-  importJson(json: JsonValue): Promise<ImportResult> { return this.engine.importJson(json); }
-  complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]> { return this.engine.complete(metamodel, text, line, column); }
-  hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined> { return this.engine.hover(metamodel, text, line, column); }
-  definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]> { return this.engine.definition(metamodel, text, line, column); }
-  references(metamodel: string, text: string, line: number, column: number): Promise<LocationDto[]> { return this.engine.references(metamodel, text, line, column); }
-  symbols(metamodel: string, text: string): Promise<SymbolDto[]> { return this.engine.symbols(metamodel, text); }
-  rename(metamodel: string, text: string, line: number, column: number, newName: string): Promise<RenameResult> { return this.engine.rename(metamodel, text, line, column, newName); }
-  quickFixes(metamodel: string, text: string, line: number, column: number): Promise<QuickFix[]> { return this.engine.quickFixes(metamodel, text, line, column); }
-  applyQuickFix(fix: QuickFix): Promise<InstanceState> { return this.engine.applyQuickFix(fix); }
-  undo(metamodel: string): Promise<InstanceState> { return this.engine.undo(metamodel); }
-  redo(metamodel: string): Promise<InstanceState> { return this.engine.redo(metamodel); }
-  build(project: string): Promise<BuildResult> { return this.engine.build(project); }
+  getInstance(metamodel: string): Promise<InstanceState> { return this.run(() => this.engine.getInstance(metamodel)); }
+  getInstances(): Promise<InstanceState[]> { return this.run(() => this.engine.getInstances()); }
+  getComposition(): Promise<CompositionInfo | undefined> { return this.run(() => this.engine.getComposition()); }
+  setText(metamodel: string, text: string): Promise<InstanceState> { return this.run(() => this.engine.setText(metamodel, text)); }
+  setInstances(texts: Record<string, string>): Promise<InstanceState[]> { return this.run(() => this.engine.setInstances(texts)); }
+  createInstance(metamodel: string): Promise<InstanceState> { return this.run(() => this.engine.createInstance(metamodel)); }
+  removeInstance(metamodel: string): Promise<void> { return this.run(() => this.engine.removeInstance(metamodel)); }
+  applyEdit(metamodel: string, op: EditOp): Promise<InstanceState> { return this.run(() => this.engine.applyEdit(metamodel, op)); }
+  getFormSchema(metamodel: string): Promise<FormSchema | undefined> { return this.run(() => this.engine.getFormSchema(metamodel)); }
+  toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined> { return this.run(() => this.engine.toJson(metamodel, options)); }
+  toProjectJson(options?: JsonSpecOptions): Promise<JsonValue> { return this.run(() => this.engine.toProjectJson(options)); }
+  getRefCandidates(refType: string): Promise<RefCandidate[]> { return this.run(() => this.engine.getRefCandidates(refType)); }
+  importJson(json: JsonValue): Promise<ImportResult> { return this.run(() => this.engine.importJson(json)); }
+  complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]> { return this.run(() => this.engine.complete(metamodel, text, line, column)); }
+  hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined> { return this.run(() => this.engine.hover(metamodel, text, line, column)); }
+  definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]> { return this.run(() => this.engine.definition(metamodel, text, line, column)); }
+  references(metamodel: string, text: string, line: number, column: number): Promise<LocationDto[]> { return this.run(() => this.engine.references(metamodel, text, line, column)); }
+  symbols(metamodel: string, text: string): Promise<SymbolDto[]> { return this.run(() => this.engine.symbols(metamodel, text)); }
+  rename(metamodel: string, text: string, line: number, column: number, newName: string): Promise<RenameResult> { return this.run(() => this.engine.rename(metamodel, text, line, column, newName)); }
+  quickFixes(metamodel: string, text: string, line: number, column: number): Promise<QuickFix[]> { return this.run(() => this.engine.quickFixes(metamodel, text, line, column)); }
+  applyQuickFix(fix: QuickFix): Promise<InstanceState> { return this.run(() => this.engine.applyQuickFix(fix)); }
+  undo(metamodel: string): Promise<InstanceState> { return this.run(() => this.engine.undo(metamodel)); }
+  redo(metamodel: string): Promise<InstanceState> { return this.run(() => this.engine.redo(metamodel)); }
+  build(project: string): Promise<BuildResult> { return this.run(() => this.engine.build(project)); }
   subscribe(listener: (event: EngineEvent) => void): Unsubscribe | Promise<Unsubscribe> { return this.engine.subscribe(listener); }
 }

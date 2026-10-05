@@ -154,6 +154,8 @@ export interface FieldSchema {
   required: boolean;
   /** text fields: true when the grammar uses a quoted STRING terminal */
   quoted?: boolean;
+  /** text and number fields whose value is a data type rule (`IntervalBound`): a value the grammar accepts, to start a new node with */
+  sample?: string;
   /** ref fields: AST type of the possible targets (may live in another metamodel) */
   refType?: string;
   /** child fields: concrete node types that can be created here */

@@ -7,7 +7,7 @@ entity Road display "Road" {
 }
 
 entity Parcel {
-  property code: String unique
+  property code: String required pk unique
   property geometry: Polygon
   relation road -> Road
 }

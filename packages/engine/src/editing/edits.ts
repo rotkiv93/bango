@@ -22,7 +22,7 @@ export function defaultDto(type: string, schema: FormSchema, refCandidates: Edit
     if (!f.required) continue;
     const one = (): unknown => {
       switch (f.kind) {
-        case 'text': return f.name === 'name' ? `new${type}` : f.quoted ? '' : 'value';
+        case 'text': return f.name === 'name' ? `new${type}` : f.quoted ? '' : f.sample ?? 'value';
         case 'number': return 0;
         case 'enum': return f.options?.[0] ?? '';
         case 'ref': return { text: refCandidates(f.refType ?? '')[0]?.name ?? 'TODO', resolved: false } satisfies RefDto;
@@ -140,9 +140,18 @@ export function applyEditToText(ctx: EditContext, op: EditOp): string {
   }
 
   // remove
+  /** What the grammar requires cannot be removed: the text would no longer be text of the language. */
+  const mustKeep = (parent: AstNode, feature: string, count: number) => {
+    const field = fieldOf(parent, feature);
+    if (!field.required) return;
+    if (field.many && count > 1) return;
+    throw new Error(field.many ? `'${parent.$type}' needs at least one '${feature}'` : `'${parent.$type}' needs a '${feature}'`);
+  };
   if (op.feature !== undefined && op.index !== undefined) {
     const node = nodeAt(op.path);
     const field = fieldOf(node, op.feature);
+    const items = (node as unknown as Record<string, unknown>)[op.feature];
+    if (field.kind === 'child' || field.kind === 'ref' || field.many) mustKeep(node, op.feature, Array.isArray(items) ? items.length : 1);
     return reprint(node, dto => {
       const store = (field.kind === 'ref' ? dto.refs : field.kind === 'child' ? dto.children : dto.props) as Record<string, unknown[]>;
       listOf(store, op.feature!).splice(op.index!, 1);
@@ -150,6 +159,17 @@ export function applyEditToText(ctx: EditContext, op: EditOp): string {
   }
   const node = nodeAt(op.path);
   if (node === root) throw new Error('The root element cannot be removed');
+  if (node.$container && node.$containerProperty) {
+    const parent = node.$container;
+    const feature = node.$containerProperty;
+    const siblings = (parent as unknown as Record<string, unknown>)[feature];
+    const count = Array.isArray(siblings) ? siblings.length : 1;
+    mustKeep(parent, feature, count);
+    // the last child of a node that is not the root: what surrounds it (`{ ... }`) goes with it, so the parent is printed again
+    if (count === 1 && parent !== root) {
+      return reprint(parent, dto => { delete dto.children[feature]; });
+    }
+  }
   let { start, end } = span(node);
   while (start > 0 && (text[start - 1] === ' ' || text[start - 1] === '\t')) start--;
   if (start > 0 && text[start - 1] === '\n') start--;

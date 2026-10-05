@@ -45,7 +45,7 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 | `runCases(metamodel, cases)` | check sample instances against what they must report: tests for a grammar and its constraints ([format](../../docs/writing-metamodels.md#5-testing-a-metamodel)). Runs in an engine of its own |
 | `getGrammarAst(name)` | the AST of a grammar |
 
-Composer operations run one at a time, in call order, so overlapping `compose` calls cannot apply out of order.
+Every call, the composer's and the engine's, runs one at a time and **in the order it was made**, so an app may fire `compose(...)` and then `applyEdit(...)` without waiting for the first and the edit still sees the composition.
 
 ### Instances (`EngineApi`)
 
@@ -76,9 +76,9 @@ await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities
 | `{ kind: 'add', path, feature, type?, value? }` | add a child node (`type`) or a list item (`value`) |
 | `{ kind: 'remove', path, feature?, index? }` | remove a node, or one item of a list feature |
 
-`path` is a list of `{ feature, index? }` steps down from the root. Changing a value replaces just that token in the text (comments and layout survive); structural changes reprint only the affected node from its grammar rule. The result is the new `InstanceState`; the engine throws if the path is stale (`The document changed, reload the form`) or the edit is impossible (removing the root).
+`path` is a list of `{ feature, index? }` steps down from the root. Changing a value replaces just that token in the text (comments and layout survive); structural changes reprint only the affected node from its grammar rule. The result is the new `InstanceState`; the engine throws if the path is stale (`The document changed, reload the form`) or the edit is impossible (removing the root). **What the grammar requires cannot be removed**: the last element of a list that must have one (`(fields+=Field)+`) is refused with `'Entity' needs at least one 'fields'`, and nothing changes. Removing the only child of a node takes what surrounds it (`{ }`) with it, and a new node starts from text the grammar accepts.
 
-For building forms: `getFormSchema(metamodel)` describes every node type of a grammar (`{ root, types: { Type: { fields: [...] } } }`, each field a `text`, `number`, `boolean`, `enum`, `ref` or `child` with `many` and `required`), and `getRefCandidates(refType)` lists every node a reference of that type could point to, across metamodels.
+For building forms: `getFormSchema(metamodel)` describes every node type of a grammar (`{ root, types: { Type: { fields: [...] } } }`, each field a `text`, `number`, `boolean`, `enum`, `ref` or `child` with `many` and `required`; a field whose value is a data type rule also has a `sample` the grammar accepts), and `getRefCandidates(refType)` lists every node a reference of that type could point to, across metamodels.
 
 ### Editor support
 

@@ -31,7 +31,8 @@ export function projectJson(store: InstanceStore, options: JsonSpecOptions): Jso
     .filter(m => meta(m).spec)
     // the root mapping first (it lays out the document, so its key order becomes the order of the merged document),
     // then the ones that need more before the ones that need less
-    .sort((a, b) => Number(!!meta(b).specRoot) - Number(!!meta(a).specRoot) || meta(b).requires.length - meta(a).requires.length)
+    // (and by name when that is a tie, so the document does not depend on the order the metamodels were selected in)
+    .sort((a, b) => Number(!!meta(b).specRoot) - Number(!!meta(a).specRoot) || meta(b).requires.length - meta(a).requires.length || a.localeCompare(b))
     .map(m => specOf(store, m, options)!);
   return mergeJson(...parts);
 }

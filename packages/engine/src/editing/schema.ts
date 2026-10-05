@@ -36,6 +36,30 @@ function keywordsOf(el: G.AbstractElement): string[] | undefined {
   return undefined;
 }
 
+/**
+ * A text the grammar accepts for a rule that is not a plain terminal (a data type rule such as `IntervalBound: '-'? (FLOAT | INT | 'Infinity')`):
+ * the first choice of every alternative, and what is optional left out. A rule that has no such text yields undefined.
+ */
+function sampleOf(el: G.AbstractElement | undefined, depth = 0): string | undefined {
+  if (!el || depth > 8) return undefined;
+  if (el.cardinality === '?' || el.cardinality === '*') return '';
+  if (G.isKeyword(el)) return el.value;
+  if (G.isAlternatives(el)) return sampleOf(el.elements[0], depth + 1);
+  if (G.isGroup(el)) {
+    const parts = el.elements.map(e => sampleOf(e, depth + 1));
+    return parts.some(p => p === undefined) ? undefined : parts.join('');
+  }
+  if (G.isRuleCall(el)) {
+    const rule = el.rule.ref;
+    if (G.isTerminalRule(rule)) {
+      if (rule.name === 'FLOAT') return '0.0';
+      return rule.type?.name === 'number' ? '0' : rule.name === 'STRING' ? '' : 'x';
+    }
+    return G.isParserRule(rule) ? sampleOf(rule.definition, depth + 1) : undefined;
+  }
+  return undefined;
+}
+
 /** Rules that only pick between other rules (`Layer: A | B`), so they never appear as a node type themselves. */
 function isAbstract(rule: G.ParserRule): boolean {
   const flat: G.AbstractElement[] = [];
@@ -76,7 +100,7 @@ export function buildFormSchema(grammar: G.Grammar, reflection: AstReflection): 
           const isNumber = ref.type?.name === 'number';
           field = { ...base, kind: isNumber ? 'number' : 'text', quoted: ref.name === 'STRING' };
         } else if (G.isParserRule(ref) && ref.dataType) {
-          field = { ...base, kind: ref.dataType === 'number' ? 'number' : 'text', quoted: false };
+          field = { ...base, kind: ref.dataType === 'number' ? 'number' : 'text', quoted: false, sample: sampleOf(ref.definition) };
         } else if (G.isParserRule(ref)) {
           const name = ref.returnType?.ref?.name ?? ref.name;
           field = { ...base, kind: 'child', childTypes: concreteSubtypes(name) };

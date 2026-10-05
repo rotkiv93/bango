@@ -1,28 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { TextEditDto } from '@bango/core';
 import { Bango } from '../src/index.js';
 import { History } from '../src/core/history.js';
+import { applyOwnEdits, at } from '../../../test-support/edits.js';
 import { errors, openProject } from '../../../test-support/harness.js';
-
-/** The (0-based) line and column of the `n`th occurrence of `needle`, a character into it. */
-function at(text: string, needle: string, n = 0) {
-  let from = -1;
-  for (let i = 0; i <= n; i++) from = text.indexOf(needle, from + 1);
-  if (from < 0) throw new Error(`no '${needle}' in the text`);
-  const before = text.slice(0, from + 1).split('\n');
-  return { line: before.length - 1, column: before[before.length - 1].length };
-}
-
-/** What an editor does with the edits of its own instance. */
-function applyOwnEdits(text: string, edits: TextEditDto[]) {
-  const lines = text.split('\n');
-  const offset = (line: number, column: number) => lines.slice(0, line).reduce((n, l) => n + l.length + 1, 0) + column;
-  let out = text;
-  for (const e of [...edits].sort((a, b) => offset(b.range.startLine, b.range.startColumn) - offset(a.range.startLine, a.range.startColumn))) {
-    out = out.slice(0, offset(e.range.startLine, e.range.startColumn)) + e.newText + out.slice(offset(e.range.endLine, e.range.endColumn));
-  }
-  return out;
-}
 
 describe('references', () => {
   it('finds every use of an entity, in every metamodel, and its declaration', async () => {

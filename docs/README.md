@@ -5,6 +5,7 @@
 | [Architecture](architecture.md) | understand how the three modules fit together and why |
 | [Writing metamodels](writing-metamodels.md) | create a metamodel: the grammar, its constraints and its JSON mapping |
 | [The JSON specification](json-spec.md) | understand the JSON an instance, and a whole project, turns into |
+| [How Bango is tested](testing.md) | see what the suites check, add a metamodel to them, run the fuzz deeper |
 | [Deploying to GitHub Pages](deploy-github-pages.md) | publish the playground as a static site |
 
 The three modules (and the small package they share) each have their own reference:
