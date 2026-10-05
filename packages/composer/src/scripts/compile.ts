@@ -1,4 +1,4 @@
-import type { ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
+import type { ConstraintModule, ConstraintSet, ImportFn, ScriptHelpers, SpecFn, ValidationCategory } from '../model/types.js';
 
 /** The name a reference points at: the target's name, or the text as written when it does not resolve. */
 const refName = (ref: unknown): string | undefined => {
@@ -26,17 +26,39 @@ export const DEFAULT_HELPERS: ScriptHelpers = {
 const run = (code: string, helpers: ScriptHelpers): any =>
   new Function('typeName', 'refName', 'duplicates', 'n', `"use strict";\n${code}`)(helpers.typeName, helpers.refName, helpers.duplicates, helpers.n);
 
-/**
- * `<metamodel>.constraints.js` holds a function body that returns `{ RuleName(node, accept) { ... } }`.
- * Throws with a readable message when the code is invalid.
- */
-export function compileConstraints(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): ConstraintSet {
-  const result = run(code, helpers);
-  if (!result || typeof result !== 'object') throw new Error('constraints must `return { TypeName(node, accept) { ... } }`');
-  for (const [k, v] of Object.entries(result)) {
+const CATEGORIES: ValidationCategory[] = ['fast', 'slow', 'built-in'];
+
+/** One validator out of what a constraints file returned: bare checks, or a validator (object, class or class instance) with a `checks` map. */
+function toModule(value: unknown, label: string): ConstraintModule {
+  let candidate = value;
+  // a validator class: Langium validators are classes, so a file may return the class itself
+  if (typeof candidate === 'function') {
+    try { candidate = new (candidate as new () => unknown)(); } catch { candidate = undefined; }
+  }
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    throw new Error(`${label} must \`return { TypeName(node, accept) { ... } }\``);
+  }
+  const object = candidate as { checks?: unknown; category?: unknown };
+  const holder = typeof object.checks === 'object' && object.checks !== null && !Array.isArray(object.checks);
+  const checks = (holder ? object.checks : object) as Record<string, unknown>;
+  for (const [k, v] of Object.entries(checks)) {
     if (typeof v !== 'function') throw new Error(`constraint '${k}' is not a function`);
   }
-  return result as ConstraintSet;
+  if (holder && object.category !== undefined && !CATEGORIES.includes(object.category as ValidationCategory)) {
+    throw new Error(`${label}: category must be one of ${CATEGORIES.map(c => `'${c}'`).join(', ')}, not ${JSON.stringify(object.category)}`);
+  }
+  return { checks: checks as ConstraintSet, ...(holder ? { thisObj: object, category: object.category as ValidationCategory | undefined } : {}) };
+}
+
+/**
+ * `<metamodel>.constraints.js` holds a function body that returns Langium validation checks, `{ RuleName(node, accept) { ... } }`, or a
+ * validator the way Langium writes them: `{ checks: { RuleName(node, accept) { ... } }, category: 'slow' }`, where `this` in a check is
+ * the validator. An array holds several. Throws with a readable message when the code is invalid.
+ */
+export function compileConstraints(code: string, helpers: ScriptHelpers = DEFAULT_HELPERS): ConstraintModule[] {
+  const result = run(code, helpers);
+  const items: unknown[] = Array.isArray(result) ? result : [result];
+  return items.map((item, i) => toModule(item, items.length > 1 ? `constraints[${i}]` : 'constraints'));
 }
 
 /**

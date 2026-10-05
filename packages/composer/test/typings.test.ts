@@ -75,6 +75,10 @@ describe('typings for scripts', () => {
     expect(bad).toMatch(/Property 'feilds' does not exist on type 'Entity'/);
     const wrongType = check(dts, `/** @type {Constraints} */\nconst c = { Entity(entity, accept) { accept('fatal', 'x', { node: entity }); } };\nreturn c;`);
     expect(wrongType).toMatch(/fatal/);
+    // a validator as Langium writes it: checks, a category, `this`
+    const validator = check(dts, `/** @type {ConstraintModule} */\nconst v = { limit: 3, category: 'slow', checks: { Entity(entity, accept, cancel) { if (cancel.isCancellationRequested) return; accept('warning', 'many', { node: entity }); } } };\nreturn v;`);
+    expect(validator).toBe('');
+    expect(check(dts, `/** @type {ConstraintModule} */\nconst v = { category: 'sometimes', checks: {} };\nreturn v;`)).toMatch(/sometimes/);
     const unknownRule = check(dts, `/** @type {Constraints} */\nconst c = { Entiti(entity, accept) {} };\nreturn c;`);
     expect(unknownRule).toMatch(/Entiti/);
   }, 120_000);

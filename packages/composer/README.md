@@ -86,7 +86,7 @@ interface SelectionCheck {
 | | |
 |---|---|
 | `toAstDto(node)` | any Langium AST as a plain tree (`AstDto`): `{ type, name?, range?, props, refs, children }` |
-| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. Scripts see `typeName(node)`, `refName(ref)`, `duplicates(items, key)` and, in import mappings, `n(type, features)` (`ScriptHelpers`); `compileImport` is the third compiler; a compiled mapping takes just the root node |
+| `compileConstraints(code, helpers?)` (returns `ConstraintModule[]`: checks, `thisObj`, category, as Langium registers them), `compileSpec(code, helpers?)` | what the composer uses to compile user code. Scripts see `typeName(node)`, `refName(ref)`, `duplicates(items, key)` and, in import mappings, `n(type, features)` (`ScriptHelpers`); `compileImport` is the third compiler; a compiled mapping takes just the root node |
 | `CompositeAstReflection` | merges the reflections of several metamodels |
 | `toProblem`, `wholeFile` | LSP diagnostic -> `Problem`; a problem about a whole document |
 | `documentUri`, `nameOfDocument`, `nameOfPath`, `nameOfUri` | every document lives at `memory:/<name>.<extension>`: these build and read that shape |

@@ -103,6 +103,34 @@ Inside a check:
 - A reference is an object: `ref.ref` is the target node (or `undefined` if it does not resolve) and `ref.$refText` the text that was written. Cross-metamodel references need no special handling: `sensor.entity.ref.fields` reaches into the data model.
 - Check for `undefined` before using a reference target: while someone is typing, references do not resolve.
 
+### Constraints are Langium validation checks
+
+What a constraints file holds is exactly what Langium's `ValidationRegistry.register(checks, thisObj, category)` takes: checks keyed by AST type name, called with `(node, accept, cancelToken)`. The simple form above is `checks`. A file may also return a **validator** the way a Langium project writes one, when it needs shared helpers, settings or a category:
+
+```js
+// a validator: its checks run with `this` bound to it
+/** @type {ConstraintModule} */
+const validator = {
+  limit: 10,
+  describe(item) { return `${item.name} is over ${this.limit}`; },
+  category: 'slow',            // 'fast' (default), 'slow' or 'built-in': when Langium runs them
+  checks: {
+    Item(item, accept) {
+      if (item.size > this.limit) accept('error', this.describe(item), { node: item, property: 'size' });
+    }
+  }
+};
+return validator;
+```
+
+- A **class instance** with a `checks` map works the same (`return new ThingsValidator()`), and so does returning the **class** itself; `this` is the instance.
+- An **array** registers several validators from one file: `return [ { checks: {...}, category: 'fast' }, { Model(model, accept) {...} } ]`.
+- `cancelToken` is Langium's `CancellationToken`: a long check can stop when `cancelToken.isCancellationRequested`.
+- A wrong category, a check that is not a function, or something that is not a validator is reported as a problem of the metamodel (`<name>.constraints.js: ...`); the other metamodels keep working.
+- When a type name is renamed for a project, the checks follow the new name and the validator keeps its `this`.
+
+This is not a look-alike: a test builds ordinary Langium services (no Bango engine) from each metamodel's composed grammar, registers the constraint modules through Langium's own registry, and checks that Langium reports exactly what Bango reports for every shipped instance.
+
 A metamodel's constraints apply to its own instances and to the instances of any **composite** metamodel that imports it (a grammar that imports `datamodel` and `gismodel` and mixes their rules in one document, say). If the file has a syntax error, or does not return an object of functions, the problem is reported on the metamodel (`<name>.constraints.js: ...`) and the other metamodels keep working.
 
 Example of a rule that crosses metamodels (`sensors`, which needs the data model and the GIS model):

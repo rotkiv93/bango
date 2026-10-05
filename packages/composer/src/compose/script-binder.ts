@@ -1,5 +1,5 @@
 import type { GrammarInfo } from '@bango/core';
-import type { ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
+import type { ConstraintModule, ConstraintSet, ImportFn, ScriptHelpers, SpecFn } from '../model/types.js';
 import { DEFAULT_HELPERS, compileConstraints, compileImport, compileSpec } from '../scripts/compile.js';
 import type { RenamePlan } from './collisions.js';
 import { report } from './grammar-workspace.js';
@@ -11,7 +11,7 @@ import { report } from './grammar-workspace.js';
  */
 export class ScriptBinder {
   private readonly helpers: ScriptHelpers;
-  private readonly compiled = new Map<string, ConstraintSet | undefined>();
+  private readonly compiled = new Map<string, ConstraintModule[] | undefined>();
 
   constructor(
     private readonly constraintTexts: Map<string, string>,
@@ -33,10 +33,10 @@ export class ScriptBinder {
   }
 
   /** The compiled constraints of one grammar file, if it has any (and they compile). */
-  constraintsFor(source: string): ConstraintSet | undefined {
+  constraintsFor(source: string): ConstraintModule[] | undefined {
     if (this.compiled.has(source)) return this.compiled.get(source);
     const code = this.constraintTexts.get(source);
-    let set: ConstraintSet | undefined;
+    let set: ConstraintModule[] | undefined;
     if (code?.trim()) {
       try { set = this.translate(source, compileConstraints(code, this.helpers)); } catch (e) {
         report(this.infos, source, 'error', `${source}.constraints.js: ${(e as Error).message}`);
@@ -67,14 +67,17 @@ export class ScriptBinder {
   }
 
   /** A constraint is written against the names its author knows: a key that names a renamed type means the renamed one. */
-  private translate(source: string, set: ConstraintSet): ConstraintSet {
-    if (!this.plan.renames.length) return set;
+  private translate(source: string, modules: ConstraintModule[]): ConstraintModule[] {
+    if (!this.plan.renames.length) return modules;
     const visible = [source, ...this.importsOf(source)];
-    const out: ConstraintSet = {};
-    for (const [key, fn] of Object.entries(set)) {
-      const declared = visible.flatMap(f => this.plan.declarations.get(f) ?? []).find(d => d.name === key);
-      out[(declared && this.plan.nodes.get(declared.node)) ?? key] = fn;
-    }
-    return out;
+    return modules.map(module => {
+      const checks: ConstraintSet = {};
+      for (const [key, fn] of Object.entries(module.checks)) {
+        const declared = visible.flatMap(f => this.plan.declarations.get(f) ?? []).find(d => d.name === key);
+        checks[(declared && this.plan.nodes.get(declared.node)) ?? key] = fn;
+      }
+      // the validator (`this`) and its category are untouched: only the names the checks are filed under change
+      return { ...module, checks };
+    });
   }
 }

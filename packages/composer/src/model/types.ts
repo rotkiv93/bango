@@ -40,8 +40,22 @@ export type ImportFn = (json: any) => ImportNode;
 export type SpecFn = (root: any) => unknown;
 
 export type ConstraintFn = (node: unknown, accept: unknown, cancel?: unknown) => void;
-/** What a `<metamodel>.constraints.js` returns: Langium validation checks keyed by AST type name. */
+/** Langium validation checks keyed by AST type name: what `ValidationRegistry.register` takes. */
 export type ConstraintSet = Record<string, ConstraintFn>;
+
+/** When Langium runs a check: `fast` on every edit, `slow` only when asked, `built-in` with the generated checks. */
+export type ValidationCategory = 'fast' | 'slow' | 'built-in';
+
+/**
+ * One validator, the way Langium registers it: `ValidationRegistry.register(checks, thisObj, category)`. A `<metamodel>.constraints.js`
+ * returns one of these, several in an array, a bare `checks` object, or a validator (class instance) that has a `checks` map.
+ */
+export interface ConstraintModule {
+  checks: ConstraintSet;
+  /** `this` inside the checks: the validator they belong to, so it can have helper methods */
+  thisObj?: object;
+  category?: ValidationCategory;
+}
 
 /** A metamodel compiled for use: its own grammar with every import inlined. */
 export interface ComposedMetamodel {
@@ -56,7 +70,7 @@ export interface ComposedMetamodel {
   /** the last version that compiled is being served because the current one has errors */
   stale: boolean;
   /** compiled constraint files of every source */
-  constraints: ConstraintSet[];
+  constraints: ConstraintModule[];
   /** the metamodel's own JSON mapping, when it has one */
   spec?: SpecFn;
   /** the inverse of the JSON mapping, when it has one */

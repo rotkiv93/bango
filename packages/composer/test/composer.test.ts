@@ -107,7 +107,7 @@ describe('ModelComposer', () => {
     const c = await composer.compose();
     const app = c.get('combo')!;
     expect(app.sources.sort()).toEqual(['combo', 'common', 'datamodel', 'gismodel']);
-    expect(app.constraints.flatMap(s => Object.keys(s)).sort()).toEqual(['Entity', 'GeoJsonLayer', 'MapDef', 'MapInLayerAndStyle', 'RelationshipField', 'StyleInterval']);
+    expect(app.constraints.flatMap(m => Object.keys(m.checks)).sort()).toEqual(['Entity', 'GeoJsonLayer', 'MapDef', 'MapInLayerAndStyle', 'RelationshipField', 'StyleInterval']);
   });
 
   it('bundleText yields one self-contained grammar that compiles on its own', async () => {

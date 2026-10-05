@@ -30,6 +30,11 @@ type Accept = (
   details?: { node?: AstNode; property?: string; index?: number; keyword?: string }
 ) => void;
 
+/** Langium's cancellation token: a long check can look at it. */
+interface CancellationToken { readonly isCancellationRequested: boolean }
+/** When Langium runs a check: \`fast\` on every edit, \`slow\` only when asked. */
+type ValidationCategory = 'fast' | 'slow' | 'built-in';
+
 interface Helpers {
   /** the name a reference points at: the target's name, or the text as written when it does not resolve */
   refName(ref: Ref<{ name?: string }> | undefined): string | undefined;
@@ -105,11 +110,14 @@ export function generateTypings(flat: Grammar | undefined, root?: string): strin
     ...interfaces.map(interfaceToString),
     ...unions.map(unionToString),
     '',
+    '/** A validator the way Langium registers it: its checks, when they run, and `this` inside them is the validator itself. */',
+    'interface ConstraintModule { checks: Constraints; category?: ValidationCategory; [member: string]: unknown }',
+    '',
     '/** The node types by name: what `n` takes. */',
     `interface Types {\n${interfaces.map(i => `  ${i.name}: ${i.name};`).join('\n')}\n}`,
     '',
-    '/** What `constraints.js` returns: validation checks keyed by AST type name. */',
-    `interface Constraints {\n${keyed.map(n => `  ${n}?(node: ${n}, accept: Accept): void;`).join('\n')}\n}`,
+    '/** What `constraints.js` returns: validation checks keyed by AST type name (or a `ConstraintModule`, or an array of them). */',
+    `interface Constraints {\n${keyed.map(n => `  ${n}?(node: ${n}, accept: Accept, cancelToken: CancellationToken): void;`).join('\n')}\n}`,
     '',
     '/** What the JSON mapping returns: a function of the instance root, or `{ root: true, map }` for the mapping that lays out the whole document. */',
     `type Spec = ((model: ${rootType}, helpers: Helpers) => unknown) | { root?: boolean; map(model: ${rootType}, helpers: Helpers): unknown };`,

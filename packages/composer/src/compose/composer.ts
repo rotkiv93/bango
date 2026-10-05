@@ -5,7 +5,7 @@ import { flatten } from '../grammar/flatten.js';
 import { generateTypings } from '../scripts/typings.js';
 import { nameOfDocument } from '../model/documents.js';
 import { wholeFile } from '../model/problems.js';
-import type { ComposedMetamodel, ConstraintSet } from '../model/types.js';
+import type { ComposedMetamodel } from '../model/types.js';
 import { planRenames, rewriteTexts, type RenamePlan } from './collisions.js';
 import { Composition } from './composition.js';
 import { buildWorkspace, copyInfos, filesOf, importsOf, report, type Build } from './grammar-workspace.js';
@@ -147,7 +147,7 @@ export class ModelComposer {
       const spec = scripts.specFor(name);
       usable.push({
         ...metamodel,
-        constraints: metamodel.sources.map(s => scripts.constraintsFor(s)).filter((c): c is ConstraintSet => !!c),
+        constraints: metamodel.sources.flatMap(s => scripts.constraintsFor(s) ?? []),
         spec: spec?.map,
         specRoot: spec?.root,
         importer: scripts.importFor(name)

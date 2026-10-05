@@ -32,8 +32,8 @@ export function createLanguages(composition: Composition): LanguageSet {
       parser: { ParserConfig: () => ({ skipValidations: false }) }
     });
     shared.ServiceRegistry.register(services);
-    // Langium's ValidationChecks are keyed by AST type name, exactly the shape of a constraint set
-    for (const set of metamodel.constraints) services.validation.ValidationRegistry.register(set as never);
+    // Langium's own registration: checks keyed by AST type name, the validator they run on, and when they run
+    for (const { checks, thisObj, category } of metamodel.constraints) services.validation.ValidationRegistry.register(checks as never, thisObj, category);
     languages.set(metamodel.name, { metamodel, services });
   }
   return { shared, languages };
