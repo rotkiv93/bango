@@ -1,5 +1,6 @@
 import { ModelComposer, type Composition, type CompositionInfo, type GrammarInfo, type SelectionCheck } from '@bango/composer';
 import { ModelEngine } from '../core/engine.js';
+import { SerialQueue } from '../core/serial-queue.js';
 import type {
   BangoApi,
   BuildResult,
@@ -26,11 +27,9 @@ export class Bango implements BangoApi {
   private composition?: Composition;
 
   /** Composer operations run one at a time and in call order, so overlapping `compose` calls cannot apply out of order. */
-  private chain: Promise<unknown> = Promise.resolve();
+  private queue = new SerialQueue();
   private run<T>(fn: () => Promise<T> | T): Promise<T> {
-    const result = this.chain.then(fn, fn);
-    this.chain = result.then(() => undefined, () => undefined);
-    return result;
+    return this.queue.run(fn);
   }
 
   setGrammar(name: string, text: string): Promise<void> {

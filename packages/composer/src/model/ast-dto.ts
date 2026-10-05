@@ -1,11 +1,8 @@
-import { AstUtils, isAstNode, isReference, type AstNode, type LangiumDocument, type Reference } from 'langium';
+import { AstUtils, isAstNode, isReference, type AstNode, type Reference } from 'langium';
 import type { AstDto, RefDto } from '@bango/core';
+import { nameOfDocument } from './documents.js';
 
 type Primitive = string | number | boolean | null;
-
-/** Instances live at `memory:/<metamodel>.<extension>`. */
-export const metamodelOfDocument = (doc: LangiumDocument) => metamodelOfPath(doc.uri.path);
-export const metamodelOfPath = (path: string) => decodeURIComponent(path.replace(/^\//, '')).replace(/\.[^.]+$/, '');
 
 function refToDto(ref: Reference): RefDto {
   let target: AstNode | undefined;
@@ -17,7 +14,7 @@ function refToDto(ref: Reference): RefDto {
     resolved: true,
     targetType: target.$type,
     targetName: typeof named === 'string' ? named : undefined,
-    targetMetamodel: metamodelOfDocument(AstUtils.getDocument(target))
+    targetMetamodel: nameOfDocument(AstUtils.getDocument(target))
   };
 }
 

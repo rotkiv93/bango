@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { problemsOf, type Problem } from '@bango/core';
 
 /** Segmented control: a row of mutually exclusive choices. */
 export function Segmented<T extends string>({ items, value, onChange, small }: {
@@ -23,7 +24,9 @@ export function Chip({ children, tone = 'plain', title }: { children: ReactNode;
 }
 
 /** The status of something with problems: ✓ when clean, otherwise error/warning counts. */
-export function Status({ errors, warnings = 0, none }: { errors: number; warnings?: number; none?: boolean }) {
+export function Status({ problems = [], none }: { problems?: Problem[]; none?: boolean }) {
+  const errors = problemsOf(problems, 'error').length;
+  const warnings = problemsOf(problems, 'warning').length;
   if (none) return <span className="status none" title="No instance yet">—</span>;
   if (errors) return <span className="status err" title={`${errors} error(s)`}>✖ {errors}</span>;
   if (warnings) return <span className="status warn" title={`${warnings} warning(s)`}>⚠ {warnings}</span>;
@@ -65,4 +68,3 @@ export function Dialog({ title, onClose, children, footer }: { title: string; on
   );
 }
 
-export const count = (ps: { severity: string }[], severity: string) => ps.filter(p => p.severity === severity).length;

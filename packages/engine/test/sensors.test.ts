@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errors, openProject } from '../../../test-support/harness.js';
-
-const warnings = (ps: { severity: string; message: string }[]) => ps.filter(p => p.severity === 'warning').map(p => p.message);
+import { errors, openProject, warnings } from '../../../test-support/harness.js';
 
 describe('sensors metamodel', () => {
   it('needs the data model and the map viewer, and says so when they are missing', async () => {

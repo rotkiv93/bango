@@ -1,16 +1,24 @@
 import type { AstReflection, Grammar } from 'langium';
 
-/** Helpers handed to a JSON mapping. */
-export interface SpecHelpers {
+/**
+ * What user code (constraints, JSON mappings) can call without importing anything: free variables of the script, and
+ * the second argument of a JSON mapping.
+ */
+export interface ScriptHelpers {
   /** the name a reference points at (the target's name, or the written text when it does not resolve) */
   refName(ref: unknown): string | undefined;
+  /**
+   * The name of a node's type as the metamodel's author wrote it: the same as `node.$type` unless the composer had to
+   * rename the type because another metamodel of the project declares one with the same name.
+   */
+  typeName(node: unknown): string | undefined;
 }
 
 /**
  * The JSON mapping of a metamodel: turns the root of an instance into the plain JSON it contributes to the
  * project's specification. Written in `<metamodel>.spec.js`.
  */
-export type SpecFn = (root: any, helpers: SpecHelpers) => unknown;
+export type SpecFn = (root: any) => unknown;
 
 export type ConstraintFn = (node: unknown, accept: unknown, cancel?: unknown) => void;
 /** What a `<metamodel>.constraints.js` returns: Langium validation checks keyed by AST type name. */

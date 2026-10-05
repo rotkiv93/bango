@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { SelectionCheck } from '@bango/core';
+import { problemsOf, type SelectionCheck } from '@bango/core';
 import { useWorkspace } from './store.js';
 import { Banner, Chip } from './ui.js';
 
@@ -12,7 +12,7 @@ export function MetamodelPicker({ selected, onChange }: { selected: string[]; on
     <div className="mm-grid" role="group" aria-label="Metamodels">
       {catalog.map(g => {
         const on = selected.includes(g.name);
-        const errors = g.problems.filter(p => p.severity === 'error').length;
+        const errors = problemsOf(g.problems, 'error').length;
         const missing = g.requires.filter(r => !selected.includes(r));
         return (
           <label key={g.name} className={`mm-card${on ? ' on' : ''}${on && missing.length ? ' blocked' : ''}`}>

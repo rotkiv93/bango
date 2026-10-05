@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@bango/composer": "^0.1.0",
     "@bango/core": "^0.1.0",
     "@bango/engine": "^0.1.0",
     "@bango/renderer": "^0.1.0",

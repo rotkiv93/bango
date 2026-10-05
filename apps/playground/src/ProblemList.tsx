@@ -1,4 +1,4 @@
-import type { Problem } from '@bango/core';
+import { problemsOf, type Problem } from '@bango/core';
 import { useState } from 'react';
 import { useWorkspace } from './store.js';
 
@@ -6,8 +6,8 @@ import { useWorkspace } from './store.js';
 export function ProblemList({ problems, metamodel }: { problems: Problem[]; metamodel?: string }) {
   const reveal = useWorkspace(s => s.revealInText);
   const [open, setOpen] = useState(true);
-  const errors = problems.filter(p => p.severity === 'error').length;
-  const warnings = problems.filter(p => p.severity === 'warning').length;
+  const errors = problemsOf(problems, 'error').length;
+  const warnings = problemsOf(problems, 'warning').length;
 
   if (!problems.length) return <div className="problems ok">✓ No problems</div>;
   return (

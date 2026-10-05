@@ -84,19 +84,19 @@ interface SelectionCheck {
 | | |
 |---|---|
 | `toAstDto(node)` | any Langium AST as a plain tree (`AstDto`): `{ type, name?, range?, props, refs, children }` |
-| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. `helpers.typeName` is what scripts call as `typeName(node)` |
-| `planRenames`, `rewriteTexts`, `declarationsOf` | the pieces behind the type name renaming |
-| `flatten(grammar, documents)`, `bundleText(flat)`, `hasEntryRule(grammar)` | the grammar utilities behind `compose` |
+| `compileConstraints(code, helpers?)`, `compileSpec(code, helpers?)` | what the composer uses to compile user code. Scripts see `typeName(node)` and `refName(ref)` (`ScriptHelpers`); a compiled mapping takes just the root node |
 | `CompositeAstReflection` | merges the reflections of several metamodels |
-| `toProblem`, `wholeFile`, `metamodelOfDocument`, `metamodelOfPath` | small conversions shared with the engine |
+| `toProblem`, `wholeFile` | LSP diagnostic -> `Problem`; a problem about a whole document |
+| `documentUri`, `nameOfDocument`, `nameOfPath`, `nameOfUri` | every document lives at `memory:/<name>.<extension>`: these build and read that shape |
 
 ## Source layout
 
 ```
-src/compose/   ModelComposer, Composition, type-name clash planning and rewriting
+src/compose/   ModelComposer (orchestration), Composition; grammar-workspace (parse and validate the grammars), requirements,
+               script-binder (compile scripts for one composition), collisions (type-name clash planning and rewriting)
 src/grammar/   import inlining, merged reflection, self-contained grammar text
 src/scripts/   compiles constraints and JSON mappings
-src/model/     shared types, AST -> plain tree, problems
+src/model/     Langium-bound types, AST -> plain tree, problems, document names
 ```
 
 See [Architecture](../../docs/architecture.md) for how the composer fits with the engine and renderer.

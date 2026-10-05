@@ -3,7 +3,7 @@ import { CodeEditorView } from './CodeEditorView.js';
 import { GrammarAst } from './GrammarAst.js';
 import { ProblemList } from './ProblemList.js';
 import { bango, useWorkspace, type MetamodelView } from './store.js';
-import { Chip, Dialog, EmptyState, Segmented, Status, count } from './ui.js';
+import { Chip, Dialog, EmptyState, Segmented, Status } from './ui.js';
 
 function NewMetamodelDialog({ onClose }: { onClose(): void }) {
   const addGrammar = useWorkspace(s => s.addGrammar);
@@ -72,7 +72,7 @@ export function MetamodelsPage() {
                 <div className="mm-title">
                   <strong>{n}</strong>
                   {g?.extension ? <Chip>.{g.extension}</Chip> : <Chip tone="plain">library</Chip>}
-                  <Status errors={g ? count(g.problems, 'error') : 0} warnings={g ? count(g.problems, 'warning') : 0} />
+                  <Status problems={g?.problems} />
                 </div>
                 <div className="mm-desc">{g?.description ?? ''}</div>
                 {g && g.requires.length > 0 && <div className="mm-needs">needs {g.requires.join(', ')}</div>}

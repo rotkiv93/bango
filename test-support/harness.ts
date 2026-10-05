@@ -1,8 +1,21 @@
+import { ModelComposer } from '@bango/composer';
+import { messagesOf, type Problem } from '@bango/core';
 import { Bango } from '@bango/engine';
 import { loadSeed, type Seed, type SeedProject } from './seed.js';
 
-export const errors = (ps: { severity: string; message: string }[]) =>
-  ps.filter(p => p.severity === 'error').map(p => p.message);
+/** The messages of the problems of one severity. */
+export const errors = (ps: Problem[]) => messagesOf(ps, 'error');
+export const warnings = (ps: Problem[]) => messagesOf(ps, 'warning');
+export const infos = (ps: Problem[]) => messagesOf(ps, 'info');
+
+/** A composer with every seed grammar and constraint loaded, plus `extra` grammars. */
+export function composerWith(extra: Record<string, string> = {}) {
+  const seed = loadSeed();
+  const composer = new ModelComposer();
+  for (const [name, text] of Object.entries({ ...seed.grammars, ...extra })) composer.setGrammar(name, text);
+  for (const [name, code] of Object.entries(seed.constraints)) composer.setConstraints(name, code);
+  return { composer, seed };
+}
 
 export interface Opened {
   bango: Bango;

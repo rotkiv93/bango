@@ -1,5 +1,5 @@
 /** A project picks the metamodels it uses and owns one instance (text) per metamodel. */
-export interface Project {
+interface Project {
   name: string;
   /** metamodel (grammar) names */
   metamodels: string[];

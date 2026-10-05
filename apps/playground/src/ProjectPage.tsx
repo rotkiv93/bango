@@ -5,7 +5,7 @@ import { InstanceView } from './InstanceView.js';
 import { MetamodelPicker, SelectionVerdict, useSelectionCheck } from './MetamodelPicker.js';
 import { ProblemList } from './ProblemList.js';
 import { useWorkspace, type OverviewView } from './store.js';
-import { Banner, Chip, Dialog, EmptyState, Segmented, Status, count } from './ui.js';
+import { Banner, Chip, Dialog, EmptyState, Segmented, Status } from './ui.js';
 
 const VIEWS: { value: ViewKind; label: string; title: string }[] = [
   { value: 'text', label: 'Text', title: 'Write the instance in its own syntax' },
@@ -89,7 +89,7 @@ function Overview() {
           const g = grammar(m);
           return (
             <article key={m} className="card" onClick={() => s.selectTab(m)}>
-              <div className="card-head"><h3>{m}</h3><Status none={!inst} errors={inst ? count(inst.problems, 'error') : 0} warnings={inst ? count(inst.problems, 'warning') : 0} /></div>
+              <div className="card-head"><h3>{m}</h3><Status none={!inst} problems={inst?.problems} /></div>
               <p className="muted">{g?.description ?? ''}</p>
               <div className="card-foot">
                 {inst
@@ -163,7 +163,7 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
       <div className="toolbar">
         <div className="title">
           <h2>{metamodel}</h2>
-          <Status errors={count(inst.problems, 'error')} warnings={count(inst.problems, 'warning')} />
+          <Status problems={inst.problems} />
           {inst.stale && <Chip tone="warn">stale</Chip>}
           {!inst.available && <Chip tone="err">not available</Chip>}
         </div>
@@ -229,7 +229,7 @@ export function ProjectPage() {
           const inst = s.instances.find(i => i.metamodel === m);
           return (
             <button key={m} role="tab" aria-selected={s.activeTab === m} className={s.activeTab === m ? 'on' : ''} onClick={() => s.selectTab(m)}>
-              {m} <Status none={!inst} errors={inst ? count(inst.problems, 'error') : 0} warnings={inst ? count(inst.problems, 'warning') : 0} />
+              {m} <Status none={!inst} problems={inst?.problems} />
             </button>
           );
         })}

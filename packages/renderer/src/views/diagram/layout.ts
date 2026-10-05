@@ -3,7 +3,8 @@ import type { Graph } from './graph.js';
 export const NODE_W = 170;
 export const NODE_H = 48;
 
-export type Positions = Map<string, { x: number; y: number }>;
+export type Point = { x: number; y: number };
+export type Positions = Map<string, Point>;
 export type LayoutFn = (graph: Graph) => Promise<Positions>;
 
 /**

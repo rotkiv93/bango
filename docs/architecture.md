@@ -73,11 +73,11 @@ packages/core/src/       types.ts   plain data types     json.ts   JSON spec and
                          client.ts  connectBango         bundle/   self-contained client (no Langium)
 packages/composer/src/   compose/   ModelComposer, Composition
                          grammar/   import inlining, merged reflection, self-contained grammar text
-                         scripts/   compiles the user's constraints and JSON mappings
+                         scripts/   compiles the user's constraints and JSON mappings (compose/ binds them to a selection)
                          model/     Langium-bound types, AST -> plain tree, problems
-packages/engine/src/     core/      ModelEngine: documents, languages, editor features, build
+packages/engine/src/     core/      ModelEngine over InstanceStore, json-views, serial-queue, event-bus; languages, features, build
                          facade/    Bango: composer + engine behind one API
-                         forms/     form schema, printer, text edits
+                         editing/   form schema, printer, text edits
                          worker/    serveBango                     bundle/   self-contained browser build
 packages/renderer/src/   host/      ModelRenderer, view registry, <bango-instance>
                          views/     text (Monaco), form, diagram, ast, json

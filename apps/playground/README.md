@@ -33,11 +33,11 @@ Also: light and dark themes, and **Reset examples** to restore what ships with t
 | File | |
 |---|---|
 | `src/bango.worker.ts` | `serveBango()`: Langium runs here, off the UI thread |
-| `src/store.ts` | the app state (zustand). Talks to the worker with `connectBango` (`@bango/core/client`), mirrors the engine's instances for saving, persists the workspace to IndexedDB |
+| `src/store.ts`, `src/state/` | the app state (zustand), in two slices: `ui-slice` (pages, tabs, views, theme, toasts) and `workspace-slice` (projects, metamodels and their scripts, the engine's answers). `state/bango.ts` talks to the worker with `connectBango` (`@bango/core/client`); `state/persistence.ts` saves to IndexedDB |
 | `src/InstanceView.tsx` | mounts a library `ModelRenderer` in an element: this is the whole integration of the views |
 | `src/CodeEditorView.tsx` | the library's `CodeEditor` for grammars, constraints and mappings |
 | `src/monaco.ts`, `src/monaco-features.ts` | Monaco setup: its worker, and just the editor features it needs |
-| `src/seed.ts` | loads `examples/seed` into the first workspace |
+| `src/seed.ts` | loads `examples/seed` into the first workspace (the folder layout is parsed by `examples/seed/parse.ts`, shared with the tests) |
 | `src/ProjectsPage.tsx`, `ProjectPage.tsx`, `MetamodelsPage.tsx` | the three pages |
 | `src/MetamodelPicker.tsx` | metamodel cards and the composer's verdict on a selection |
 

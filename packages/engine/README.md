@@ -152,9 +152,9 @@ The composer and the engine run together inside the worker; only plain data cros
 ## Source layout
 
 ```
-src/core/     ModelEngine: documents, languages, editor features, build
+src/core/     ModelEngine (the façade) over InstanceStore (texts, documents, state), json-views, serial-queue, event-bus; languages, editor features, build
 src/facade/   Bango
-src/forms/    form schema, printer, text edits
+src/editing/  form schema, printer, text edits
 src/worker/   serveBango
 src/bundle/   entries of the self-contained browser build
 ```

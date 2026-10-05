@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Bango } from '../src/index.js';
 import { OTHER_GRAMMAR, OTHER_INSTANCE } from '../../../test-support/clash.js';
-import { errors, openProject } from '../../../test-support/harness.js';
+import { errors, openProject, warnings } from '../../../test-support/harness.js';
 
 /** The city project (datamodel + gismodel) plus a metamodel that also calls its things Entity. */
 async function withOther(extraConstraints?: string, spec?: string) {
@@ -57,8 +57,8 @@ describe('instances of metamodels whose type names clash', () => {
   it('constraints written against the original name apply to the renamed type only', async () => {
     const constraints = `return { Entity(node, accept) { accept('warning', 'checked a ' + typeName(node), { node, property: 'name' }); } };`;
     const { bango } = await withOther(constraints);
-    const warnings = (await bango.getInstance('other')).problems.filter(p => p.severity === 'warning').map(p => p.message);
-    expect(warnings).toEqual(['checked a Entity', 'checked a Entity']);
+    const found = warnings((await bango.getInstance('other')).problems);
+    expect(found).toEqual(['checked a Entity', 'checked a Entity']);
     // the data model's own Entity is not touched by the constraints of `other`
     expect((await bango.getInstance('datamodel')).problems.filter(p => p.message.startsWith('checked'))).toEqual([]);
   });

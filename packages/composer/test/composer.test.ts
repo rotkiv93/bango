@@ -1,17 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ModelComposer } from '../src/index.js';
 import { COMBO_GRAMMAR } from '../../../test-support/combo.js';
-import { loadSeed } from '../../../test-support/seed.js';
-
-const errors = (ps: { severity: string; message: string }[]) => ps.filter(p => p.severity === 'error').map(p => p.message);
-
-function composerWith(overrides: Record<string, string> = {}) {
-  const seed = loadSeed();
-  const composer = new ModelComposer();
-  for (const [name, text] of Object.entries({ ...seed.grammars, ...overrides })) composer.setGrammar(name, text);
-  for (const [name, code] of Object.entries(seed.constraints)) composer.setConstraints(name, code);
-  return { composer, seed };
-}
+import { composerWith, errors } from '../../../test-support/harness.js';
 
 describe('ModelComposer', () => {
   it('compiles the seed grammars; libraries are not metamodels', async () => {

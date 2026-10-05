@@ -1,18 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ModelComposer } from '../src/index.js';
+import type { Problem } from '@bango/core';
 import { OTHER_GRAMMAR, SHARED_A, SHARED_B, USES_GRAMMAR } from '../../../test-support/clash.js';
-import { loadSeed } from '../../../test-support/seed.js';
+import { composerWith, infos as infoMessages } from '../../../test-support/harness.js';
 
-function composerWith(extra: Record<string, string> = {}) {
-  const seed = loadSeed();
-  const composer = new ModelComposer();
-  for (const [name, text] of Object.entries({ ...seed.grammars, ...extra })) composer.setGrammar(name, text);
-  for (const [name, code] of Object.entries(seed.constraints)) composer.setConstraints(name, code);
-  return { composer, seed };
-}
-
-const infos = (c: { grammars: { name: string; problems: { severity: string; message: string }[] }[] }, name: string) =>
-  c.grammars.find(g => g.name === name)!.problems.filter(p => p.severity === 'info').map(p => p.message);
+const infos = (c: { grammars: { name: string; problems: Problem[] }[] }, name: string) =>
+  infoMessages(c.grammars.find(g => g.name === name)!.problems);
 const typeNames = (g: { rules: { $type: string; name?: string }[] }) => g.rules.filter(r => r.$type === 'ParserRule').map(r => r.name);
 
 describe('type name clashes between metamodels', () => {

@@ -2,7 +2,7 @@ import { AstUtils, GrammarAST, GrammarUtils, type AstNode, type Grammar, type La
 import type { TypeRename } from '@bango/core';
 
 /** A declaration of an AST type in a grammar: a parser rule, an `infers` name, an `interface` or a `type`. */
-export interface Declaration {
+interface Declaration {
   file: string;
   name: string;
   node: AstNode;
@@ -20,7 +20,7 @@ export interface RenamePlan {
  * The AST types a grammar declares. Rules that `return` another type, data type rules, fragments and terminals
  * declare none: they do not appear in the shared index or in the merged reflection.
  */
-export function declarationsOf(file: string, grammar: Grammar): Declaration[] {
+function declarationsOf(file: string, grammar: Grammar): Declaration[] {
   const out: Declaration[] = [];
   for (const rule of grammar.rules) {
     if (!GrammarAST.isParserRule(rule) || rule.fragment || rule.dataType || rule.returnType) continue;

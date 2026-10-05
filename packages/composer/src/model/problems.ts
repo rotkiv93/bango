@@ -1,5 +1,5 @@
 import type { LangiumDocument } from 'langium';
-import type { Problem } from '@bango/core';
+import { toRange0, type Problem } from '@bango/core';
 
 type LspDiagnostic = NonNullable<LangiumDocument['diagnostics']>[number];
 
@@ -11,10 +11,7 @@ export function toProblem(d: LspDiagnostic): Problem {
   return {
     severity: SEVERITY[d.severity ?? 1] ?? 'error',
     message: typeof message === 'string' ? message : (message as { value: string }).value,
-    startLine: d.range.start.line,
-    startColumn: d.range.start.character,
-    endLine: d.range.end.line,
-    endColumn: d.range.end.character
+    ...toRange0(d.range)
   };
 }
 
