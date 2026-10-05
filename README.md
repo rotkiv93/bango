@@ -9,7 +9,7 @@ An instance turns into JSON, and the pieces of all the metamodels of a project m
 ```bash
 npm install
 npm run dev        # the playground
-npm test           # 170+ tests: composer, engine (also across a worker boundary), renderers
+npm test           # 250+ tests: composer, engine (also across a worker boundary), renderers
 ```
 
 ## In code
