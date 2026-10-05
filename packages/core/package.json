@@ -1,7 +1,7 @@
 {
-  "name": "@bango/engine",
+  "name": "@bango/core",
   "version": "0.1.0",
-  "description": "Parses, validates and edits one instance per metamodel; runs in a page or in a worker",
+  "description": "The plain data types, JSON helpers and worker client shared by every Bango package (no Langium)",
   "type": "module",
   "sideEffects": false,
   "files": [
@@ -14,20 +14,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./worker": {
-      "types": "./dist/worker/index.d.ts",
-      "import": "./dist/worker.js"
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
     },
-    "./bundle": "./dist/bundle/bango.js",
-    "./bundle/worker": "./dist/bundle/bango.worker.js"
+    "./bundle/client": "./dist/bundle/client.js"
   },
   "dependencies": {
-    "@bango/composer": "^0.1.0",
-    "@bango/core": "^0.1.0",
     "comlink": "^4.4.2"
-  },
-  "peerDependencies": {
-    "langium": "^4.4.0"
   },
   "scripts": {
     "build": "vite build && vite build -c vite.bundle.config.ts && tsc -p tsconfig.build.json",

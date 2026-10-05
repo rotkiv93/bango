@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { SelectionCheck } from '@bango/engine';
+import type { SelectionCheck } from '@bango/core';
 import { useWorkspace } from './store.js';
 import { Banner, Chip } from './ui.js';
 

@@ -10,7 +10,8 @@ import { planRenames, rewriteTexts, type RenamePlan } from './collisions.js';
 import { Composition } from './composition.js';
 import { flatten, hasEntryRule } from '../grammar/flatten.js';
 import { toProblem, wholeFile } from '../model/problems.js';
-import type { ComposedMetamodel, CompositionProblem, ConstraintSet, GrammarInfo, SelectionCheck, SpecFn } from '../model/types.js';
+import type { CompositionProblem, GrammarInfo, SelectionCheck } from '@bango/core';
+import type { ComposedMetamodel, ConstraintSet, SpecFn } from '../model/types.js';
 
 interface Build {
   docs: Map<string, LangiumDocument<Grammar>>;

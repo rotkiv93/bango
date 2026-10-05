@@ -3,7 +3,7 @@ export { Bango } from './facade/bango.js';
 export { toAstDto } from '@bango/composer';
 export { buildFormSchema, indexRules } from './forms/schema.js';
 export { Printer } from './forms/printer.js';
-export { toJsonSpec, mergeJson } from './json/json-spec.js';
+export { toJsonSpec, mergeJson } from '@bango/core';
 export { applyEditToText, type EditContext } from './forms/edits.js';
 export type {
   AstDto,

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Range0 } from '@bango/engine';
+import type { Range0 } from '@bango/core';
 import {
   DiagramRenderer, ModelRenderer, buildGraph, defineBangoElements, layeredLayout, registerRenderer, registeredViews
 } from '../src/index.js';

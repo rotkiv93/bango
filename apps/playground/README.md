@@ -1,6 +1,6 @@
 # The playground
 
-A web app to work with metamodels and projects, built on the three packages. It runs **entirely in the browser** (Langium in a web worker, work saved in IndexedDB), so it deploys as a static site: see [Deploying to GitHub Pages](../../docs/deploy-github-pages.md).
+A web app to work with metamodels and projects, built on the library packages. It runs **entirely in the browser** (Langium in a web worker, work saved in IndexedDB), so it deploys as a static site: see [Deploying to GitHub Pages](../../docs/deploy-github-pages.md).
 
 ```bash
 npm run dev           # from the repository root: development server with hot reload
@@ -33,7 +33,7 @@ Also: light and dark themes, and **Reset examples** to restore what ships with t
 | File | |
 |---|---|
 | `src/bango.worker.ts` | `serveBango()`: Langium runs here, off the UI thread |
-| `src/store.ts` | the app state (zustand). Talks to the worker with `connectBango`, mirrors the engine's instances for saving, persists the workspace to IndexedDB |
+| `src/store.ts` | the app state (zustand). Talks to the worker with `connectBango` (`@bango/core/client`), mirrors the engine's instances for saving, persists the workspace to IndexedDB |
 | `src/InstanceView.tsx` | mounts a library `ModelRenderer` in an element: this is the whole integration of the views |
 | `src/CodeEditorView.tsx` | the library's `CodeEditor` for grammars, constraints and mappings |
 | `src/monaco.ts`, `src/monaco-features.ts` | Monaco setup: its worker, and just the editor features it needs |

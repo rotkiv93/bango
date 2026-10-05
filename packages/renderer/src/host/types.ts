@@ -1,4 +1,4 @@
-import type { EngineApi, InstanceState, Range0 } from '@bango/engine';
+import type { EngineApi, InstanceState, Range0 } from '@bango/core';
 
 /** Built-in views are `text`, `form`, `diagram`, `ast`, `json` and the project-wide `project-ast` and `project-json`; anything registered with `registerRenderer` works too. */
 export type ViewKind = 'text' | 'form' | 'diagram' | 'ast' | 'project-ast' | (string & {});

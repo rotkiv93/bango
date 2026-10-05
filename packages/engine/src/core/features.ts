@@ -1,5 +1,5 @@
 import type { LangiumDocument } from 'langium';
-import type { CompletionDto, DefinitionDto, Range0 } from '../types.js';
+import type { CompletionDto, DefinitionDto, Range0 } from '@bango/core';
 import type { Language } from './languages.js';
 import { metamodelOfPath } from '@bango/composer';
 

@@ -7,8 +7,9 @@
 | [The JSON specification](json-spec.md) | understand the JSON an instance, and a whole project, turns into |
 | [Deploying to GitHub Pages](deploy-github-pages.md) | publish the playground as a static site |
 
-The three modules each have their own reference:
+The three modules (and the small package they share) each have their own reference:
 
+- [`@bango/core`](../packages/core/README.md): the plain data types, JSON helpers and the worker client
 - [`@bango/composer`](../packages/composer/README.md): composes grammars into languages and checks that a selection fits together
 - [`@bango/engine`](../packages/engine/README.md): parses, validates and edits instances; builds the final model
 - [`@bango/renderer`](../packages/renderer/README.md): text, form, diagram, AST and JSON views of an instance

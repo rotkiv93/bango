@@ -1,5 +1,5 @@
 import type * as Monaco from 'monaco-editor/editor/editor.api';
-import type { Problem, Range0 } from '@bango/engine';
+import type { Problem, Range0 } from '@bango/core';
 import { javascriptMonarch, langiumMonarch, languageConfiguration } from './monarch.js';
 
 type MonacoApi = typeof Monaco;

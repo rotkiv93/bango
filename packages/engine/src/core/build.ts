@@ -1,6 +1,6 @@
 import type { Composition } from '@bango/composer';
-import { toJsonSpec } from '../json/json-spec.js';
-import type { BuildResult, InstanceState, JsonValue } from '../types.js';
+import { toJsonSpec } from '@bango/core';
+import type { BuildResult, InstanceState, JsonValue } from '@bango/core';
 
 /**
  * The final model of a project. It only succeeds when the metamodel selection is complete (every requirement

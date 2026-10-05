@@ -32,7 +32,7 @@
   <!-- Monaco (AMD build, served locally) provides the text view; the library only needs its namespace -->
   <script src="../../node_modules/monaco-editor/min/vs/loader.js"></script>
   <script type="module">
-    import { connectBango } from '../../packages/engine/dist/bundle/bango.js';
+    import { connectBango } from '../../packages/core/dist/bundle/client.js';
     import { defineBangoElements, registerTextRenderer } from '../../packages/renderer/dist/bundle/renderer.js';
 
     const out = document.getElementById('out');

@@ -7,6 +7,8 @@ const pkg = (p: string) => fileURLToPath(new URL(`./packages/${p}`, import.meta.
 export default defineConfig({
   resolve: {
     alias: [
+      { find: '@bango/core/client', replacement: pkg('core/src/client.ts') },
+      { find: '@bango/core', replacement: pkg('core/src/index.ts') },
       { find: '@bango/composer', replacement: pkg('composer/src/index.ts') },
       { find: '@bango/engine/worker', replacement: pkg('engine/src/worker/index.ts') },
       { find: '@bango/engine', replacement: pkg('engine/src/index.ts') },

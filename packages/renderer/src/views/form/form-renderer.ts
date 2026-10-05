@@ -1,4 +1,4 @@
-import type { AstDto, EditOp, FieldSchema, FormSchema, InstanceState, PathStep, RefCandidate, RefDto } from '@bango/engine';
+import type { AstDto, EditOp, FieldSchema, FormSchema, InstanceState, PathStep, RefCandidate, RefDto } from '@bango/core';
 import { asArray, clear, h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error the adapter ships as a separate ESM file without a package export entry
 import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mjs';
 import type { EngineEvent } from '../src/index.js';
-import { connectBango, serveBango } from '../src/worker/index.js';
+import { connectBango } from '@bango/core/client';
+import { serveBango } from '../src/worker/index.js';
 import { errors } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 

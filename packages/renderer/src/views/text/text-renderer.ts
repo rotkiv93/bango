@@ -1,5 +1,5 @@
 import type * as Monaco from 'monaco-editor/editor/editor.api';
-import type { EngineApi, InstanceState, Range0 } from '@bango/engine';
+import type { EngineApi, InstanceState, Range0 } from '@bango/core';
 import { h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 import { CodeEditor, ensureLanguage } from './code-editor.js';

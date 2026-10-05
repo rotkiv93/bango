@@ -6,20 +6,8 @@ export { planRenames, rewriteTexts, declarationsOf } from './compose/collisions.
 export { toAstDto, metamodelOfDocument, metamodelOfPath } from './model/ast-dto.js';
 export { toProblem, wholeFile } from './model/problems.js';
 export { flatten, bundleText, hasEntryRule } from './grammar/flatten.js';
+export type { ComposedMetamodel, ConstraintFn, ConstraintSet, SpecFn, SpecHelpers } from './model/types.js';
+// the plain data types live in @bango/core; re-exported so composer users need only this package
 export type {
-  AstDto,
-  RefDto,
-  Range0,
-  ComposedMetamodel,
-  CompositionInfo,
-  CompositionProblem,
-  ConstraintFn,
-  ConstraintSet,
-  SpecFn,
-  TypeRename,
-  SpecHelpers,
-  GrammarInfo,
-  SelectionCheck,
-  LanguageInfo,
-  Problem
-} from './model/types.js';
+  AstDto, CompositionInfo, CompositionProblem, GrammarInfo, LanguageInfo, Problem, Range0, RefDto, SelectionCheck, TypeRename
+} from '@bango/core';

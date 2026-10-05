@@ -1,6 +1,6 @@
 import { GrammarUtils, type AstNode, type AstReflection, type Grammar, type LangiumDocument } from 'langium';
 import { toAstDto } from '@bango/composer';
-import type { AstDto, EditOp, FormSchema, PathStep, RefCandidate, RefDto } from '../types.js';
+import type { AstDto, EditOp, FormSchema, PathStep, RefCandidate, RefDto } from '@bango/core';
 import { Printer } from './printer.js';
 import { buildFormSchema, indexRules } from './schema.js';
 

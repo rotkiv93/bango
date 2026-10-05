@@ -2,7 +2,7 @@ import { URI, type LangiumDocument } from 'langium';
 import type { LangiumSharedServices } from 'langium/lsp';
 import { metamodelOfPath, toAstDto, toProblem, wholeFile, type Composition, type CompositionInfo } from '@bango/composer';
 import { buildModel } from './build.js';
-import { mergeJson, toJsonSpec } from '../json/json-spec.js';
+import { mergeJson, toJsonSpec } from '@bango/core';
 import * as features from './features.js';
 import { applyEditToText, defaultDto } from '../forms/edits.js';
 import { Printer } from '../forms/printer.js';
@@ -21,7 +21,7 @@ import type {
   JsonValue,
   RefCandidate,
   Unsubscribe
-} from '../types.js';
+} from '@bango/core';
 
 /**
  * Parses, links, validates and edits the instances of a composition: one document per metamodel,

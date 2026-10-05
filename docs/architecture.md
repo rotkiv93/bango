@@ -1,6 +1,6 @@
 # Architecture
 
-Bango has two levels, and three modules that connect them.
+Bango has two levels, and three modules that connect them, on top of one small package of shared data.
 
 - **Metamodels**: what can be said. A metamodel is a [Langium](https://langium.org) grammar: `datamodel` says what an entity is, `gismodel` what a layer is. Metamodels can refer to each other: a map layer must show a data-model entity.
 - **Instances**: what is said. A project chooses metamodels and holds one instance (a text) of each. Instances are checked against their metamodel *and against each other*.
@@ -13,15 +13,16 @@ Bango has two levels, and three modules that connect them.
                                                       toJson()
 ```
 
-## The three modules
+## The three modules (and `core`)
 
 | | Knows about | Does not know about |
 |---|---|---|
+| **core** | plain data: DTOs, the JSON spec helpers, the worker client | Langium, grammars, the DOM |
 | **composer** | grammars, imports, constraints, JSON mappings | instances, editors, the DOM |
 | **engine** | one `Composition`; instance texts; Langium documents | how anything is drawn |
 | **renderer** | the engine's *plain-data* API | Langium (it never imports it) |
 
-Each only depends on the one before it. The renderer depends on the engine **as types only**, so it works unchanged against an engine in the same page or one in a web worker.
+Everything depends on `core`; beyond that each only depends on the one before it. The renderer depends on `core` **as types only**, so it works unchanged against an engine in the same page or one in a web worker, and a page that only talks to a worker loads no Langium.
 
 ### Composer: from grammars to languages
 
@@ -55,7 +56,7 @@ A renderer is a small object (`mount`, `update`, `reveal`, `dispose`) that reads
 
 ## Worker boundary
 
-Langium is heavy, so it can run off the UI thread. Langium objects cannot cross a worker boundary, so the **composer and the engine run together** in the worker (`Bango` is the pair behind one object) and everything that crosses is plain data: `CompositionInfo`, `InstanceState`, `AstDto`, JSON. `serveBango()` exposes a `Bango` from a worker; `connectBango(worker)` returns an object with the same async API. The engine's methods are all async for exactly this reason, so a renderer cannot tell the two apart.
+Langium is heavy, so it can run off the UI thread. Langium objects cannot cross a worker boundary, so the **composer and the engine run together** in the worker (`Bango` is the pair behind one object) and everything that crosses is plain data: `CompositionInfo`, `InstanceState`, `AstDto`, JSON. `serveBango()` (`@bango/engine/worker`, runs in the worker) exposes a `Bango`; `connectBango(worker)` (`@bango/core/client`, runs in the page) returns an object with the same async API. The engine's methods are all async for exactly this reason, so a renderer cannot tell the two apart.
 
 ## Decisions and trade-offs
 
@@ -68,15 +69,16 @@ Langium is heavy, so it can run off the UI thread. Langium objects cannot cross 
 ## Source layout
 
 ```
+packages/core/src/       types.ts   plain data types     json.ts   JSON spec and merging
+                         client.ts  connectBango         bundle/   self-contained client (no Langium)
 packages/composer/src/   compose/   ModelComposer, Composition
                          grammar/   import inlining, merged reflection, self-contained grammar text
                          scripts/   compiles the user's constraints and JSON mappings
-                         model/     shared types, AST -> plain tree, problems
+                         model/     Langium-bound types, AST -> plain tree, problems
 packages/engine/src/     core/      ModelEngine: documents, languages, editor features, build
                          facade/    Bango: composer + engine behind one API
                          forms/     form schema, printer, text edits
-                         json/      JSON spec and merging
-                         worker/    serveBango / connectBango      bundle/   self-contained browser build
+                         worker/    serveBango                     bundle/   self-contained browser build
 packages/renderer/src/   host/      ModelRenderer, view registry, <bango-instance>
                          views/     text (Monaco), form, diagram, ast, json
                          dom/       DOM helpers and the default stylesheet      bundle/   self-contained browser build

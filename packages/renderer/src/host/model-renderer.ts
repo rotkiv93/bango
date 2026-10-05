@@ -1,4 +1,4 @@
-import type { EngineApi, Range0 } from '@bango/engine';
+import type { EngineApi, Range0 } from '@bango/core';
 import { clear, h } from '../dom/dom.js';
 import { getRenderer } from './registry.js';
 import { injectStyles } from '../dom/styles.js';

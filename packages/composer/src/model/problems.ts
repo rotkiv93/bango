@@ -1,5 +1,5 @@
 import type { LangiumDocument } from 'langium';
-import type { Problem } from './types.js';
+import type { Problem } from '@bango/core';
 
 type LspDiagnostic = NonNullable<LangiumDocument['diagnostics']>[number];
 

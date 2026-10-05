@@ -1,4 +1,4 @@
-import type { InstanceState, JsonSpecOptions, JsonValue } from '@bango/engine';
+import type { InstanceState, JsonSpecOptions, JsonValue } from '@bango/core';
 import { clear, h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 

@@ -2,7 +2,8 @@ import { AstUtils, GrammarAST, type AstReflection, type LangiumDocument } from '
 import { toAstDto } from '../model/ast-dto.js';
 import { bundleText } from '../grammar/flatten.js';
 import { CompositeAstReflection } from '../grammar/reflection.js';
-import type { AstDto, ComposedMetamodel, CompositionInfo, CompositionProblem, GrammarInfo, TypeRename } from '../model/types.js';
+import type { AstDto, CompositionInfo, CompositionProblem, GrammarInfo, TypeRename } from '@bango/core';
+import type { ComposedMetamodel } from '../model/types.js';
 
 export interface CompositionParts {
   selection: string[];

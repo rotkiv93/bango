@@ -1,4 +1,4 @@
-import type { Problem } from '@bango/engine';
+import type { Problem } from '@bango/core';
 import { useState } from 'react';
 import { useWorkspace } from './store.js';
 

@@ -1,4 +1,4 @@
-import type { EngineApi, Range0 } from '@bango/engine';
+import type { EngineApi, Range0 } from '@bango/core';
 import { ModelRenderer } from './model-renderer.js';
 import type { ViewKind } from './types.js';
 

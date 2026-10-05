@@ -11,7 +11,7 @@
     "dev": "npm run dev -w apps/playground",
     "test": "vitest run",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "build:libs": "npm run build -w @bango/composer && npm run build -w @bango/engine && npm run build -w @bango/renderer",
+    "build:libs": "npm run build -w @bango/core && npm run build -w @bango/composer && npm run build -w @bango/engine && npm run build -w @bango/renderer",
     "build": "npm run build:libs && npm run build -w @bango/playground",
     "example": "node examples/serve.mjs",
     "pages": "npm run build -w @bango/playground",

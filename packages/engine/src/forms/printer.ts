@@ -1,5 +1,5 @@
 import { GrammarAST as G } from 'langium';
-import type { AstDto, RefDto } from '../types.js';
+import type { AstDto, RefDto } from '@bango/core';
 import { isFragment } from './schema.js';
 
 interface Tok { text: string; block?: boolean }

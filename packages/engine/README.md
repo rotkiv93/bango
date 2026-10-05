@@ -21,7 +21,7 @@ state.problems;    // [{ severity: 'error', message: "Could not resolve referenc
 | Import | |
 |---|---|
 | `@bango/engine` | `Bango`, `ModelEngine`, and the types |
-| `@bango/engine/worker` | `serveBango()` (inside a worker) and `connectBango(worker)` (in the page) |
+| `@bango/engine/worker` | `serveBango()` (inside a worker); the page side, `connectBango(worker)`, is in [`@bango/core/client`](../core/README.md) |
 | `@bango/engine/bundle` | a self-contained ES module (Langium and Comlink inlined) for pages without a bundler |
 | `@bango/engine/bundle/worker` | the matching worker script |
 
@@ -87,7 +87,7 @@ For building forms: `getFormSchema(metamodel)` describes every node type of a gr
 | `toJson(metamodel, options?)` | the instance as JSON: its metamodel's mapping, or the generic tree |
 | `toProjectJson(options?)` | the whole project: mappings merged into one document, or one entry per metamodel |
 
-`options` is `{ format?: 'spec' \| 'generic', merge?, refs?, types?, ranges? }`. Everything about it is in [The JSON specification](../../docs/json-spec.md). `mergeJson(...docs)` and `toJsonSpec(ast, options)` are exported too.
+`options` is `{ format?: 'spec' \| 'generic', merge?, refs?, types?, ranges? }`. Everything about it is in [The JSON specification](../../docs/json-spec.md). `mergeJson(...docs)` and `toJsonSpec(ast, options)` are exported too (they live in `@bango/core`).
 
 ### Building
 
@@ -129,7 +129,7 @@ serveBango();
 
 ```ts
 // in the page
-import { connectBango } from '@bango/engine/worker';
+import { connectBango } from '@bango/core/client';
 
 const bango = connectBango(new Worker(new URL('./engine.worker.ts', import.meta.url), { type: 'module' }));
 await bango.compose([...]);          // same API as a local Bango
@@ -142,7 +142,7 @@ The composer and the engine run together inside the worker; only plain data cros
 
 ```html
 <script type="module">
-  import { connectBango } from './bango.js';        // @bango/engine/bundle
+  import { connectBango } from './client.js';       // @bango/core/bundle/client (no Langium)
   const bango = connectBango(new Worker('./bango.worker.js', { type: 'module' }));  // @bango/engine/bundle/worker
 </script>
 ```
@@ -155,7 +155,6 @@ The composer and the engine run together inside the worker; only plain data cros
 src/core/     ModelEngine: documents, languages, editor features, build
 src/facade/   Bango
 src/forms/    form schema, printer, text edits
-src/json/     JSON spec and merging
-src/worker/   serveBango / connectBango
+src/worker/   serveBango
 src/bundle/   entries of the self-contained browser build
 ```

@@ -1,5 +1,5 @@
 import { AstUtils, isAstNode, isReference, type AstNode, type LangiumDocument, type Reference } from 'langium';
-import type { AstDto, RefDto } from './types.js';
+import type { AstDto, RefDto } from '@bango/core';
 
 type Primitive = string | number | boolean | null;
 

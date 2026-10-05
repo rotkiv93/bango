@@ -1,4 +1,4 @@
-import type { InstanceAst, InstanceState } from '@bango/engine';
+import type { InstanceAst, InstanceState } from '@bango/core';
 import { clear, h, svg } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 import { buildGraph, type Graph, type GraphEdge, type GraphNode } from './graph.js';

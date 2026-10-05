@@ -1,4 +1,4 @@
-import type { AstDto, InstanceAst, Range0 } from '@bango/engine';
+import type { AstDto, InstanceAst, Range0 } from '@bango/core';
 import { asArray } from '../../dom/dom.js';
 
 export interface GraphNode {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { InstanceState } from '@bango/engine';
+import type { InstanceState } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import { InstanceView } from './InstanceView.js';
 import { MetamodelPicker, SelectionVerdict, useSelectionCheck } from './MetamodelPicker.js';

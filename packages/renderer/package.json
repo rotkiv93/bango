@@ -21,7 +21,7 @@
     "./bundle": "./dist/bundle/renderer.js"
   },
   "peerDependencies": {
-    "@bango/engine": "^0.1.0",
+    "@bango/core": "^0.1.0",
     "monaco-editor": "^0.57.0",
     "elkjs": "^0.12.0"
   },

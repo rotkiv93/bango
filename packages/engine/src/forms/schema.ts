@@ -1,5 +1,5 @@
 import { GrammarAST as G, type AstReflection } from 'langium';
-import type { FieldSchema, FormSchema } from '../types.js';
+import type { FieldSchema, FormSchema } from '@bango/core';
 
 /** Rules of a language by the AST type they produce (rule name unless `returns` says otherwise). */
 export function indexRules(grammar: G.Grammar): Map<string, G.ParserRule> {

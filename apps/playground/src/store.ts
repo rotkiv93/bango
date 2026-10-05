@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { get as idbGet, set as idbSet } from 'idb-keyval';
-import { connectBango } from '@bango/engine/worker';
-import type { BuildResult, CompositionInfo, GrammarInfo, InstanceState, Range0, SelectionCheck } from '@bango/engine';
+import { connectBango } from '@bango/core/client';
+import type { BuildResult, CompositionInfo, GrammarInfo, InstanceState, Range0, SelectionCheck } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import { seedWorkspace } from './seed.js';
 import { monaco } from './monaco.js';

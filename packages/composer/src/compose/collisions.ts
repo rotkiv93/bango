@@ -1,5 +1,5 @@
 import { AstUtils, GrammarAST, GrammarUtils, type AstNode, type Grammar, type LangiumDocument } from 'langium';
-import type { TypeRename } from '../model/types.js';
+import type { TypeRename } from '@bango/core';
 
 /** A declaration of an AST type in a grammar: a parser rule, an `infers` name, an `interface` or a `type`. */
 export interface Declaration {

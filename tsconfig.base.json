@@ -10,6 +10,8 @@
     "resolveJsonModule": true,
     "types": ["vite/client", "node"],
     "paths": {
+      "@bango/core": ["./packages/core/src/index.ts"],
+      "@bango/core/client": ["./packages/core/src/client.ts"],
       "@bango/composer": ["./packages/composer/src/index.ts"],
       "@bango/engine": ["./packages/engine/src/index.ts"],
       "@bango/engine/worker": ["./packages/engine/src/worker/index.ts"],

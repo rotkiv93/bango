@@ -1,4 +1,4 @@
-import type { AstDto, InstanceAst, InstanceState, RefDto } from '@bango/engine';
+import type { AstDto, InstanceAst, InstanceState, RefDto } from '@bango/core';
 import { asArray, clear, h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 

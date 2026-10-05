@@ -14,7 +14,7 @@ import type {
   JsonValue,
   RefCandidate,
   Unsubscribe
-} from '../types.js';
+} from '@bango/core';
 
 /**
  * Composer + engine behind one async interface: set grammars, compose a selection, edit instances.

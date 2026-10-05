@@ -1,4 +1,4 @@
-import type { AstDto, JsonSpecOptions, JsonValue, RefDto } from '../types.js';
+import type { AstDto, JsonSpecOptions, JsonValue, RefDto } from './types.js';
 
 /**
  * The JSON spec of an instance: its configuration as plain data, free of parser details.

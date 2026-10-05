@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CodeEditor } from '@bango/renderer/text';
-import type { Problem } from '@bango/engine';
+import type { Problem } from '@bango/core';
 import { monaco } from './monaco.js';
 
 /** A metamodel (or constraints) editor: the library's `CodeEditor` bound to one text. */
