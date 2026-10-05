@@ -1,4 +1,5 @@
-import { URI, type LangiumServices } from 'langium';
+import { URI } from 'langium';
+import type { LangiumServices } from 'langium/lsp';
 import { createServicesForGrammar } from 'langium/grammar';
 import { describe, expect, it } from 'vitest';
 import type { Composition } from '@bango/composer';
