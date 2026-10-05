@@ -200,6 +200,14 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
       await refreshInstances();
     },
 
+    // the engine announces the change, which refreshes `instances` and every view
+    async undo(metamodel) {
+      await bango.undo(metamodel);
+    },
+    async redo(metamodel) {
+      await bango.redo(metamodel);
+    },
+
     // --------------------------------------------------------------- metamodels
 
     editGrammar(name, text) {

@@ -201,3 +201,6 @@ input[type=checkbox] { accent-color: var(--accent); }
 .case-with summary { cursor: pointer; color: var(--muted); }
 .check { display: flex; align-items: center; gap: 6px; font-size: 13px; }
 @media (max-width: 800px) { .case-body { grid-template-columns: 1fr; } }
+
+.history { display: inline-flex; gap: 2px; margin-right: 6px; }
+.history .icon { font-size: 18px; }

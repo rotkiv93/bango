@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { InstanceState } from '@bango/core';
 import type { ViewKind } from '@bango/renderer';
 import { InstanceView } from './InstanceView.js';
@@ -147,6 +147,19 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
   // beside the text, a view of the same instance; the text itself cannot be its own neighbour
   const side: ViewKind = s.instanceView === 'text' ? 'form' : s.instanceView;
 
+  // Ctrl+Z / Ctrl+Shift+Z (or Ctrl+Y) outside the text editors, which have their own history
+  const { undo, redo } = s;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || (e.target as Element | null)?.closest?.('.monaco-editor, input, textarea, select')) return;
+      const key = e.key.toLowerCase();
+      if (key === 'z' && !e.shiftKey) { e.preventDefault(); void undo(metamodel); }
+      else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); void redo(metamodel); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [metamodel, undo, redo]);
+
   if (!inst) {
     return (
       <EmptyState
@@ -168,6 +181,10 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
           {!inst.available && <Chip tone="err">not available</Chip>}
         </div>
         <div className="tools">
+          <span className="history">
+            <button className="icon" disabled={!inst.canUndo} title="Undo the last change (Ctrl+Z)" aria-label="Undo" onClick={() => void s.undo(metamodel)}>↶</button>
+            <button className="icon" disabled={!inst.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo" onClick={() => void s.redo(metamodel)}>↷</button>
+          </span>
           <Segmented<ViewKind> value={s.split && s.instanceView === 'text' ? 'form' : s.instanceView} items={VIEWS} onChange={s.setInstanceView} />
           <label className="toggle" title="Show the text next to the view">
             <input type="checkbox" checked={s.split} onChange={e => s.setSplit(e.target.checked)} /> Split with text

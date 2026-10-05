@@ -55,7 +55,7 @@ Instances are keyed by **metamodel name**. A project has at most one per metamod
 | `setInstances(texts)` | replace all instances at once (opening a project): one rebuild |
 | `createInstance(metamodel)` | start from the smallest valid root, e.g. `datamodel`; returns the existing one if there is one |
 | `removeInstance(metamodel)` | |
-| `getInstance(metamodel)`, `getInstances()` | `InstanceState`: `{ metamodel, text, ast?, problems, stale, available }` |
+| `getInstance(metamodel)`, `getInstances()` | `InstanceState`: `{ metamodel, text, ast?, problems, stale, available, canUndo?, canRedo? }` |
 | `getComposition()` | the loaded `CompositionInfo` |
 
 `available` is `false` when the metamodel is not usable (not in the project, a missing requirement, grammar errors); `problems` then holds the reason and `ast` is absent. `stale` means the metamodel's grammar currently has errors and its last good version is being used.
@@ -81,6 +81,21 @@ For building forms: `getFormSchema(metamodel)` describes every node type of a gr
 ### Editor support
 
 `complete(metamodel, text, line, column)`, `hover(...)` and `definition(...)` wrap Langium's providers and return plain data. They carry the **editor's live text, which the engine adopts as the instance text first**, so an editor and the engine never disagree. For a metamodel that is not available they return nothing instead of failing. Lines and columns are 0-based.
+
+### Editing across instances
+
+The instances of a project share one index, so these work **across metamodels**: a data-model entity and the GIS layer that shows it are one symbol.
+
+| Method | |
+|---|---|
+| `references(metamodel, text, line, column)` | every place that refers to the symbol at the position (and its declaration), in every instance: `{ metamodel, range }[]` |
+| `rename(metamodel, text, line, column, newName)` | the edits that rename the symbol everywhere: `{ edits, applied, error? }`. The engine changes the **other** instances itself (one rebuild) and lists them in `applied`; the instance that asked is left to its editor, which holds the live text and applies its own `edits`. `error` says why nothing could be renamed |
+| `symbols(metamodel, text)` | the outline: named elements, nested, as `{ name, kind, range, selectionRange, children }[]` |
+| `quickFixes(metamodel, text, line, column)` | fixes for the problem at the position. For a reference that does not resolve: `Create Entity 'Foo'` **in the metamodel whose instances can hold an entity** (it may be another one than the instance being edited) |
+| `applyQuickFix(fix)` | does it, starting that metamodel's instance if the project has none yet. A `QuickFix` is plain data (`{ title, metamodel, type, name }`) |
+| `undo(metamodel)`, `redo(metamodel)` | go back or forward one change. Every instance has its own history (100 steps); typing in quick succession is one step; replacing all instances or removing one clears it |
+
+Undo and redo are for the views that have no editor of their own (form, diagram); a text editor keeps its own history too. A rename that reached into another instance is undone there.
 
 ### JSON
 

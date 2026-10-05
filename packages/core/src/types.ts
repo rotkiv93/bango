@@ -131,6 +131,10 @@ export interface InstanceState {
   /** the metamodel currently has errors and the last version that compiled is being used */
   stale: boolean;
   available: boolean;
+  /** there is an earlier text to go back to (`undo`) */
+  canUndo?: boolean;
+  /** there is a later text to go forward to (`redo`) */
+  canRedo?: boolean;
 }
 
 export interface InstanceAst {
@@ -204,6 +208,50 @@ export interface DefinitionDto {
   /** metamodel of the instance that contains the target */
   metamodel: string;
   target: Range0;
+}
+
+/** A place in the text of one instance. */
+export interface LocationDto {
+  metamodel: string;
+  range: Range0;
+}
+
+export interface TextEditDto extends LocationDto {
+  newText: string;
+}
+
+export interface RenameResult {
+  /** why the symbol cannot be renamed (nothing was changed) */
+  error?: string;
+  /** every change, in every instance, positions as in the texts before the rename */
+  edits: TextEditDto[];
+  /**
+   * The metamodels whose text the engine has already changed. The one that asked is not among them: its editor holds the live
+   * text, so it applies its own `edits` (and the engine learns the result as it would from any edit).
+   */
+  applied: string[];
+}
+
+/** An entry of the outline of an instance. */
+export interface SymbolDto {
+  name: string;
+  detail?: string;
+  /** LSP SymbolKind */
+  kind: number;
+  range: Range0;
+  selectionRange: Range0;
+  children: SymbolDto[];
+}
+
+/** A way to fix a problem that may lie in another instance: create what a reference points at. Plain data, so it can travel to a worker and back. */
+export interface QuickFix {
+  title: string;
+  /** the instance that gets the new node (created if the project has none yet) */
+  metamodel: string;
+  /** the node type to create there */
+  type: string;
+  /** its name */
+  name: string;
 }
 
 // ----------------------------------------------------------------------- build
@@ -292,6 +340,18 @@ export interface EngineApi {
   complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]>;
   hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined>;
   definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]>;
+  /** every place that refers to the symbol at the position, in every instance, and its declaration */
+  references(metamodel: string, text: string, line: number, column: number): Promise<LocationDto[]>;
+  /** the outline of an instance: its named elements, nested */
+  symbols(metamodel: string, text: string): Promise<SymbolDto[]>;
+  /** rename the symbol at the position everywhere it appears: its declaration and every reference, across the instances of the project */
+  rename(metamodel: string, text: string, line: number, column: number, newName: string): Promise<RenameResult>;
+  /** fixes for the problem at the position, e.g. creating the entity a reference names (in the instance that declares such things) */
+  quickFixes(metamodel: string, text: string, line: number, column: number): Promise<QuickFix[]>;
+  applyQuickFix(fix: QuickFix): Promise<InstanceState>;
+  /** go back to the text before the last change (typing in quick succession counts as one change) */
+  undo(metamodel: string): Promise<InstanceState>;
+  redo(metamodel: string): Promise<InstanceState>;
   build(project: string): Promise<BuildResult>;
   subscribe(listener: (event: EngineEvent) => void): Unsubscribe | Promise<Unsubscribe>;
 }

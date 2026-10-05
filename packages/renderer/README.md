@@ -21,7 +21,7 @@ Peer dependencies: `@bango/engine` (types only), and optionally `monaco-editor` 
 
 | View | Shows | Edits through |
 |---|---|---|
-| `text` | the instance in its own syntax, with highlighting, completion, hover, go-to-definition and live problems | `engine.setText` (debounced) |
+| `text` | the instance in its own syntax, with highlighting, completion, hover, go-to-definition, find references, rename (F2), outline and quick fixes, **across the instances of the project**, and live problems | `engine.setText` (debounced) |
 | `form` | a form generated from the grammar: inputs, drop-downs of references (across metamodels), lists with add and remove | `engine.applyEdit` |
 | `diagram` | **the whole project**: named elements as nodes, containment and references as edges, references across metamodels highlighted. Pan, zoom, drag nodes, double-click to fit, click a node to show its text | nothing |
 | `ast` | the parsed tree of this instance, with resolved references (unresolved ones in red), or its raw JSON | nothing |
@@ -58,7 +58,7 @@ registerTextRenderer(monaco, { theme: 'vs-dark', fontSize: 13, debounceMs: 250, 
 ```
 
 - **Monaco's own web workers are the page's business** (`MonacoEnvironment.getWorker`).
-- **Monaco must include its editor features** (suggest, hover, go-to-definition). The bare `monaco-editor/editor/editor.api` entry does not; the AMD/CDN build and `monaco-editor/editor/editor.main` do. [`apps/playground/src/monaco-features.ts`](../../apps/playground/src/monaco-features.ts) imports just the features, without the CSS/HTML/JSON/TypeScript language services.
+- **Monaco must include its editor features** (suggest, hover, go-to-definition, rename, reference search, document symbols, code actions). The bare `monaco-editor/editor/editor.api` entry does not; the AMD/CDN build and `monaco-editor/editor/editor.main` do. [`apps/playground/src/monaco-features.ts`](../../apps/playground/src/monaco-features.ts) imports just the features, without the CSS/HTML/JSON/TypeScript language services.
 - One Monaco language per metamodel is registered (`bango-<metamodel>`), with a tokenizer built from the grammar's keywords. The tokenizer follows the grammar as it changes.
 - Typing is debounced and flushed when the editor loses focus. While typing is pending or in flight, incoming updates do not overwrite it.
 

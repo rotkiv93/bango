@@ -18,13 +18,13 @@ Your projects as cards, and **+ New project**. The dialog lists the metamodels t
 
 One tab per metamodel of the project, plus an **Overview**.
 
-- **A metamodel's tab**: its instance, with the views *Text*, *Form*, *Diagram*, *JSON* and *AST*. **Split with text** shows the text beside any of them, always in sync. *Create instance* starts from the smallest valid one. Clicking a problem, a diagram node or an AST entry shows it in the text.
+- **A metamodel's tab**: its instance, with the views *Text*, *Form*, *Diagram*, *JSON* and *AST*. **Split with text** shows the text beside any of them, always in sync. *Create instance* starts from the smallest valid one. Clicking a problem, a diagram node or an AST entry shows it in the text. The text editor works **across the instances**: F2 renames an entity everywhere it appears (the data model and the GIS layers that show it), Shift+F12 lists its references, Ctrl+Shift+O is the outline, and Ctrl+. on a reference that does not resolve offers to create what it names, in the instance that declares such things. The undo/redo buttons (Ctrl+Z) cover the form and diagram edits.
 - **Overview**: the state of every instance, the **build** result (and *Download JSON spec* / *Download model*), and *The whole project* as a diagram, merged JSON or AST.
 - **Manage metamodels** changes the selection, with the same composer checks as creating a project.
 
 ### Metamodels
 
-The grammars shared by every project. Pick one and edit it as *Grammar*, *Constraints*, *JSON mapping*, or see it as *Composed* (the grammar with every import inlined, as the composer builds it) or *AST*. Projects that use it revalidate as you type; a grammar with errors keeps serving its last good version and its instances are marked *stale*. **+ New metamodel** starts from a minimal grammar.
+The grammars shared by every project. Pick one and edit it as *Grammar*, *Constraints*, *JSON mapping* (the last two know the types of the grammar: completion on `entity.`, errors for a misspelled property), or *Tests* (sample instances and what they must report, rerun as you edit), or see it as *Composed* (the grammar with every import inlined, as the composer builds it) or *AST*. Projects that use it revalidate as you type; a grammar with errors keeps serving its last good version and its instances are marked *stale*. **+ New metamodel** starts from a minimal grammar.
 
 Also: light and dark themes, and **Reset examples** to restore what ships with the repository.
 
@@ -34,6 +34,7 @@ Also: light and dark themes, and **Reset examples** to restore what ships with t
 |---|---|
 | `src/bango.worker.ts` | `serveBango()`: Langium runs here, off the UI thread |
 | `src/store.ts`, `src/state/` | the app state (zustand), in two slices: `ui-slice` (pages, tabs, views, theme, toasts) and `workspace-slice` (projects, metamodels and their scripts, the engine's answers). `state/bango.ts` talks to the worker with `connectBango` (`@bango/core/client`); `state/persistence.ts` saves to IndexedDB |
+| `src/MetamodelTests.tsx`, `src/ScriptEditorView.tsx`, `src/script-intelligence.ts` | the *Tests* tab of a metamodel, and the editor of its constraints and mapping, which loads Monaco's TypeScript service on first use and feeds it the types generated from the grammar |
 | `src/InstanceView.tsx` | mounts a library `ModelRenderer` in an element: this is the whole integration of the views |
 | `src/CodeEditorView.tsx` | the library's `CodeEditor` for grammars, constraints and mappings |
 | `src/monaco.ts`, `src/monaco-features.ts` | Monaco setup: its worker, and just the editor features it needs |

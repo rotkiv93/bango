@@ -1,5 +1,5 @@
 import type * as Monaco from 'monaco-editor/editor/editor.api';
-import type { EngineApi, InstanceState, Range0 } from '@bango/core';
+import type { EngineApi, InstanceState, QuickFix, Range0, SymbolDto } from '@bango/core';
 import { h } from '../../dom/dom.js';
 import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 import { CodeEditor, ensureLanguage } from './code-editor.js';
@@ -23,6 +23,7 @@ interface Environment {
   bindings: Map<string, Binding>;
   tokenizers: Map<string, { keywords: string; disposable: Monaco.IDisposable }>;
   providers: Set<string>;
+  commandRegistered: boolean;
 }
 
 const environments = new WeakMap<object, Environment>();
@@ -31,7 +32,7 @@ let nextEngineId = 0;
 
 function environmentOf(monaco: MonacoApi): Environment {
   let env = environments.get(monaco);
-  if (!env) environments.set(monaco, (env = { bindings: new Map(), tokenizers: new Map(), providers: new Set() }));
+  if (!env) environments.set(monaco, (env = { bindings: new Map(), tokenizers: new Map(), providers: new Set(), commandRegistered: false }));
   return env;
 }
 
@@ -49,10 +50,36 @@ const toMonacoRange = (r: Range0): Monaco.IRange => ({
   startLineNumber: r.startLine + 1, startColumn: r.startColumn + 1, endLineNumber: r.endLine + 1, endColumn: r.endColumn + 1
 });
 
+/** The command a quick fix runs: the fix is plain data, so it carries the engine that knows how to apply it. */
+const APPLY_QUICK_FIX = 'bango.applyQuickFix';
+
+/** LSP symbol kinds count from 1, Monaco's from 0. */
+function toMonacoSymbol(s: SymbolDto): Monaco.languages.DocumentSymbol {
+  return {
+    name: s.name, detail: s.detail ?? '', kind: s.kind - 1, tags: [], range: toMonacoRange(s.range), selectionRange: toMonacoRange(s.selectionRange),
+    children: s.children.map(toMonacoSymbol)
+  };
+}
+
 function registerProviders(monaco: MonacoApi, env: Environment, language: string) {
   if (env.providers.has(language)) return;
   env.providers.add(language);
   const bindingOf = (model: Monaco.editor.ITextModel) => env.bindings.get(model.uri.toString());
+
+  if (!env.commandRegistered) {
+    env.commandRegistered = true;
+    monaco.editor.registerCommand(APPLY_QUICK_FIX, (_accessor, engine: EngineApi, fix: QuickFix) => engine.applyQuickFix(fix));
+  }
+
+  /** The Monaco model that shows an instance, made on the spot when it is not open in an editor (so a jump or a reference can land in it). */
+  const modelFor = async (binding: Binding, metamodel: string) => {
+    const uri = monaco.Uri.parse(modelUri(binding.engine, metamodel));
+    if (!monaco.editor.getModel(uri)) {
+      monaco.editor.createModel((await binding.engine.getInstance(metamodel)).text, languageIdOf(metamodel), uri);
+      env.bindings.set(uri.toString(), { engine: binding.engine, metamodel });
+    }
+    return uri;
+  };
 
   monaco.languages.registerCompletionItemProvider(language, {
     async provideCompletionItems(model, position) {
@@ -89,17 +116,57 @@ function registerProviders(monaco: MonacoApi, env: Environment, language: string
       const b = bindingOf(model);
       if (!b) return [];
       const defs = await b.engine.definition(b.metamodel, model.getValue(), position.lineNumber - 1, position.column - 1);
-      const result: Monaco.languages.Location[] = [];
-      for (const d of defs) {
-        const uri = monaco.Uri.parse(modelUri(b.engine, d.metamodel));
-        if (!monaco.editor.getModel(uri)) {
-          // the target instance is not open in an editor yet: give Monaco a model to jump into
-          monaco.editor.createModel((await b.engine.getInstance(d.metamodel)).text, languageIdOf(d.metamodel), uri);
-          env.bindings.set(uri.toString(), { engine: b.engine, metamodel: d.metamodel });
-        }
-        result.push({ uri, range: toMonacoRange(d.target) });
-      }
-      return result;
+      return Promise.all(defs.map(async d => ({ uri: await modelFor(b, d.metamodel), range: toMonacoRange(d.target) })));
+    }
+  });
+
+  monaco.languages.registerReferenceProvider(language, {
+    async provideReferences(model, position) {
+      const b = bindingOf(model);
+      if (!b) return [];
+      const found = await b.engine.references(b.metamodel, model.getValue(), position.lineNumber - 1, position.column - 1);
+      return Promise.all(found.map(async l => ({ uri: await modelFor(b, l.metamodel), range: toMonacoRange(l.range) })));
+    }
+  });
+
+  monaco.languages.registerDocumentSymbolProvider(language, {
+    displayName: 'Bango',
+    async provideDocumentSymbols(model) {
+      const b = bindingOf(model);
+      return b ? (await b.engine.symbols(b.metamodel, model.getValue())).map(toMonacoSymbol) : [];
+    }
+  });
+
+  monaco.languages.registerRenameProvider(language, {
+    async provideRenameEdits(model, position, newName) {
+      const b = bindingOf(model);
+      if (!b) return { edits: [] };
+      const result = await b.engine.rename(b.metamodel, model.getValue(), position.lineNumber - 1, position.column - 1, newName);
+      if (result.error) return { edits: [], rejectReason: result.error };
+      // the engine has changed the other instances; this editor applies its own part, as it would any edit
+      return {
+        edits: result.edits.filter(e => e.metamodel === b.metamodel).map(e => ({
+          resource: model.uri, versionId: undefined, textEdit: { range: toMonacoRange(e.range), text: e.newText }
+        }))
+      };
+    }
+  });
+
+  monaco.languages.registerCodeActionProvider(language, {
+    async provideCodeActions(model, range) {
+      const b = bindingOf(model);
+      if (!b) return { actions: [], dispose() {} };
+      const start = range.getStartPosition();
+      const fixes = await b.engine.quickFixes(b.metamodel, model.getValue(), start.lineNumber - 1, start.column - 1);
+      return {
+        actions: fixes.map(fix => ({
+          title: fix.title,
+          kind: 'quickfix',
+          isPreferred: true,
+          command: { id: APPLY_QUICK_FIX, title: fix.title, arguments: [b.engine, fix] }
+        })),
+        dispose() {}
+      };
     }
   });
 }

@@ -15,7 +15,11 @@ import type {
   InstanceState,
   JsonSpecOptions,
   JsonValue,
+  LocationDto,
   MetamodelCase,
+  QuickFix,
+  RenameResult,
+  SymbolDto,
   RefCandidate,
   Unsubscribe
 } from '@bango/core';
@@ -102,6 +106,13 @@ export class Bango implements BangoApi {
   complete(metamodel: string, text: string, line: number, column: number): Promise<CompletionDto[]> { return this.engine.complete(metamodel, text, line, column); }
   hover(metamodel: string, text: string, line: number, column: number): Promise<string | undefined> { return this.engine.hover(metamodel, text, line, column); }
   definition(metamodel: string, text: string, line: number, column: number): Promise<DefinitionDto[]> { return this.engine.definition(metamodel, text, line, column); }
+  references(metamodel: string, text: string, line: number, column: number): Promise<LocationDto[]> { return this.engine.references(metamodel, text, line, column); }
+  symbols(metamodel: string, text: string): Promise<SymbolDto[]> { return this.engine.symbols(metamodel, text); }
+  rename(metamodel: string, text: string, line: number, column: number, newName: string): Promise<RenameResult> { return this.engine.rename(metamodel, text, line, column, newName); }
+  quickFixes(metamodel: string, text: string, line: number, column: number): Promise<QuickFix[]> { return this.engine.quickFixes(metamodel, text, line, column); }
+  applyQuickFix(fix: QuickFix): Promise<InstanceState> { return this.engine.applyQuickFix(fix); }
+  undo(metamodel: string): Promise<InstanceState> { return this.engine.undo(metamodel); }
+  redo(metamodel: string): Promise<InstanceState> { return this.engine.redo(metamodel); }
   build(project: string): Promise<BuildResult> { return this.engine.build(project); }
   subscribe(listener: (event: EngineEvent) => void): Unsubscribe | Promise<Unsubscribe> { return this.engine.subscribe(listener); }
 }

@@ -2,6 +2,7 @@ import type { LangiumDocument } from 'langium';
 import type { LangiumSharedServices } from 'langium/lsp';
 import { documentUri, nameOfPath, toAstDto, toProblem, wholeFile, type Composition } from '@bango/composer';
 import type { InstanceState, RefCandidate } from '@bango/core';
+import { History } from './history.js';
 import { createLanguages, type Language } from './languages.js';
 
 /**
@@ -14,6 +15,7 @@ export class InstanceStore {
   languages = new Map<string, Language>();
   texts = new Map<string, string>();
   docs = new Map<string, LangiumDocument>();
+  history = new History();
 
   /** Switch to a composition. Texts are kept; call `rebuild()` to revalidate them. */
   load(composition: Composition) {
@@ -36,15 +38,37 @@ export class InstanceStore {
     return lang;
   }
 
-  async setText(metamodel: string, text: string) {
+  /** Change one instance's text. `typing`: it comes from an editor, so changes in quick succession are one step of history. */
+  async setText(metamodel: string, text: string, typing = false) {
+    this.remember(metamodel, text, typing);
     this.texts.set(metamodel, text);
     await this.rebuild();
+  }
+
+  /** Change several instances with one rebuild (a rename that reaches into other instances, say). */
+  async setTexts(changes: Map<string, string>) {
+    for (const [metamodel, text] of changes) {
+      this.remember(metamodel, text, false);
+      this.texts.set(metamodel, text);
+    }
+    await this.rebuild();
+  }
+
+  /** Put a text back (undo, redo): what history keeps is already in order, so nothing is recorded. */
+  async restore(metamodel: string, text: string) {
+    this.texts.set(metamodel, text);
+    await this.rebuild();
+  }
+
+  private remember(metamodel: string, text: string, typing: boolean) {
+    const before = this.texts.get(metamodel);
+    if (before !== undefined && before !== text) this.history.record(metamodel, before, typing);
   }
 
   /** The document of a metamodel for `text`, adopting `text` as the instance text first when it differs (live editor text). */
   async docFor(metamodel: string, text: string) {
     const lang = this.language(metamodel);
-    if (this.texts.get(metamodel) !== text || !this.docs.has(metamodel)) await this.setText(metamodel, text);
+    if (this.texts.get(metamodel) !== text || !this.docs.has(metamodel)) await this.setText(metamodel, text, true);
     return { doc: this.docs.get(metamodel)!, lang };
   }
 
@@ -59,7 +83,9 @@ export class InstanceStore {
       ast: toAstDto(doc.parseResult.value),
       problems: (doc.diagnostics ?? []).map(toProblem),
       stale: lang.metamodel.stale,
-      available: true
+      available: true,
+      canUndo: this.history.canUndo(metamodel),
+      canRedo: this.history.canRedo(metamodel)
     };
   }
 

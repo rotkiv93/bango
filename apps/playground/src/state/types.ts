@@ -66,6 +66,9 @@ export interface WorkspaceSlice {
   buildProject(): Promise<void>;
   createInstance(metamodel: string): Promise<void>;
   removeInstance(metamodel: string): Promise<void>;
+  /** go back or forward through the changes of an instance (the engine keeps the history) */
+  undo(metamodel: string): Promise<void>;
+  redo(metamodel: string): Promise<void>;
   editGrammar(name: string, text: string): void;
   editConstraints(metamodel: string, text: string): void;
   editSpec(metamodel: string, text: string): void;
