@@ -1,5 +1,5 @@
 import { MessageChannel } from 'node:worker_threads';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 // @ts-expect-error the adapter ships as a separate ESM file without a package export entry
 import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mjs';
 import { EngineRestartedError, ScriptTimeoutError, connectBango, type BangoConnection, type RestartInfo } from '@bango/core/client';
@@ -56,6 +56,9 @@ class FakeWorker {
 
 const open: BangoConnection[] = [];
 afterEach(() => { for (const c of open.splice(0)) c.disconnect(); });
+
+// recovering an engine takes several timeouts (a fresh worker, then one more once the culprit is found): longer than vitest's 5 s
+vi.setConfig({ testTimeout: 60_000 });
 
 /** Short enough to keep the tests quick, long enough for a cold compose of the examples on a slow machine. */
 const TIMEOUT = 1500;
