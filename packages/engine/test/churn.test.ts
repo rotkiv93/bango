@@ -10,8 +10,8 @@ const grammarErrors = (info: { grammars: { name: string; problems: { severity: s
 
 describe('grammars changing under a running project', () => {
   it('breaking a grammar and repairing it changes nothing in the end', async () => {
-    const { bango, seed } = await openProject('everything');
-    const names = seed.projects.everything.metamodels;
+    const { bango, seed } = await openProject('security-everything');
+    const names = seed.projects['security-everything'].metamodels;
     const textsBefore = await texts(bango);
     const jsonBefore = await bango.toProjectJson();
 
@@ -37,7 +37,7 @@ describe('grammars changing under a running project', () => {
   }, 120_000);
 
   it('a metamodel that never compiled is unavailable with the reason, and its text is kept for when it does', async () => {
-    const { bango } = await openProject('office');
+    const { bango } = await openProject('security-office');
     await bango.setGrammar('broken', "grammar Broken\nimport 'common'\nentry B: 'b' name=;\n");
     const info = await bango.compose(['datamodel', 'broken']);
     expect(info.languages.map(l => l.name)).toEqual(['datamodel']);
@@ -56,8 +56,8 @@ describe('grammars changing under a running project', () => {
   });
 
   it('removing a grammar that others import makes them unavailable, saying why; putting it back restores everything', async () => {
-    const { bango, seed } = await openProject('office');
-    const names = seed.projects.office.metamodels;
+    const { bango, seed } = await openProject('security-office');
+    const names = seed.projects['security-office'].metamodels;
     const textsBefore = await texts(bango);
     const jsonBefore = await bango.toProjectJson();
 
@@ -77,8 +77,8 @@ describe('grammars changing under a running project', () => {
   });
 
   it('a metamodel with a type name that clashes can join and leave a running project, and the others do not notice', async () => {
-    const { bango, seed } = await openProject('everything');
-    const names = seed.projects.everything.metamodels;
+    const { bango, seed } = await openProject('security-everything');
+    const names = seed.projects['security-everything'].metamodels;
     const jsonBefore = await bango.toProjectJson();
 
     await bango.setGrammar('other', OTHER_GRAMMAR);
@@ -99,22 +99,22 @@ describe('grammars changing under a running project', () => {
   });
 
   it('a constraint that throws on every node is a problem of that instance, and no other instance changes', async () => {
-    const { bango, seed } = await openProject('everything');
+    const { bango, seed } = await openProject('security-everything');
     const jsonBefore = await bango.toProjectJson();
     await bango.setConstraints('menus', "return { Menu() { throw new Error('menus constraint exploded'); }, MenuItem() { throw new Error('and so does this'); } };");
-    await bango.compose(seed.projects.everything.metamodels);
+    await bango.compose(seed.projects['security-everything'].metamodels);
     expect(errors((await bango.getInstance('menus')).problems).join()).toMatch(/exploded/);
     for (const s of (await bango.getInstances()).filter(i => i.metamodel !== 'menus')) expect(errors(s.problems), s.metamodel).toEqual([]);
     expect(await bango.toProjectJson()).toEqual(jsonBefore);
   });
 
   it('a JSON mapping that throws fails that metamodel only, with its name', async () => {
-    const { bango, seed } = await openProject('office');
+    const { bango, seed } = await openProject('security-office');
     await bango.setSpec('forms', "return function () { throw new Error('forms mapping exploded'); };");
-    await bango.compose(seed.projects.office.metamodels);
+    await bango.compose(seed.projects['security-office'].metamodels);
     await expect(bango.toProjectJson()).rejects.toThrow(/JSON mapping of 'forms' failed: forms mapping exploded/);
     expect(await bango.toJson('datamodel')).toBeDefined();
-    const build = await bango.build('office');
+    const build = await bango.build('security-office');
     expect(build.ok).toBe(false);
     expect(build.errors.join()).toMatch(/forms/);
   });
@@ -123,7 +123,7 @@ describe('grammars changing under a running project', () => {
 describe('unusual grammars', () => {
   it('two grammars that import each other do not hang, and are reported or composed without crashing', async () => {
     const bango = new Bango();
-    await bango.setGrammar('common', loadSeed().grammars.common);
+    await bango.setGrammar('common', loadSeed({ fixtures: true }).grammars.common);
     await bango.setGrammar('ping', "grammar Ping\nimport 'common'\nimport 'pong'\nentry P: 'ping' name=ID;\n");
     await bango.setGrammar('pong', "grammar Pong\nimport 'common'\nimport 'ping'\nentry Q: 'pong' name=ID;\n");
     const info = await bango.compose(['ping']);
@@ -135,7 +135,7 @@ describe('unusual grammars', () => {
 
   it('importing a grammar that does not exist is a problem of the importer, not a crash', async () => {
     const bango = new Bango();
-    await bango.setGrammar('common', loadSeed().grammars.common);
+    await bango.setGrammar('common', loadSeed({ fixtures: true }).grammars.common);
     await bango.setGrammar('lonely', "grammar Lonely\nimport 'common'\nimport 'ghost'\nentry L: 'l' name=ID;\n");
     const info = await bango.compose(['lonely']);
     const problems = info.grammars.find(g => g.name === 'lonely')!.problems.map(p => p.message).join();
@@ -144,7 +144,7 @@ describe('unusual grammars', () => {
 
   it('a grammar with two entry rules, or none, is not silently accepted as a metamodel', async () => {
     const bango = new Bango();
-    await bango.setGrammar('common', loadSeed().grammars.common);
+    await bango.setGrammar('common', loadSeed({ fixtures: true }).grammars.common);
     await bango.setGrammar('twins', "grammar Twins\nimport 'common'\nentry A: 'a' name=ID;\nentry B: 'b' name=ID;\n");
     await bango.setGrammar('nothing', "grammar Nothing\nimport 'common'\nX: 'x' name=ID;\n");
     const all = await bango.listMetamodels();
@@ -156,7 +156,7 @@ describe('unusual grammars', () => {
 
   it('a grammar whose name is not its file name still composes under the file name', async () => {
     const bango = new Bango();
-    await bango.setGrammar('common', loadSeed().grammars.common);
+    await bango.setGrammar('common', loadSeed({ fixtures: true }).grammars.common);
     await bango.setGrammar('shortname', "grammar SomethingElseEntirely\nimport 'common'\nentry M: 'm' name=ID;\n");
     const info = await bango.compose(['shortname']);
     expect(info.languages.map(l => l.name)).toEqual(['shortname']);
@@ -168,13 +168,13 @@ describe('unusual grammars', () => {
 
 describe('calls that overlap', () => {
   it('many calls in flight at once end in the same state as the same calls one after another', async () => {
-    const seed = loadSeed();
+    const seed = loadSeed({ fixtures: true });
     const make = async () => {
       const bango = new Bango();
       await feedSeed(bango, seed);
       return bango;
     };
-    const office = seed.projects.office;
+    const office = seed.projects['security-office'];
     const script = (bango: Bango) => [
       () => bango.compose(['datamodel']),
       () => bango.setText('datamodel', office.instances.datamodel),
@@ -204,7 +204,7 @@ describe('calls that overlap', () => {
   });
 
   it('text set for a metamodel that is not in the project yet is kept, and checked once it joins', async () => {
-    const { bango, project } = await openProject('office');
+    const { bango, project } = await openProject('security-office');
     await bango.compose(['datamodel']);
     const early = await bango.getInstance('forms');
     expect(early.available).toBe(false);

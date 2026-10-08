@@ -10,7 +10,7 @@ import { EXAMPLE_PROJECTS, loadSeed } from '../../../test-support/seed.js';
  * the same about every instance after every step.
  */
 async function pair(project: string) {
-  const seed = loadSeed();
+  const seed = loadSeed({ fixtures: true });
   const def = seed.projects[project];
   const make = async (incremental: boolean) => {
     const bango = new Bango({ incremental });
@@ -79,7 +79,7 @@ describe.each(EXAMPLE_PROJECTS)('incremental rebuild in %s', name => {
 
 describe('what incremental rebuild leaves alone', () => {
   it('editing a metamodel that nothing needs does not remake the documents of the others', async () => {
-    const { fast } = await pair('office');
+    const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.setText('security', (await fast.getInstance('security')).text + ' ');
@@ -89,7 +89,7 @@ describe('what incremental rebuild leaves alone', () => {
   });
 
   it('editing one that others need remakes those, and only those', async () => {
-    const { fast } = await pair('office');
+    const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.setText('forms', (await fast.getInstance('forms')).text + ' ');
@@ -101,7 +101,7 @@ describe('what incremental rebuild leaves alone', () => {
   });
 
   it('editing the data model remakes everything that needs it, which is everything else here', async () => {
-    const { fast } = await pair('office');
+    const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.setText('datamodel', (await fast.getInstance('datamodel')).text + ' ');
@@ -109,7 +109,7 @@ describe('what incremental rebuild leaves alone', () => {
   });
 
   it('the same text again makes nothing again', async () => {
-    const { fast } = await pair('office');
+    const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     for (const m of ['datamodel', 'forms', 'security']) await fast.setText(m, (await fast.getInstance(m)).text);
@@ -117,7 +117,7 @@ describe('what incremental rebuild leaves alone', () => {
   });
 
   it('a new composition starts from nothing: every document is made again', async () => {
-    const { fast, def } = await pair('office');
+    const { fast, def } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.compose(def.metamodels);

@@ -92,15 +92,14 @@ describe('the product specification (gresint)', () => {
     expect(errors((await bango.getInstance('sensors')).problems).join()).toMatch(/Entity named 'ZoneDimension'/);
   });
 
-  it('the basic data has the defaults of the sensor DSL when it says less', async () => {
+  it('the basic data has the defaults of the platform when it says less', async () => {
     const { bango } = await openProject('gresint');
     await bango.setText('basic', 'basic MyApp');
     const spec = ((await bango.toJson('basic')) as { data: { basicData: Obj } }).data.basicData;
     expect(spec).toEqual({
       name: 'MyApp',
-      index: { component: 'STATIC', view: 'welcome' },
       languages: ['en', 'es', 'gl'],
-      packageInfo: { artifactId: 'MyApp', groupId: 'es.udc.lbd.myapp' },
+      packageInfo: { artifact: 'myapp', group: 'es.udc.lbd.gisspl' },
       SRID: '4326'
     });
     expect(((await bango.toJson('basic')) as Obj).features).toEqual([]);

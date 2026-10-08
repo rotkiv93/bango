@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { JsonValue } from '@bango/core';
 import { Bango } from '../src/index.js';
 import { errors, openProject, warnings } from '../../../test-support/harness.js';
+import { loadSeed } from '../../../test-support/seed.js';
 
 type Json = { [key: string]: JsonValue };
 const get = (json: JsonValue, ...path: string[]): JsonValue => path.reduce<JsonValue>((v, k) => (v as Json)[k], json);
 
 describe('security: a reference to a type that three metamodels contribute to', () => {
   it('resolves grants on an entity, a form and a list in the same instance', async () => {
-    const { bango } = await openProject('office');
+    const { bango } = await openProject('security-office');
     expect(errors((await bango.getInstance('security')).problems)).toEqual([]);
     const json = await bango.toJson('security');
     const kinds = (get(json!, 'data', 'security', 'permissions') as Json[]).map(p => `${p.resource}:${p.kind}`);
@@ -16,8 +17,8 @@ describe('security: a reference to a type that three metamodels contribute to', 
   });
 
   it('still resolves when metamodels that do not know the union are composed with it, in any order (regression: the merged reflection forgot Entity is a Resource)', async () => {
-    const { bango, seed } = await openProject('everything');
-    const all = seed.projects.everything;
+    const { bango, seed } = await openProject('security-everything');
+    const all = seed.projects['security-everything'];
     const permutations = [
       ['datamodel', 'forms', 'lists', 'security', 'gismodel'],
       ['gismodel', 'security', 'lists', 'forms', 'datamodel'],
@@ -35,7 +36,7 @@ describe('security: a reference to a type that three metamodels contribute to', 
   });
 
   it('role inheritance: a cycle is an error on each role of it, and breaking it clears them', async () => {
-    const { bango } = await openProject('office');
+    const { bango } = await openProject('security-office');
     const text = 'security office\nrole a extends b\nrole b extends a\nrole c extends a\n';
     const state = await bango.setText('security', text);
     // c extends a cycle but is not in it
@@ -44,7 +45,7 @@ describe('security: a reference to a type that three metamodels contribute to', 
   });
 
   it('removing an entity breaks exactly the things that refer to it, across three metamodels', async () => {
-    const { bango, project } = await openProject('office');
+    const { bango, project } = await openProject('security-office');
     const without = project.instances.datamodel.replace(/entity Customer[\s\S]*?\n}\n\n/, '').replace(/\n\s*relation invoices[^\n]*/, '').replace(/relation customer -> Customer inverse invoices owner/, 'property customerName: String');
     await bango.setText('datamodel', without);
     const broken = async (m: string) => errors((await bango.getInstance(m)).problems).filter(e => /Customer/.test(e)).length;
@@ -55,7 +56,7 @@ describe('security: a reference to a type that three metamodels contribute to', 
   });
 
   it('an entity and a form with the same name: the reference resolves to one of them, always the same', async () => {
-    const { bango, project } = await openProject('office');
+    const { bango, project } = await openProject('security-office');
     const clash = project.instances.forms.replace('form InvoiceForm entity Invoice', 'form InvoiceForm entity Invoice\n\nform Invoice entity Customer');
     await bango.setText('forms', clash);
     const kinds = new Set<string>();
@@ -82,7 +83,7 @@ describe('menus: recursion, and a screen that is a form, a list or a map', () =>
   });
 
   it('fills the data.menus slot that basic leaves empty, and nothing else of the gresint document changes', async () => {
-    const { bango, seed } = await openProject('everything');
+    const { bango, seed } = await openProject('security-everything');
     const json = await bango.toProjectJson();
     expect((get(json, 'data', 'menus') as Json[]).length).toBe(2);
     const expected = seed.expected.gresint as JsonValue;
@@ -156,7 +157,7 @@ describe('the new projects', () => {
 
   it('security needs the data model, the forms and the lists; menus the forms, the lists and the GIS model', async () => {
     const bango = new Bango();
-    const { seed } = await openProject('shop');
+    const seed = loadSeed({ fixtures: true });
     for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
     const grammars = await bango.listMetamodels();
     const requires = (name: string) => grammars.find(g => g.name === name)!.requires.sort();

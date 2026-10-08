@@ -1,8 +1,6 @@
 basic gresint
   srid 4326
-  index STATIC welcome
   languages en, es, gl
-  package gresint group "es.udc.lbd.gresint"
   database at "localhost" schema "postgres" login "postgres" password "postgres"
   features GEMA_SPL, DataManagement, GraphicalUserInterface, MapViewer, Tools, DM_SpatialDatabase,
     DM_GenerationType, DM_DataServer, MV_MapServer, MV_Tools, MV_MapManagement, DM_SD_PostGIS, UserManagement,

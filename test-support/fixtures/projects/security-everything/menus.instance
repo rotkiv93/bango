@@ -1,0 +1,14 @@
+menus gresint
+
+menu main position top {
+  item data label "Data" {
+    item stations opens Stations
+    item zones opens Zones
+    item editStation opens StationForm
+  }
+  item overview opens stationobservation-map
+}
+
+menu sidebar position side {
+  item zoneEditor opens ZoneForm
+}

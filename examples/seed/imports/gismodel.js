@@ -5,10 +5,34 @@ const importer = function (json, { n }) {
   // a label that is only the name is not written
   const label = item => (item.label !== item.name ? item.label : undefined);
 
-  const mapLayer = l => n('MapInLayerAndStyle', { layer: l.name, style: l.style, baseLayer: l.baseLayer, selected: l.selected, order: l.order });
+  const mapLayer = l => n('MapInLayerAndStyle', { layer: l.name, style: l.style, opacity: l.opacity, baseLayer: l.baseLayer, selected: l.selected, order: l.order });
+
+  const crs = o => {
+    const c = o?.crs;
+    if (!c) return undefined;
+    const options = c.proj4Config?.options ?? {};
+    return n('MapCrs', {
+      srid: c.srid,
+      proj4: c.proj4Config?.params,
+      originX: options.origin?.[0],
+      originY: options.origin?.[1],
+      resolutions: options.resolutions ?? []
+    });
+  };
 
   const map = m =>
-    n('MapDef', { name: m.name, label: label(m), lat: m.center?.lat, lng: m.center?.lng, zoom: m.center?.zoom, sortable: m.sortable, layers: m.layers.map(mapLayer) });
+    n('MapDef', {
+      name: m.name,
+      label: label(m),
+      lat: m.center?.lat,
+      lng: m.center?.lng,
+      zoom: m.center?.zoom,
+      minZoom: m.mapOptions?.minZoom,
+      maxZoom: m.mapOptions?.maxZoom,
+      crs: crs(m.mapOptions),
+      sortable: m.sortable,
+      layers: m.layers.map(mapLayer)
+    });
 
   const layer = l => {
     switch (l.type) {
@@ -29,7 +53,7 @@ const importer = function (json, { n }) {
         });
       }
       default:
-        return n('WMSLayer', { name: l.name, label: label(l) });
+        return n('WMSLayer', { name: l.name, label: label(l), url: l.url, wmsLayers: l.layers ?? [] });
     }
   };
 

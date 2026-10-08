@@ -22,7 +22,7 @@ async function timed(fn: () => Promise<unknown>, times = 5) {
 }
 
 async function load(entities: number, incremental = true) {
-  const seed = loadSeed();
+  const seed = loadSeed({ fixtures: true });
   const project = generateProject({ entities });
   const bango = new Bango({ incremental });
   await feedSeed(bango, seed);

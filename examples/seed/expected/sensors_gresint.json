@@ -84,14 +84,10 @@
   "data": {
     "basicData": {
       "name": "gresint",
-      "index": {
-        "component": "STATIC",
-        "view": "welcome"
-      },
       "languages": ["en", "es", "gl"],
       "packageInfo": {
-        "artifactId": "gresint",
-        "groupId": "es.udc.lbd.gresint"
+        "artifact": "gresint",
+        "group": "es.udc.lbd.gisspl"
       },
       "SRID": "4326",
       "database": {

@@ -4,7 +4,7 @@ import { feedSeed, openProject } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 async function bangoWithSeed() {
-  const seed = loadSeed();
+  const seed = loadSeed({ fixtures: true });
   const bango = new Bango();
   await feedSeed(bango, seed);
   return { bango, seed };
@@ -14,7 +14,7 @@ describe('metamodel test cases', () => {
   it('every case shipped with the metamodels passes', async () => {
     const { bango, seed } = await bangoWithSeed();
     const names = Object.keys(seed.cases);
-    expect(names.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors']);
+    expect(names.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors', 'statics']);
     for (const name of names) {
       const results = await bango.runCases(name, seed.cases[name]);
       expect(results.length).toBe(seed.cases[name].length);

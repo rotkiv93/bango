@@ -6,11 +6,15 @@ import './datamodel'
 entry Gis: 'gismodel' (maps+=MapDef | layers+=Layer | styles+=Style)*;
 
 // A map shows layers in an order; `center lat lng zoom N` is where it opens
-MapDef: 'map' name=ID ('label' label=STRING)? ('center' lat=SignedNumber lng=SignedNumber 'zoom' zoom=INT)? (sortable?='sortable')?
+MapDef: 'map' name=ID ('label' label=STRING)? ('center' lat=SignedNumber lng=SignedNumber 'zoom' zoom=INT)?
+  ('zoomRange' minZoom=INT maxZoom=INT)? (crs=MapCrs)? (sortable?='sortable')?
   '{' (layers+=MapInLayerAndStyle)+ '}';
 
+// The projection of a map that is not the web one: `crs "EPSG:25829" proj4 "+proj=utm ..." origin -5120900 9998100 resolutions 4891.9, 2445.9`
+MapCrs: 'crs' srid=STRING 'proj4' proj4=STRING ('origin' originX=SignedNumber originY=SignedNumber)? ('resolutions' resolutions+=Double (',' resolutions+=Double)*)?;
+
 // A layer on a map. Layers that draw data (GeoJSON, WMS) need a style, the base tile layer does not.
-MapInLayerAndStyle: 'use' layer=[Layer:ID] ('style' style=[Style:ID])?
+MapInLayerAndStyle: 'use' layer=[Layer:ID] ('style' style=[Style:ID])? ('opacity' opacity=Double)?
   (baseLayer?='baseLayer')? (selected?='selected')? 'order' order=INT;
 
 Layer: TileLayer | GeoJsonLayer | WMSLayer;
@@ -22,7 +26,8 @@ GeoJsonLayer: 'geojsonlayer' name=ID ('label' label=STRING)? 'entity' entity=[En
   'defaultStyle' defaultStyle=[Style:ID]
   'availableStyles' availableStyles+=[Style:ID] (',' availableStyles+=[Style:ID])*;
 
-WMSLayer: 'wmslayer' name=ID ('label' label=STRING)?;
+// A layer served by a WMS: of this product's GeoServer when it has no `url`; `layers` are the names it asks the server for
+WMSLayer: 'wmslayer' name=ID ('label' label=STRING)? ('url' url=STRING)? ('layers' wmsLayers+=STRING (',' wmsLayers+=STRING)*)?;
 
 Style: GeoJSONLayerStyle | StaticIntervalsStyle | WMSLayerStyle;
 

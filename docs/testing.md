@@ -30,7 +30,7 @@ These do not know any metamodel by name. They take what ships in `examples/seed`
 | 500 entities (92 KB data model, 130 KB in all) | |
 |---|---|
 | load every instance | ~100 ms |
-| a change to a metamodel that nothing needs (`security`) | ~10 ms |
+| a change to a metamodel that nothing needs (`security`, a test fixture) | ~10 ms |
 | ... to `forms` (needed by `security`) | ~20 ms |
 | ... to the data model (needed by all) | ~80 ms |
 | a form edit, the project JSON | ~10 ms, ~5 ms |

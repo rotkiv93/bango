@@ -1,9 +1,8 @@
 basic fleet
+  version "1.0.0"
   srid 4326
-  index STATIC welcome
   languages en, es, gl
-  package fleet group "es.udc.lbd.fleet"
-  database at "localhost" schema "postgres" login "postgres" password "postgres"
+  database at "localhost" port "5432" schema "postgres" login "postgres" password "postgres"
   features GEMA_SPL, DataManagement, GraphicalUserInterface, MapViewer, Tools, DM_SpatialDatabase,
     DM_GenerationType, DM_DataServer, MV_MapServer, MV_Tools, MV_MapManagement, DM_SD_PostGIS, UserManagement,
     UM_Authentication, UM_UpdatePassword, UM_SecurityType, UM_UP_ByUser, UM_Registration, UM_R_ByAdmin,
@@ -18,3 +17,5 @@ basic fleet
     SV_P_Histogram, SV_P_SensorInfo, SV_Data, SV_D_DataInsertion, SV_D_DI_Producers, SV_D_DI_Consumers,
     SV_D_ArtificialGenerator, SV_D_ADG_Entities, SV_D_ADG_Sensors, SV_D_ADG_Dimensions, SV_Rasters,
     D_Containers, D_C_Nginx
+  extra client_deploy_url "http://localhost:1234"
+  extra geoserver_url "http://localhost:9001/geoserver"

@@ -1,0 +1,15 @@
+datamodel office
+
+entity Customer display "$name" {
+  property id: Long autoinc required pk unique
+  property name: String required
+  property email: String
+  relation invoices -> Invoice inverse customer multiple
+}
+
+entity Invoice display "$number" {
+  property id: Long autoinc required pk unique
+  property number: String required unique
+  property total: Double
+  relation customer -> Customer inverse invoices owner
+}

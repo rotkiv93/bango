@@ -75,7 +75,7 @@ test.describe('metamodels and their scripts', () => {
   test('every metamodel that ships has test cases, and they pass', async ({ page }) => {
     await start(page);
     await page.locator('.topbar nav button', { hasText: 'Metamodels' }).click();
-    for (const name of ['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security']) {
+    for (const name of ['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'statics']) {
       await page.locator('.mm-item', { has: page.locator(`strong:text-is("${name}")`) }).click();
       await view(page, 'Tests');
       const summary = page.locator('.tests-head strong');

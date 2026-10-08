@@ -8,6 +8,7 @@ const spec = function (model, { refName }) {
   const mapLayer = entry => {
     const out = { name: refName(entry.layer), baseLayer: !!entry.baseLayer };
     if (entry.style) out.style = refName(entry.style);
+    if (entry.opacity !== undefined) out.opacity = entry.opacity;
     out.selected = !!entry.selected;
     out.order = entry.order;
     return out;
@@ -18,6 +19,19 @@ const spec = function (model, { refName }) {
     if (m.lat !== undefined) out.center = { lat: m.lat, lng: m.lng, zoom: m.zoom };
     out.sortable = !!m.sortable;
     out.layers = m.layers.map(mapLayer);
+    if (m.crs || m.minZoom !== undefined) {
+      out.mapOptions = {};
+      if (m.crs) {
+        const options = {};
+        if (m.crs.originX !== undefined) options.origin = [m.crs.originX, m.crs.originY];
+        if (m.crs.resolutions.length) options.resolutions = [...m.crs.resolutions];
+        out.mapOptions.crs = { srid: m.crs.srid, proj4Config: { params: m.crs.proj4, options } };
+      }
+      if (m.minZoom !== undefined) {
+        out.mapOptions.minZoom = m.minZoom;
+        out.mapOptions.maxZoom = m.maxZoom;
+      }
+    }
     return out;
   };
 
@@ -38,7 +52,8 @@ const spec = function (model, { refName }) {
           availableStyles: l.availableStyles.map(refName)
         };
       default:
-        return { name: l.name, type: 'wmslayer', label };
+        // the platform's templates call it `wms`
+        return { name: l.name, type: 'wms', label, ...(l.url !== undefined ? { url: l.url } : {}), ...(l.wmsLayers.length ? { layers: [...l.wmsLayers] } : {}) };
     }
   };
 

@@ -36,7 +36,9 @@ export interface Opened {
 
 /** A Bango with every seed grammar loaded, the project's metamodels composed and its instances set. */
 export async function openProject(name: string, bango = new Bango()): Promise<Opened> {
-  const seed = loadSeed();
+  // a project that only the tests have (built on the `security` metamodel) brings its fixtures along
+  let seed = loadSeed();
+  if (!seed.projects[name]) seed = loadSeed({ fixtures: true });
   const project = seed.projects[name];
   await feedSeed(bango, seed);
   await bango.compose(project.metamodels);

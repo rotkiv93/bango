@@ -1,0 +1,9 @@
+lists
+
+list Invoices label "Invoices" entity Invoice pageSize 25 sortBy number {
+  column number
+  column total label "Total (EUR)"
+  column customer
+}
+
+list Customers entity Customer sortBy name

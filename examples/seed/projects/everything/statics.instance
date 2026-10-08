@@ -1,0 +1,4 @@
+statics everything
+
+page Home html "<article><h1>Welcome</h1><p>The gresint product, with its forms, lists and menus.</p></article>"
+page About html "<p>About this product.</p>"

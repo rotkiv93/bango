@@ -31,7 +31,7 @@ function subsets<T>(items: T[]): T[][] {
 }
 
 describe('every selection of the shipped metamodels', () => {
-  const seed = loadSeed();
+  const seed = loadSeed({ fixtures: true });
   const graph = importGraph(seed.grammars);
 
   it('the oracle reads the dependencies the documentation promises', () => {
@@ -97,7 +97,7 @@ describe('the order of a selection never matters', () => {
   };
 
   it.each(['gresint', 'office', 'portal', 'everything'])('%s: the project JSON and every instance are the same in any order', async name => {
-    const seed = loadSeed();
+    const seed = loadSeed({ fixtures: true });
     const project = seed.projects[name];
     const results: string[] = [];
     for (const order of [project.metamodels, [...project.metamodels].reverse(), shuffled(project.metamodels, 1), shuffled(project.metamodels, 7)]) {

@@ -1,0 +1,11 @@
+sensors gresint
+
+sensor StationObservation time 10 geometry Polygon
+  entity StationObservationEntity factTable StationObservationMeasurement
+  map stationobservation-map layer stationobservation-layer {
+  measurements
+    value Double
+    quality Integer
+  spatial ZoneDimension entities (ZoneDimension)
+  categorical SensorType field sensorType
+}
