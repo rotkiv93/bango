@@ -4,7 +4,7 @@ import type { ViewKind } from '@bango/renderer';
 
 export type Page = 'projects' | 'project' | 'metamodels';
 export type Theme = 'dark' | 'light';
-export type MetamodelView = 'grammar' | 'constraints' | 'scope' | 'spec' | 'import' | 'tests' | 'ast' | 'composed';
+export type MetamodelView = 'grammar' | 'constraints' | 'scope' | 'spec' | 'import' | 'visualizations' | 'tests' | 'ast' | 'composed';
 export type OverviewView = 'diagram' | 'project-json' | 'project-ast';
 interface Toast { id: number; kind: 'error' | 'success' | 'info'; text: string }
 
@@ -59,6 +59,8 @@ export interface WorkspaceSlice extends WorkspaceState {
   editSpec(metamodel: string, text: string): void;
   editImport(metamodel: string, text: string): void;
   editScope(metamodel: string, text: string): void;
+  /** the views of the metamodel's instances that it brings (page code: the engine never sees it) */
+  editVisualizations(metamodel: string, text: string): void;
   setCases(metamodel: string, cases: MetamodelCase[]): void;
   runCases(metamodel: string, cases?: MetamodelCase[]): Promise<CaseResult[]>;
   /** what importing this JSON into the open project would produce; changes nothing */

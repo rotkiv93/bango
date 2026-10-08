@@ -26,4 +26,4 @@ export function loadSeed(): Seed {
 export const METAMODELS = ['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors'];
 
 /** The projects the playground offers as examples, sorted. */
-export const EXAMPLE_PROJECTS = ['catalog', 'city', 'everything', 'gresint', 'office', 'portal', 'shop'];
+export const EXAMPLE_PROJECTS = ['catalog', 'city', 'everything', 'fleet', 'gresint', 'office', 'portal', 'shop'];

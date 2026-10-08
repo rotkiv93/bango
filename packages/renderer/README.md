@@ -96,6 +96,51 @@ await view.setView('size');
 
 `InstanceRenderer` is `{ mount(el), update(state: InstanceState), reveal?(range), dispose() }`. `ctx` gives you `engine`, `metamodel` and `reveal(metamodel, range)`. `update` is called on every engine event, and again after `mount`. Registering a name that exists replaces the built-in view.
 
+## Visualizations: views a metamodel brings
+
+The built-in views know nothing of any metamodel. A metamodel that has something better to show than a form (a class diagram for a data model, a sensor diagram for sensors) brings it itself, in its `visualizations/<name>.js`. bango loads it and offers each visualization as a view named `viz:<id>`; it never knows what they draw.
+
+```js
+// visualizations/datamodel.js: the body of a function that returns the list. `kit` is what bango gives to draw with.
+return [{
+  id: 'class-diagram',
+  label: 'Class diagram',
+  create(ctx, kit) {
+    const canvas = new kit.Canvas({ onSelect: key => ctx.inspect(/* the path of that node, or null */ null) });
+    return {
+      mount: el => canvas.mount(el),
+      update: state => canvas.render(/* nodes */ [], /* edges */ [], ctx.layout.get()),
+      dispose: () => canvas.dispose()
+    };
+  }
+}];
+```
+
+The host gives the renderer a store of them, and asks it which views a metamodel has:
+
+```ts
+const visualizations = new VisualizationStore();
+visualizations.set('datamodel', textOfTheFile);            // or .load({ datamodel: ..., sensors: ... })
+
+const view = new ModelRenderer(bango, { visualizations, layouts });
+view.views('datamodel');       // [{ id: 'text', ... }, ..., { id: 'viz:class-diagram', label: 'Class diagram', kind: 'visualization' }]
+await view.mount(el, 'datamodel', 'viz:class-diagram');
+```
+
+| | |
+|---|---|
+| `ctx` | the usual `engine`, `metamodel` and `reveal`, plus `layout` (`get()` / `set(positions)`: where this view's nodes are, kept by the host) and `inspect(path)` (open the node at that path in the panel at the side, a form for that node alone; `null` closes it) |
+| `kit.Canvas` | a pannable, zoomable canvas of draggable nodes of any size that you draw with SVG, joined by edges with arrowheads and labels at their ends. Selection, Delete, double-click, and a handle to drag a connection from one node to another. `render(nodes, edges, savedPositions)` keeps the positions people left and lays out the rest |
+| `kit.editor(engine, metamodel, onFailure)` | edits the instance by its tree (`add`, `addNamed`, `addValue`, `set`, `remove`); what the grammar refuses is reported to `onFailure`, not thrown |
+| `kit.boxLayout`, `kit.columnLayout` | where to put boxes of any size to begin with |
+| `kit.h`, `kit.svg`, `kit.walk`, `kit.nodeAt`, `kit.fit` | DOM and tree helpers |
+
+- **What is offered** reaches every visualization in `update(state)`: `state.offered` are the read-only instances that others contribute (`engine.setContributed`: what a module adds to the data model, say), of any metamodel, with their trees (`ast`), only the ones that could be read. A view draws them next to the instance's own (the class diagram draws the entities a module offers dashed and locked, with who offers them, and an *Offered* button hides them), and must not edit them: their paths are in another instance.
+- **Where the nodes are** is the host's: `layouts` is a `LayoutStore` (`get(metamodel, view)`, `set(metamodel, view, positions)`). `MemoryLayoutStore` keeps them in memory, with `toJSON()` to save, `load()` to give them back and `subscribe()` to know when one moved; LINEA saves them next to the model in the product's repository, the playground in the project. Without a store, nodes are laid out again each time the page loads.
+- **Changing the file** redraws the view from the new text: the studio's *Visualizations* tab and the playground's editor are live. A file that does not load, or a view that throws while drawing, is a message where the view was, never a crash; `view.views()` carries the reason.
+- **Trust.** The file runs in the page, with everything the page has: bango does not sandbox it. It is as trusted as the package that holds it, like the scripts a metamodel brings. A host that loads packages from places it does not trust decides what to do before it gives them to the store.
+- **Typings.** `VISUALIZATION_TYPINGS` declares `kit`, `Visualization`, `Visualizations` and the rest, for an editor that completes the file.
+
 ## Custom element
 
 ```html
@@ -131,6 +176,7 @@ The default look is dark and comes from CSS variables read from any ancestor, so
 
 ```
 src/host/    ModelRenderer, view registry, <bango-instance>, types
+src/visualizations/  what a metamodel's own views are given: canvas, layouts, tree edits; the store and the loader
 src/views/   text (Monaco), form, diagram, ast, json
 src/dom/     DOM helpers and the default stylesheet
 src/bundle/  entry of the self-contained browser build

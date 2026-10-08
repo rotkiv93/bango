@@ -13,7 +13,7 @@ The three modules (and the small package they share) each have their own referen
 - [`@bango/core`](../packages/core/README.md): the plain data types, JSON helpers and the worker client
 - [`@bango/composer`](../packages/composer/README.md): composes grammars into languages and checks that a selection fits together
 - [`@bango/engine`](../packages/engine/README.md): parses, validates and edits instances; builds the final model
-- [`@bango/renderer`](../packages/renderer/README.md): text, form, diagram, AST and JSON views of an instance
+- [`@bango/renderer`](../packages/renderer/README.md): text, form, diagram, AST and JSON views of an instance, and the views a metamodel brings (`<name>.visualizations.js`)
 
 And the two things built on them:
 

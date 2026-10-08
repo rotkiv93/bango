@@ -22,6 +22,52 @@ describe('sensors metamodel', () => {
     }
   });
 
+  describe('the fleet example: enumerations, inheritance, patterns and ranges', () => {
+    it('is valid, without a single warning', async () => {
+      const { bango } = await openProject('fleet');
+      for (const m of ['basic', 'datamodel', 'gismodel', 'sensors']) {
+        const s = await bango.getInstance(m);
+        expect(errors(s.problems), m).toEqual([]);
+        expect(warnings(s.problems), m).toEqual([]);
+      }
+    });
+
+    it('says in JSON what the generator reads: enums, superclasses, limits, icons and categories', async () => {
+      const { bango } = await openProject('fleet');
+      const data = ((await bango.toProjectJson()) as { data: { dataModel: { entities: any[]; enums: any[] }; dataWarehouse: { sensors: any[] } } }).data;
+      expect(data.dataModel.enums).toEqual([{ name: 'Status', values: ['OK', 'DEGRADED', 'OFFLINE'] }]);
+      const entity = (name: string) => data.dataModel.entities.find(e => e.name === name);
+      expect(entity('Asset')).toMatchObject({ abstract: true, displayString: '$name' });
+      expect(entity('Buoy')).toMatchObject({ superclass: 'Asset', traceable: true });
+      expect(entity('Port').superclass).toBe('Asset');
+      expect(entity('Asset').properties.find((p: any) => p.name === 'name')).toMatchObject({ class: 'String', required: true, min: 2, max: 60 });
+      expect(entity('Buoy').properties.find((p: any) => p.name === 'serial')).toMatchObject({ patternType: 'Personalizado', pattern: '[A-Z]{2}[0-9]{4}', unique: true });
+      expect(entity('BuoyReading').properties.find((p: any) => p.name === 'status').class).toBe('Status');
+
+      const sensor = data.dataWarehouse.sensors[0];
+      expect(sensor.measureData).toEqual([
+        { name: 'level', type: 'Double', units: 'm', icon: 'waves' },
+        { name: 'temperature', type: 'Float', units: 'C', icon: 'thermostat', range: 'Temperature' }
+      ]);
+      expect(sensor.dimensions[1]).toEqual({
+        id: 'Health',
+        type: 'CATEGORICAL',
+        field: 'status',
+        categories: [{ value: 'OK', label: 'Working' }, { value: 'DEGRADED', label: 'Degraded' }, { value: 'DEFAULT', label: 'Unknown' }]
+      });
+    });
+
+    it('is read back from its own JSON: the same model, with a range for what the JSON labels', async () => {
+      const { bango } = await openProject('fleet');
+      const json = await bango.toProjectJson();
+      const back = await bango.importJson(json);
+      expect(back.errors).toEqual([]);
+      // the JSON keeps the categories of a dimension and the name of a measurement's range, not the ranges themselves
+      await bango.setInstances(back.texts);
+      expect(await bango.toProjectJson()).toEqual(json);
+    });
+  });
+
   it('what a sensor points at lives in the other two metamodels', async () => {
     const { bango } = await openProject('gresint');
     const { ast } = await bango.getInstance('sensors');

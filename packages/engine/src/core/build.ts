@@ -1,6 +1,6 @@
 import type { Composition } from '@bango/composer';
 import { toJsonSpec } from '@bango/core';
-import type { BuildResult, InstanceState, JsonValue } from '@bango/core';
+import type { BuildResult, ContributedState, InstanceState, JsonValue } from '@bango/core';
 
 /**
  * The final model of a project. It only succeeds when the metamodel selection is complete (every requirement
@@ -11,7 +11,8 @@ export function buildModel(
   project: string,
   composition: Composition,
   instances: InstanceState[],
-  json: { specs: Map<string, JsonValue>; merged: JsonValue; errors: string[] }
+  json: { specs: Map<string, JsonValue>; merged: JsonValue; errors: string[] },
+  contributed: ContributedState[] = []
 ): BuildResult {
   const errors: string[] = [...composition.problems.map(p => p.message), ...json.errors];
   const warnings: string[] = [];
@@ -30,6 +31,20 @@ export function buildModel(
     }
     for (const p of inst.problems) {
       const line = `${inst.metamodel} ${p.startLine + 1}:${p.startColumn + 1} ${p.message}`;
+      if (p.severity === 'error') errors.push(line);
+      else if (p.severity === 'warning') warnings.push(line);
+    }
+  }
+
+  // what other parties offer must be sound too, or the references to it mean nothing; they stay out of the model itself
+  for (const c of contributed) {
+    const where = `${c.origin}:${c.metamodel}`;
+    if (!c.available) {
+      errors.push(`${where}: ${c.problems[0]?.message ?? 'metamodel not available'}`);
+      continue;
+    }
+    for (const p of c.problems) {
+      const line = `${where} ${p.startLine + 1}:${p.startColumn + 1} ${p.message}`;
       if (p.severity === 'error') errors.push(line);
       else if (p.severity === 'warning') warnings.push(line);
     }

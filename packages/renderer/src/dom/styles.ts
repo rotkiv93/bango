@@ -11,6 +11,7 @@ export const CSS = `
 .bango-empty { padding: 16px; opacity: .7; }
 .bango-pad { padding: 8px 12px; }
 .bango-view button { cursor: pointer; background: var(--bango-input, #3c3c3c); color: inherit; border: 1px solid var(--bango-line, #3c3c3c); border-radius: 3px; padding: 1px 8px; font: inherit; }
+.bango-view button.bango-on { border-color: var(--bango-accent, #3794ff); }
 .bango-view button.bango-link { background: none; border: 0; color: var(--bango-accent, #3794ff); padding: 0 4px; }
 .bango-view button.bango-x { background: none; border: 0; color: var(--bango-err, #f48771); }
 
@@ -59,6 +60,27 @@ export const CSS = `
 .bango-dedge { fill: none; stroke-width: 1.5; }
 .bango-dedge.bango-ref { stroke-dasharray: 5 4; }
 .bango-legend { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 12px; font-size: 11px; background: var(--bango-panel, #252526); padding: 4px 8px; border-radius: 4px; }
+
+/* visualizations: a canvas of nodes, and the inspector at its side */
+.bango-view-viz { display: flex; overflow: hidden; }
+.bango-viz-main { position: relative; flex: 1; min-width: 0; }
+.bango-inspector { width: 340px; flex: none; overflow: auto; border-left: 1px solid var(--bango-line, #3c3c3c); background: var(--bango-panel, #252526); }
+.bango-canvas { position: absolute; inset: 0; overflow: hidden; outline: none; }
+.bango-canvas > svg { width: 100%; height: 100%; display: block; cursor: grab; }
+.bango-canvas > svg.bango-panning { cursor: grabbing; }
+.bango-cnode { cursor: move; }
+.bango-cnode text { fill: var(--bango-fg, #d4d4d4); font-size: 11px; pointer-events: none; }
+.bango-selframe { fill: none; stroke: var(--bango-accent, #3794ff); stroke-width: 2; display: none; pointer-events: none; }
+.bango-selected .bango-selframe { display: block; }
+.bango-handle { fill: var(--bango-accent, #3794ff); opacity: 0; cursor: crosshair; }
+.bango-cnode:hover .bango-handle, .bango-selected .bango-handle { opacity: .85; }
+.bango-rubber { stroke: var(--bango-accent, #3794ff); stroke-width: 2; stroke-dasharray: 4 3; pointer-events: none; }
+.bango-clabel { font-size: 10px; pointer-events: none; paint-order: stroke; stroke: var(--bango-bg, #1e1e1e); stroke-width: 3px; stroke-linejoin: round; }
+.bango-ctoolbar { position: absolute; top: 8px; left: 8px; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; background: var(--bango-panel, #252526); padding: 4px; border-radius: 4px; border: 1px solid var(--bango-line, #3c3c3c); }
+.bango-ctoolbar:empty { display: none; }
+.bango-ctoolbar input { background: var(--bango-input, #3c3c3c); color: inherit; border: 1px solid var(--bango-line, #555); border-radius: 3px; padding: 1px 6px; font: inherit; width: 140px; }
+.bango-ctoolbar .bango-spacer { width: 8px; }
+.bango-cmessage { position: absolute; left: 8px; bottom: 8px; max-width: 70%; padding: 4px 8px; border-radius: 4px; background: var(--bango-panel, #252526); border: 1px solid var(--bango-err, #f48771); color: var(--bango-err, #f48771); font-size: 12px; }
 `;
 
 const STYLE_ID = 'bango-renderer-styles';

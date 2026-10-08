@@ -1,14 +1,18 @@
 # Writing metamodels
 
-A metamodel is up to five files, named after it. Only the grammar is required.
+A metamodel is a folder with one file per kind of thing it says, each in a folder of its kind and named after the grammar. Only the grammar is required.
 
 | File | What it is | Loaded with |
 |---|---|---|
-| `<name>.langium` | the grammar: what instances look like | `bango.setGrammar(name, text)` |
-| `<name>.constraints.js` | validation the grammar cannot express | `bango.setConstraints(name, code)` |
-| `<name>.spec.js` | how an instance becomes JSON | `bango.setSpec(name, code)` |
-| `<name>.import.js` | how JSON becomes an instance | `bango.setImport(name, code)` |
-| `<name>.scope.js` | which nodes each reference can point at | `bango.setScope(name, code)` |
+| `grammars/<name>.langium` | the grammar: what instances look like | `bango.setGrammar(name, text)` |
+| `constraints/<name>.js` | validation the grammar cannot express | `bango.setConstraints(name, code)` |
+| `specs/<name>.js` | how an instance becomes JSON | `bango.setSpec(name, code)` |
+| `imports/<name>.js` | how JSON becomes an instance | `bango.setImport(name, code)` |
+| `scopes/<name>.js` | which nodes each reference can point at | `bango.setScope(name, code)` |
+| `visualizations/<name>.js` | views of its instances that only it can draw | the renderer's `VisualizationStore` (bango's engine never runs it) |
+| `cases/<name>.json` | sample instances and what they must report | `bango.runCases(name, cases)` |
+
+(The scripts are still called by their old file names in messages: `datamodel.constraints.js: ...`.) The LINEA `metamodels` repository has one such folder per metamodel, and `examples/seed` here has the same kind folders with every metamodel's files side by side.
 
 In the playground, they are edited on the **Metamodels** page (*Grammar*, *Constraints*, *Scope*, *JSON mapping*, *JSON import*), and every project that uses the metamodel revalidates as you type.
 
@@ -263,17 +267,23 @@ return importer;
 
 In code, `bango.importJson(json)` returns `{ texts, skipped, errors, problems }` and **changes nothing**: `problems` is what each new instance reports once they are loaded together, and `await bango.setInstances(texts)` makes them the instances. In the playground, **Import JSON** on a project page does both, after showing the preview.
 
-## 5. Trying it
+## 5. Views of its own (optional)
+
+The built-in views (text, form, diagram, JSON) work for every metamodel. When yours has a natural picture, a metamodel can bring its own: `visualizations/<name>.js`. The data model brings a **class diagram** (entities as UML classes, enumerations, inheritance, relationships with their multiplicities), and the sensors a **sensor diagram** (sensors, ranges, groups, and the entities and map they point at). bango offers each as a view called `viz:<id>`, and knows nothing of what it draws.
+
+The file is the body of a function that returns the list. Each visualization creates a view over the engine, with a canvas and tree edits to draw and change the instance; selecting a node opens a form for it at the side. See [Visualizations](../packages/renderer/README.md#visualizations-views-a-metamodel-brings) for the contract and the kit, and `metamodels/datamodel/visualizations/datamodel.js` for a complete one. It runs in the page, not in the engine, so keep to the kit and the instance the engine gives it, and treat it like the scripts above: it is as trusted as the package it comes from.
+
+## 6. Trying it
 
 1. Open the playground, go to **Metamodels**, and create one (*+ New metamodel*): it starts from a minimal grammar that imports `common`.
 2. Edit the grammar; the problems list shows grammar errors as you type.
 3. Add it to a project (*Manage metamodels*), create its instance and write some text. Completion offers the keywords and the references that exist in the project.
-4. Add constraints and a mapping (the *Constraints* and *JSON mapping* tabs create a starting file).
+4. Add constraints and a mapping (the *Constraints* and *JSON mapping* tabs create a starting file). The *Visualizations* tab is where its own views are written; they show up beside *Form* and *Diagram* on an instance of it.
 5. *JSON import* is the inverse mapping: with it, *Import JSON* on a project fills this metamodel's instance from a whole project's JSON.
 6. *Composed* shows the grammar exactly as the composer builds it, with every import inlined.
 7. *Tests* keeps sample instances and what they must report (below), so you can keep changing the grammar and the constraints with a safety net.
 
-## 6. Testing a metamodel
+## 7. Testing a metamodel
 
 A **test case** is a sample instance and the problems it must have:
 

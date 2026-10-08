@@ -51,9 +51,9 @@
 
     // 3. Metamodels are Langium grammars; a project picks which ones it uses
     for (const name of ['common', 'datamodel', 'gismodel']) await bango.setGrammar(name, await read(`${seed}/grammars/${name}.langium`));
-    for (const name of ['datamodel', 'gismodel']) await bango.setConstraints(name, await read(`${seed}/grammars/${name}.constraints.js`));
+    for (const name of ['datamodel', 'gismodel']) await bango.setConstraints(name, await read(`${seed}/constraints/${name}.js`));
     // how each metamodel's instances become JSON: the pieces of one specification
-    for (const name of ['datamodel', 'gismodel']) await bango.setSpec(name, await read(`${seed}/grammars/${name}.spec.js`));
+    for (const name of ['datamodel', 'gismodel']) await bango.setSpec(name, await read(`${seed}/specs/${name}.js`));
     const composition = await bango.compose(['datamodel', 'gismodel']);
 
     // 4. One instance per metamodel

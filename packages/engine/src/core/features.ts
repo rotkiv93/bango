@@ -1,5 +1,5 @@
 import type { LangiumDocument } from 'langium';
-import { nameOfUri } from '@bango/composer';
+import { nameOfUri, originOfUri } from '@bango/composer';
 import { toRange0, type CompletionDto, type DefinitionDto, type LocationDto, type SymbolDto, type TextEditDto } from '@bango/core';
 import type { Language } from './languages.js';
 
@@ -9,6 +9,12 @@ const params = (doc: LangiumDocument, line: number, character: number) => ({
   textDocument: { uri: doc.uri.toString() },
   position: { line, character }
 });
+
+/** `{ origin }` for a document that is a read-only contributed instance, nothing for the project's own. */
+const withOrigin = (uri: string) => {
+  const origin = originOfUri(uri);
+  return origin ? { origin } : {};
+};
 
 /** Editor features: Langium's LSP providers, reduced to plain data. */
 export async function complete(lang: Language, doc: LangiumDocument, line: number, character: number): Promise<CompletionDto[]> {
@@ -36,13 +42,13 @@ export async function hover(lang: Language, doc: LangiumDocument, line: number, 
 
 export async function definition(lang: Language, doc: LangiumDocument, line: number, character: number): Promise<DefinitionDto[]> {
   const links = await lang.services.lsp.DefinitionProvider?.getDefinition(doc, params(doc, line, character));
-  return (links ?? []).map(l => ({ metamodel: nameOfUri(l.targetUri), target: toRange0(l.targetSelectionRange) }));
+  return (links ?? []).map(l => ({ metamodel: nameOfUri(l.targetUri), ...withOrigin(l.targetUri), target: toRange0(l.targetSelectionRange) }));
 }
 
 /** Every reference to the symbol at the position, in every instance of the shared index, and its declaration. */
 export async function references(lang: Language, doc: LangiumDocument, line: number, character: number): Promise<LocationDto[]> {
   const locations = await lang.services.lsp.ReferencesProvider?.findReferences(doc, { ...params(doc, line, character), context: { includeDeclaration: true } });
-  return (locations ?? []).map(l => ({ metamodel: nameOfUri(l.uri), range: toRange0(l.range) }));
+  return (locations ?? []).map(l => ({ metamodel: nameOfUri(l.uri), ...withOrigin(l.uri), range: toRange0(l.range) }));
 }
 
 export async function symbols(lang: Language, doc: LangiumDocument): Promise<SymbolDto[]> {
@@ -71,7 +77,7 @@ export async function renameEdits(lang: Language, doc: LangiumDocument, line: nu
   const workspaceEdit = await provider.rename(doc, { ...params(doc, line, character), newName });
   const edits: TextEditDto[] = [];
   for (const [uri, changes] of Object.entries(workspaceEdit?.changes ?? {})) {
-    for (const c of changes) edits.push({ metamodel: nameOfUri(uri), range: toRange0(c.range), newText: c.newText });
+    for (const c of changes) edits.push({ metamodel: nameOfUri(uri), ...withOrigin(uri), range: toRange0(c.range), newText: c.newText });
   }
   return { edits };
 }

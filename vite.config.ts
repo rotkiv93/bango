@@ -14,7 +14,8 @@ export default defineConfig({
       { find: '@bango/engine/workspace', replacement: pkg('engine/src/workspace/index.ts') },
       { find: '@bango/engine', replacement: pkg('engine/src/index.ts') },
       { find: '@bango/renderer/text', replacement: pkg('renderer/src/views/text/index.ts') },
-      { find: '@bango/renderer', replacement: pkg('renderer/src/index.ts') }
+      { find: '@bango/renderer', replacement: pkg('renderer/src/index.ts') },
+      { find: '@bango/studio', replacement: pkg('studio/src/index.ts') }
     ]
   },
   test: { environment: 'node', include: ['packages/*/test/**/*.test.ts'] }

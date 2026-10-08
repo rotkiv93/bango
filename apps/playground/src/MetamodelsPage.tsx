@@ -101,6 +101,7 @@ export function MetamodelsPage() {
                       { value: 'scope', label: 'Scope', title: 'Which nodes each reference can point at, from where it is written' },
                       { value: 'spec', label: 'JSON mapping', title: 'The piece of the JSON specification this metamodel owns' },
                       { value: 'import', label: 'JSON import', title: 'How the project JSON becomes an instance of this metamodel: the inverse of the JSON mapping' },
+                      { value: 'visualizations', label: `Visualizations${(s.workspace.visualizations[s.activeGrammar] ?? '').trim() ? ' •' : ''}`, title: 'The views of its instances that only this metamodel knows how to draw (a class diagram, ...)' },
                       { value: 'tests', label: `Tests${(s.workspace.cases[s.activeGrammar]?.length ?? 0) ? ` (${s.workspace.cases[s.activeGrammar].length})` : ''}`, title: 'Sample instances and what they must report' },
                       { value: 'composed', label: 'Composed', title: 'The grammar with every import inlined' },
                       { value: 'ast', label: 'AST', title: 'The grammar as a tree' }
@@ -123,6 +124,9 @@ export function MetamodelsPage() {
                 )}
                 {view === 'import' && (
                   <ScriptEditorView id={`import/${s.activeGrammar}`} grammar={s.activeGrammar} value={s.workspace.imports[s.activeGrammar] ?? ''} onChange={t => s.editImport(s.activeGrammar!, t)} />
+                )}
+                {view === 'visualizations' && (
+                  <ScriptEditorView id={`visualizations/${s.activeGrammar}`} grammar={s.activeGrammar} kind="visualizations" value={s.workspace.visualizations[s.activeGrammar] ?? ''} onChange={t => s.editVisualizations(s.activeGrammar!, t)} />
                 )}
                 {view === 'tests' && <div className="scroll"><MetamodelTests name={s.activeGrammar} requires={info.requires} /></div>}
                 {view === 'composed' && <Composed name={s.activeGrammar} />}

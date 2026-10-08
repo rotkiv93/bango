@@ -7,6 +7,8 @@ export interface ProjectData {
   metamodels: string[];
   /** metamodel name -> instance text */
   instances: Record<string, string>;
+  /** where the nodes of the visualizations were left, by metamodel and view */
+  layouts?: Record<string, Record<string, Record<string, { x: number; y: number }>>> | undefined;
 }
 
 /** Everything that is saved: the metamodels shared by every project (with their scripts and tests), plus the projects. */
@@ -23,17 +25,19 @@ export interface WorkspaceData {
   scopes: Record<string, string>;
   /** metamodel name -> its test cases: sample instances and what they must report */
   cases: Record<string, MetamodelCase[]>;
+  /** metamodel name -> the views of its instances it brings (see `@bango/renderer`'s visualizations). Code for the page, never run by the engine */
+  visualizations: Record<string, string>;
   projects: Record<string, ProjectData>;
 }
 
-export const emptyWorkspace = (): WorkspaceData => ({ grammars: {}, constraints: {}, specs: {}, imports: {}, scopes: {}, cases: {}, projects: {} });
+export const emptyWorkspace = (): WorkspaceData => ({ grammars: {}, constraints: {}, specs: {}, imports: {}, scopes: {}, visualizations: {}, cases: {}, projects: {} });
 
 /**
  * A workspace saved by an older version lacks what was added since. Specs were never seeded on their own, so an old workspace simply has
  * none; import mappings and test cases start from `seed` (the examples). Everything the user wrote is kept.
  */
 export function migrateWorkspace(saved: Partial<WorkspaceData>, seed: () => WorkspaceData): WorkspaceData {
-  const needsSeed = saved.imports === undefined || saved.cases === undefined || saved.scopes === undefined;
+  const needsSeed = saved.imports === undefined || saved.cases === undefined || saved.scopes === undefined || saved.visualizations === undefined;
   const seeded = needsSeed ? seed() : emptyWorkspace();
   return {
     grammars: saved.grammars ?? {},
@@ -41,6 +45,7 @@ export function migrateWorkspace(saved: Partial<WorkspaceData>, seed: () => Work
     specs: saved.specs ?? {},
     imports: saved.imports ?? seeded.imports,
     scopes: saved.scopes ?? seeded.scopes,
+    visualizations: saved.visualizations ?? seeded.visualizations,
     cases: saved.cases ?? seeded.cases,
     projects: saved.projects ?? {}
   };

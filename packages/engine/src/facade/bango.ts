@@ -8,6 +8,8 @@ import type {
   CaseResult,
   ImportResult,
   CompletionDto,
+  ContributedInstance,
+  ContributedState,
   DefinitionDto,
   EditOp,
   EngineEvent,
@@ -117,6 +119,8 @@ export class Bango implements BangoApi {
   setInstances(texts: Record<string, string>): Promise<InstanceState[]> { return this.run(() => this.engine.setInstances(texts)); }
   createInstance(metamodel: string): Promise<InstanceState> { return this.run(() => this.engine.createInstance(metamodel)); }
   removeInstance(metamodel: string): Promise<void> { return this.run(() => this.engine.removeInstance(metamodel)); }
+  setContributed(instances: ContributedInstance[]): Promise<ContributedState[]> { return this.run(() => this.engine.setContributed(instances)); }
+  getContributed(): Promise<ContributedState[]> { return this.run(() => this.engine.getContributed()); }
   applyEdit(metamodel: string, op: EditOp): Promise<InstanceState> { return this.run(() => this.engine.applyEdit(metamodel, op)); }
   getFormSchema(metamodel: string): Promise<FormSchema | undefined> { return this.run(() => this.engine.getFormSchema(metamodel)); }
   toJson(metamodel: string, options?: JsonSpecOptions): Promise<JsonValue | undefined> { return this.run(() => this.engine.toJson(metamodel, options)); }

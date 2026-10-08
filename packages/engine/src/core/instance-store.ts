@@ -1,7 +1,7 @@
 import type { AstNode, LangiumDocument, Reference } from 'langium';
 import type { LangiumSharedServices } from 'langium/lsp';
-import { documentUri, nameOfPath, toAstDto, toProblem, wholeFile, type Composition } from '@bango/composer';
-import type { InstanceState, RefCandidate } from '@bango/core';
+import { contributedUri, documentUri, nameOfPath, ORIGIN_PATTERN, originOfPath, toAstDto, toProblem, wholeFile, type Composition } from '@bango/composer';
+import { toRange0, type ContributedInstance, type ContributedState, type InstanceState, type Problem, type RefCandidate } from '@bango/core';
 import { History } from './history.js';
 import { createLanguages, type Language } from './languages.js';
 import { MetamodelScopeProvider } from './scope.js';
@@ -12,9 +12,14 @@ const reasonOf = (e: unknown) => (e instanceof RangeError ? 'it is nested too de
 /** How big an instance may be (characters). Every keystroke parses it again, so beyond this it is reported instead of read. */
 const DEFAULT_MAX_INSTANCE_CHARS = 2_000_000;
 
+const contributedKey = (c: { origin: string; metamodel: string }) => `${c.origin}/${c.metamodel}`;
+
 /**
  * The instances of one composition: their texts, one Langium document per metamodel in one shared index (so references can
  * cross metamodels), and the languages they are parsed with. Not queued: callers (the engine) serialise access.
+ *
+ * Next to them live the *contributed* instances: read-only texts from outside the project, one document per origin and metamodel,
+ * in the same index. The project's instances can refer to what they declare; they are never edited and never part of the project's JSON.
  */
 export class InstanceStore {
   /**
@@ -41,6 +46,13 @@ export class InstanceStore {
   texts = new Map<string, string>();
   docs = new Map<string, LangiumDocument>();
   history = new History();
+
+  /** Read-only instances from outside the project, by `origin/metamodel`. */
+  contributed = new Map<string, ContributedInstance>();
+  private contributedDocs = new Map<string, { doc: LangiumDocument; metamodel: string }>();
+  private contributedUnreadable = new Map<string, string>();
+  /** Names declared twice (by document URI): the same type and name in two documents, one of them contributed, would be linked to whichever is found first. */
+  private duplicates = new Map<string, Problem[]>();
 
   /** Switch to a composition. Texts are kept; call `rebuild()` to revalidate them. */
   load(composition: Composition) {
@@ -117,12 +129,42 @@ export class InstanceStore {
       metamodel,
       text,
       ast: toAstDto(doc.parseResult.value),
-      problems: (doc.diagnostics ?? []).map(toProblem),
+      problems: [...(doc.diagnostics ?? []).map(toProblem), ...(this.duplicates.get(doc.uri.toString()) ?? [])],
       stale: lang.metamodel.stale,
       available: true,
       canUndo: this.history.canUndo(metamodel),
       canRedo: this.history.canRedo(metamodel)
     };
+  }
+
+  /** Replace the read-only instances from outside the project. Throws (changing nothing) for a bad origin or the same origin and metamodel twice. */
+  async setContributed(items: ContributedInstance[]) {
+    const next = new Map<string, ContributedInstance>();
+    for (const item of items) {
+      if (!ORIGIN_PATTERN.test(item.origin)) throw new Error(`'${item.origin}' is not a valid origin: use letters, digits and _ . @ + - only`);
+      const key = contributedKey(item);
+      if (next.has(key)) throw new Error(`'${item.origin}' offers two instances of '${item.metamodel}'`);
+      next.set(key, { origin: item.origin, metamodel: item.metamodel, text: item.text });
+    }
+    const touched = new Set([...this.contributed.values(), ...next.values()].map(c => c.metamodel));
+    this.contributed = next;
+    await this.rebuild([...touched]);
+  }
+
+  contributedState(c: ContributedInstance): ContributedState {
+    const key = contributedKey(c);
+    const base = { origin: c.origin, metamodel: c.metamodel, text: c.text, readOnly: true as const };
+    if (!this.languages.has(c.metamodel)) return { ...base, available: false, problems: [wholeFile('error', this.unavailable(c.metamodel))] };
+    const entry = this.contributedDocs.get(key);
+    if (!entry) {
+      const reason = this.contributedUnreadable.get(key);
+      return { ...base, available: false, problems: [wholeFile('error', reason ? `This text could not be read: ${reason}` : 'This text is not read yet')] };
+    }
+    return { ...base, available: true, ast: toAstDto(entry.doc.parseResult.value), problems: [...(entry.doc.diagnostics ?? []).map(toProblem), ...(this.duplicates.get(entry.doc.uri.toString()) ?? [])] };
+  }
+
+  contributedStates(): ContributedState[] {
+    return [...this.contributed.values()].map(c => this.contributedState(c));
   }
 
   states(): InstanceState[] {
@@ -133,7 +175,12 @@ export class InstanceStore {
   candidates(refType: string): RefCandidate[] {
     const index = this.shared?.workspace.IndexManager;
     if (!index) return [];
-    return index.allElements(refType).toArray().map(d => ({ name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path) }));
+    return index.allElements(refType).toArray().map(d => this.candidateOf(d));
+  }
+
+  private candidateOf(d: { name: string; type: string; documentUri: { path: string } }): RefCandidate {
+    const origin = originOfPath(d.documentUri.path);
+    return { name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path), ...(origin ? { origin } : {}) };
   }
 
   /** Whether a scope script has a say about this reference feature of this node type, in the metamodel. */
@@ -152,7 +199,7 @@ export class InstanceStore {
     if (!(provider instanceof MetamodelScopeProvider) || !provider.decides(node.$type, feature)) return this.candidates(refType);
     try {
       const scope = provider.getScope({ container: node as AstNode, property: feature, reference: { $refText: '' } as Reference });
-      return scope.getAllElements().toArray().map(d => ({ name: d.name, type: d.type, metamodel: nameOfPath(d.documentUri.path) }));
+      return scope.getAllElements().toArray().map(d => this.candidateOf(d));
     } catch {
       return []; // a scope script that fails offers nothing: the problem shows when the instance is checked
     }
@@ -182,9 +229,13 @@ export class InstanceStore {
     const { LangiumDocumentFactory, LangiumDocuments, DocumentBuilder } = shared.workspace;
     const stale = [...this.docs].filter(([metamodel]) => !only || only.has(metamodel));
     for (const [metamodel] of stale) this.docs.delete(metamodel);
+    const staleContributed = [...this.contributedDocs].filter(([, c]) => !only || only.has(c.metamodel));
+    for (const [key] of staleContributed) this.contributedDocs.delete(key);
     // drop the documents that are made again from the shared index first
-    if (stale.length) await DocumentBuilder.update([], stale.map(([, d]) => d.uri));
-    const docs: LangiumDocument[] = [];
+    const dropped = [...stale.map(([, d]) => d.uri), ...staleContributed.map(([, c]) => c.doc.uri)];
+    if (dropped.length) await DocumentBuilder.update([], dropped);
+    /** What was made, and how to give it up when it cannot be built. */
+    const built: { doc: LangiumDocument; fail: (reason: string) => void }[] = [];
     for (const [metamodel, text] of this.texts) {
       if (only && !only.has(metamodel)) continue;
       this.unreadable.delete(metamodel);
@@ -201,15 +252,67 @@ export class InstanceStore {
       }
       LangiumDocuments.addDocument(doc);
       this.docs.set(metamodel, doc);
-      docs.push(doc);
+      built.push({ doc, fail: reason => { this.unreadable.set(metamodel, reason); this.docs.delete(metamodel); } });
+    }
+    for (const [key, c] of this.contributed) {
+      if (only && !only.has(c.metamodel)) continue;
+      this.contributedUnreadable.delete(key);
+      const lang = this.languages.get(c.metamodel);
+      if (!lang) continue;
+      if (c.text.length > this.maxInstanceChars) {
+        this.contributedUnreadable.set(key, `it is ${(c.text.length / 1_000_000).toFixed(1)} million characters, over the limit of ${(this.maxInstanceChars / 1_000_000).toFixed(1)} million`);
+        continue;
+      }
+      let doc: LangiumDocument;
+      try {
+        doc = LangiumDocumentFactory.fromString(c.text, contributedUri(c.origin, c.metamodel, lang.metamodel.extension));
+      } catch (e) {
+        this.contributedUnreadable.set(key, reasonOf(e));
+        continue;
+      }
+      LangiumDocuments.addDocument(doc);
+      this.contributedDocs.set(key, { doc, metamodel: c.metamodel });
+      built.push({ doc, fail: reason => { this.contributedUnreadable.set(key, reason); this.contributedDocs.delete(key); } });
     }
     try {
-      await DocumentBuilder.build(docs, { validation: true });
+      await DocumentBuilder.build(built.map(b => b.doc), { validation: true });
     } catch (e) {
       // linking or checking ran out of stack on one of them: they are left out, one by one, until what remains builds
-      for (const doc of docs) this.unreadable.set(nameOfPath(doc.uri.path), reasonOf(e));
-      for (const doc of docs) this.docs.delete(nameOfPath(doc.uri.path));
-      try { await DocumentBuilder.update([], docs.map(d => d.uri)); } catch { /* the index is rebuilt with the next change */ }
+      for (const b of built) b.fail(reasonOf(e));
+      try { await DocumentBuilder.update([], built.map(b => b.doc.uri)); } catch { /* the index is rebuilt with the next change */ }
     }
+    this.findDuplicates();
+  }
+
+  /**
+   * A name declared twice, with the same type, where one of the two documents is contributed: references would resolve to whichever the index
+   * finds first, silently. The contributed one counts as the original (it is read-only); a problem lands on the declaration in the other.
+   * Between two instances of the project itself nothing is added: that is how it always was.
+   */
+  private findDuplicates() {
+    this.duplicates = new Map();
+    const index = this.shared?.workspace.IndexManager;
+    if (!index) return;
+    const ordered = [
+      ...[...this.contributedDocs.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, c]) => c.doc),
+      ...[...this.docs.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, d]) => d)
+    ];
+    const first = new Map<string, { uri: string; who: string; contributed: boolean }>();
+    try {
+      for (const doc of ordered) {
+        const uri = doc.uri.toString();
+        const origin = originOfPath(doc.uri.path);
+        const who = origin ? `'${origin}' (read-only)` : `the ${nameOfPath(doc.uri.path)} instance`;
+        for (const d of index.allElements(undefined, new Set([uri])).toArray()) {
+          const key = `${d.type}\u0000${d.name}`;
+          const earlier = first.get(key);
+          if (!earlier) { first.set(key, { uri, who, contributed: !!origin }); continue; }
+          if (earlier.uri === uri || (!origin && !earlier.contributed)) continue;
+          const message = `'${d.name}' (${d.type}) is already declared by ${earlier.who}`;
+          const problem: Problem = d.nameSegment ? { severity: 'error', message, ...toRange0(d.nameSegment.range) } : wholeFile('error', message);
+          this.duplicates.set(uri, [...(this.duplicates.get(uri) ?? []), problem]);
+        }
+      }
+    } catch { /* a half-built index has nothing to compare */ }
   }
 }

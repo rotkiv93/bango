@@ -306,8 +306,8 @@ describe('diagram view', () => {
     expect(el.querySelector('.bango-dedge[stroke="#f59e0b"]')).not.toBeNull(); // the cross-metamodel reference
 
     await bango.applyEdit('datamodel', { kind: 'add', path: [], feature: 'entities', type: 'Entity' });
-    // the new entity comes with its required first property
-    await vi.waitFor(() => expect(nodes()).toBe(before + 2));
+    // a new entity has no fields: they are optional
+    await vi.waitFor(() => expect(nodes()).toBe(before + 1));
     expect(labels(el, '.bango-dnode title')).toContain('datamodel: Entity newEntity');
   });
 

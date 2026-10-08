@@ -323,6 +323,24 @@ export class WorkspaceController {
     });
   }
 
+  /**
+   * The views of a metamodel's instances that the metamodel brings. They are code for the page, so they are saved with the workspace and
+   * never sent to the engine.
+   */
+  editVisualizations(metamodel: string, code: string) {
+    const { workspace } = this.current;
+    this.commit({ ...workspace, visualizations: { ...workspace.visualizations, [metamodel]: code } });
+  }
+
+  /** Where a visualization's nodes were left in the open project, by metamodel and view. */
+  setLayout(metamodel: string, view: string, positions: Record<string, { x: number; y: number }>) {
+    const { workspace, activeProject } = this.current;
+    const project = activeProject ? workspace.projects[activeProject] : undefined;
+    if (!project) return;
+    const layouts = { ...project.layouts, [metamodel]: { ...project.layouts?.[metamodel], [view]: positions } };
+    this.commit({ ...workspace, projects: { ...workspace.projects, [project.name]: { ...project, layouts } } });
+  }
+
   /** Switch a quarantined script back on, as it is: the next time the engine stops answering with it, it is switched off again. */
   reenableScript(kind: ScriptKind, metamodel: string) {
     const code = this.current.workspace[SCRIPTS[kind].files][metamodel];

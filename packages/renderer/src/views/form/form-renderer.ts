@@ -5,6 +5,17 @@ import type { InstanceRenderer, RenderContext } from '../../host/types.js';
 /** Where a reference is written, as a key: the path of its node and its feature. */
 const scopeKey = (path: PathStep[], feature: string) => `${JSON.stringify(path)}|${feature}`;
 
+/** The node a path leads to, or undefined when the instance has changed since the path was made. */
+export function nodeAt(ast: AstDto, path: PathStep[]): AstDto | undefined {
+  let node: AstDto | undefined = ast;
+  for (const step of path) {
+    const child: AstDto | AstDto[] | undefined = node?.children[step.feature];
+    node = Array.isArray(child) ? child[step.index ?? 0] : child;
+    if (!node) return undefined;
+  }
+  return node;
+}
+
 /**
  * Form editor generated from the grammar of the instance's metamodel.
  * Every change becomes an `EditOp` sent to the engine, which edits the text and re-parses it.
@@ -16,7 +27,18 @@ export class FormRenderer implements InstanceRenderer {
   private data?: { ast: AstDto; schema: FormSchema; candidates: Record<string, RefCandidate[]>; scoped: Record<string, RefCandidate[]> };
   private message?: string;
 
-  constructor(private ctx: RenderContext) {}
+  /** the node shown alone, when this is an inspector; the whole instance otherwise */
+  private focused?: PathStep[];
+
+  constructor(private ctx: RenderContext, options: { focus?: PathStep[] } = {}) {
+    this.focused = options.focus;
+  }
+
+  /** Show only the node at `path` (an inspector), or the whole instance again with `undefined`. */
+  focus(path: PathStep[] | undefined): void {
+    this.focused = path;
+    if (this.root) this.render();
+  }
 
   mount(el: HTMLElement) {
     this.root = h('div', { class: 'bango-pad bango-form' });
@@ -85,7 +107,12 @@ export class FormRenderer implements InstanceRenderer {
       this.root.appendChild(h('div', { class: 'bango-empty' }, this.message ?? ''));
       return;
     }
-    this.root.appendChild(this.nodeForm(this.data.ast, [], 0));
+    if (this.focused) {
+      const node = nodeAt(this.data.ast, this.focused);
+      this.root.appendChild(node ? this.nodeForm(node, this.focused, 0) : h('div', { class: 'bango-empty' }, 'That element is gone.'));
+    } else {
+      this.root.appendChild(this.nodeForm(this.data.ast, [], 0));
+    }
     this.root.scrollTop = scroll;
   }
 

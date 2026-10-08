@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ModelRenderer, type ViewKind } from '@bango/renderer';
-import { bango, useWorkspace } from './store.js';
+import { bango, layouts, useWorkspace, visualizations } from './store.js';
 
 /**
  * Shows one instance with a library renderer. The component only owns the lifecycle: all drawing,
@@ -20,7 +20,7 @@ export function InstanceView({ metamodel, view, acceptReveal = true }: {
 
   // one renderer per metamodel tab
   useEffect(() => {
-    const r = new ModelRenderer(bango, { onReveal: (m, range) => useWorkspace.getState().revealInText(m, range) });
+    const r = new ModelRenderer(bango, { onReveal: (m, range) => useWorkspace.getState().revealInText(m, range), visualizations, layouts });
     renderer.current = r;
     ready.current = r.mount(host.current!, metamodel, initialView.current);
     return () => {

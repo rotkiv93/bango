@@ -9,3 +9,11 @@ export { DiagramRenderer, type DiagramOptions } from './views/diagram/diagram-re
 export { buildGraph, type Graph, type GraphEdge, type GraphNode } from './views/diagram/graph.js';
 export { elkLayout, layeredLayout, type LayoutFn, type Positions } from './views/diagram/layout.js';
 export type { InstanceRenderer, RenderContext, RendererFactory, ViewKind } from './host/types.js';
+export { VisualizationStore, MemoryLayoutStore, VISUALIZATION_PREFIX, loadVisualizations, visualizationViews, kit as visualizationKit } from './visualizations/store.js';
+export { Canvas } from './visualizations/canvas.js';
+export { boxLayout, columnLayout } from './visualizations/box-layout.js';
+export { editor as createEditor, walk, nodeAt } from './visualizations/edits.js';
+export { VISUALIZATION_TYPINGS } from './visualizations/typings.js';
+export type {
+  CanvasEdge, CanvasNode, CanvasOptions, EdgeEnd, Editor, LayoutHandle, LayoutPositions, LayoutStore, ViewInfo, Visualization, VisualizationContext, VisualizationKit
+} from './visualizations/types.js';

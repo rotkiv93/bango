@@ -4,25 +4,31 @@ import { errors, openProject } from '../../../test-support/harness.js';
 const syntax = (problems: { message: string }[]) => problems.map(p => p.message).filter(m => /Expecting|mismatched|Unexpected|token of type/i.test(m));
 
 describe('removing what the grammar requires', () => {
-  it('the last field of an entity cannot be removed, by index or by node, and nothing changes', async () => {
+  it('the last value of an enumeration cannot be removed, and nothing changes', async () => {
     const { bango } = await openProject('shop');
-    const state = await bango.getInstance('datamodel');
-    const entities = state.ast!.children.entities as unknown as { children: { fields: unknown[] } }[];
-    expect(entities[0].children.fields.length).toBe(3);
+    await bango.setText('datamodel', 'datamodel shop\nenum Color { RED, GREEN, BLUE }\n');
+    const values = (state: { ast?: { children: Record<string, unknown> } }) => (state.ast!.children.enums as unknown as { props: { values: string[] } }[])[0].props.values;
+    expect(values(await bango.getInstance('datamodel'))).toHaveLength(3);
 
     // the second-to-last can go, down to one
-    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 2 }] });
-    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 1 }] });
+    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 2 });
+    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 1 });
     const one = await bango.getInstance('datamodel');
     expect(syntax(one.problems)).toEqual([]);
 
-    await expect(bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }], feature: 'fields', index: 0 })).rejects.toThrow("'Entity' needs at least one 'fields'");
-    await expect(bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 0 }] })).rejects.toThrow("needs at least one 'fields'");
+    await expect(bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 0 })).rejects.toThrow("'EnumDef' needs at least one 'values'");
     expect((await bango.getInstance('datamodel')).text).toBe(one.text);
 
-    // the entity itself can still be removed
-    const gone = await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }] });
+    // the enumeration itself can still be removed
+    const gone = await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }] });
     expect(syntax(gone.problems)).toEqual([]);
+  });
+
+  it('a field is optional: an entity can lose all of them', async () => {
+    const { bango } = await openProject('shop');
+    for (let i = 0; i < 3; i++) await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 0 }] });
+    const state = await bango.getInstance('datamodel');
+    expect(syntax(state.problems)).toEqual([]);
   });
 
   it('the last layer of a map, whose list the grammar requires, is refused the same way', async () => {
@@ -54,14 +60,15 @@ describe('removing what the grammar requires', () => {
 
   it('the refusal can be undone-proof: history has not recorded an edit that did not happen', async () => {
     const { bango } = await openProject('shop');
-    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 2 }] });
-    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 1 }] });
+    await bango.setText('datamodel', 'datamodel shop\nenum Color { RED, GREEN, BLUE }\n');
+    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 2 });
+    await bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 1 });
     const before = await bango.getInstance('datamodel');
-    await expect(bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'entities', index: 0 }, { feature: 'fields', index: 0 }] })).rejects.toThrow();
+    await expect(bango.applyEdit('datamodel', { kind: 'remove', path: [{ feature: 'enums', index: 0 }], feature: 'values', index: 0 })).rejects.toThrow();
     const after = await bango.undo('datamodel');
     // one undo goes back to before the second removal, not to before a refused one
     expect(after.text).not.toBe(before.text);
-    expect(after.text.split('property').length).toBeGreaterThan(before.text.split('property').length);
+    expect(after.text).toContain('GREEN');
   });
 });
 

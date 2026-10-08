@@ -1,0 +1,24 @@
+sensors fleet
+
+// what the temperature means, and what the health of a buoy is called
+range Temperature {
+  default as "mild"
+  -30 to 5 as "cold"
+  25 to 50 as "hot"
+}
+
+range Health {
+  OK as "Working"
+  DEGRADED as "Degraded"
+  default as "Unknown"
+}
+
+sensor Tide time 600 geometry Point
+  entity Buoy factTable BuoyReading
+  map buoys-map layer buoy-layer {
+  measurements
+    level Double units "m" icon "waves"
+    temperature Float units "C" icon "thermostat" range Temperature
+  spatial Harbour entities (Port)
+  categorical Health field status range Health
+}

@@ -1,6 +1,6 @@
 import { GrammarAST as G } from 'langium';
 import type { AstDto, RefDto } from '@bango/core';
-import { isFragment } from './schema.js';
+import { isFragment, sampleOf } from './schema.js';
 
 interface Tok { text: string; block?: boolean }
 
@@ -107,12 +107,16 @@ export class Printer {
         const t = this.emit(alt, dto, used, level, strict);
         if (t) return t;
       }
-      // nothing has a value: a purely syntactic choice, take the first branch that can be printed
+      // nothing has a value: a purely syntactic choice, take the first branch that can be printed (and says something: a branch that is
+      // only an unset flag prints nothing, and the text would lose what the choice is for)
+      let silent: Tok[] | undefined;
       for (const alt of el.elements) {
         const t = this.emit(alt, dto, used, level, strict);
-        if (t) return t;
+        if (t?.length) return t;
+        silent ??= t ?? undefined;
       }
-      return strict ? null : [];
+      // every branch that says something needs a value that is not there: a flag that is not set is no way to write the choice
+      return strict ? null : silent ?? [];
     }
     if (G.isRuleCall(el)) {
       const rule = el.rule.ref;
@@ -133,7 +137,10 @@ export class Printer {
     if (value === undefined) {
       if (strict) return null;
       used.set(a.feature, (used.get(a.feature) ?? 0) + 1);
-      return [{ text: G.isRuleCall(t) && G.isTerminalRule(t.rule.ref) && t.rule.ref.name === 'STRING' ? '""' : 'TODO' }];
+      // a placeholder the grammar accepts: an empty string, the first choice of a data type rule (`Boolean`, not `TODO`, which would read as a reference), or TODO
+      const rule = G.isRuleCall(t) ? t.rule.ref : undefined;
+      const sample = G.isParserRule(rule) && rule.dataType ? sampleOf(rule.definition) : undefined;
+      return [{ text: G.isTerminalRule(rule) && rule.name === 'STRING' ? '""' : sample || 'TODO' }];
     }
     used.set(a.feature, (used.get(a.feature) ?? 0) + 1);
     if (G.isCrossReference(t)) return [{ text: (value as RefDto).text }];

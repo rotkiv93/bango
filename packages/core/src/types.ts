@@ -203,6 +203,29 @@ export interface RefCandidate {
   type: string;
   /** metamodel of the instance that declares it */
   metamodel: string;
+  /** set when a read-only contributed instance declares it (see `ContributedInstance`): who offers it */
+  origin?: string;
+}
+
+/**
+ * An instance that comes from outside the project (a module that offers a model, say): it is parsed, validated and indexed with the
+ * project's instances, so they can refer to what it declares, but it cannot be edited and it is not part of the project's JSON.
+ * Several can exist for one metamodel, as long as they have different origins; the instance of the project itself has no origin.
+ */
+export interface ContributedInstance {
+  /** who offers it: letters, digits and `_ . @ + -` only */
+  origin: string;
+  metamodel: string;
+  text: string;
+}
+
+export interface ContributedState extends ContributedInstance {
+  readOnly: true;
+  problems: Problem[];
+  /** false when the metamodel is not in the composition, or the text could not be read (see `problems`) */
+  available: boolean;
+  /** its tree, to draw it read-only next to the project's own (undefined when it is not `available`) */
+  ast?: AstDto;
 }
 
 // --------------------------------------------------------------- editor support
@@ -220,12 +243,16 @@ export interface CompletionDto {
 export interface DefinitionDto {
   /** metamodel of the instance that contains the target */
   metamodel: string;
+  /** set when the target is in a read-only contributed instance */
+  origin?: string;
   target: Range0;
 }
 
 /** A place in the text of one instance. */
 export interface LocationDto {
   metamodel: string;
+  /** set when the place is in a read-only contributed instance */
+  origin?: string;
   range: Range0;
 }
 
@@ -357,6 +384,9 @@ export interface EngineApi {
   /** start an instance of a metamodel with the text of its minimal valid root; returns the existing one if there is one */
   createInstance(metamodel: string): Promise<InstanceState>;
   removeInstance(metamodel: string): Promise<void>;
+  /** replace the read-only instances that come from outside the project (offered by modules): one rebuild */
+  setContributed(instances: ContributedInstance[]): Promise<ContributedState[]>;
+  getContributed(): Promise<ContributedState[]>;
   applyEdit(metamodel: string, op: EditOp): Promise<InstanceState>;
   getFormSchema(metamodel: string): Promise<FormSchema | undefined>;
   /** the instance as plain JSON (the "spec"), or undefined when the metamodel is not available */

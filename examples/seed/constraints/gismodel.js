@@ -18,8 +18,8 @@ const constraints = {
     const field = layer.field ? layer.field.ref : entity.fields.filter(f => f.$type === 'PropertyField').find(f => f.name === 'geometry');
     if (!field) {
       accept('error', `entity '${entity.name}' has no property 'geometry' to draw`, { node: layer, property: 'entity' });
-    } else if (!SPATIAL.includes(field.class)) {
-      accept('error', `'${entity.name}.${field.name}' is a ${field.class}, not a geometry`, { node: layer, property: layer.field ? 'field' : 'entity' });
+    } else if (!SPATIAL.includes(field.class ?? '')) {
+      accept('error', `'${entity.name}.${field.name}' is a ${field.class ?? field.enumType?.$refText}, not a geometry`, { node: layer, property: layer.field ? 'field' : 'entity' });
     }
   },
 

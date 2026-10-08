@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 const GRESINT_JSON = readFileSync(new URL('../examples/seed/expected/sensors_gresint.json', import.meta.url), 'utf8');
-const PROJECTS = ['catalog', 'city', 'everything', 'gresint', 'office', 'portal', 'shop'];
+const PROJECTS = ['catalog', 'city', 'everything', 'fleet', 'gresint', 'office', 'portal', 'shop'];
 
 /** A fresh browser context each test, so each starts from the examples. */
 async function start(page: Page) {
@@ -238,12 +238,14 @@ test.describe('editing across metamodels', () => {
 
   test('the form refuses to remove what the grammar requires, and says so', async ({ page }) => {
     await start(page);
-    await openProject(page, 'shop');
+    // an enumeration needs at least one value; the fields of an entity are optional
+    await openProject(page, 'fleet');
     await tab(page, 'datamodel').click();
     await view(page, 'Form');
     await expect(page.locator('.bango-form .bango-node').first()).toBeVisible();
+    const enumeration = page.locator('.bango-form .bango-node', { has: page.locator('legend', { hasText: 'EnumDef' }) }).first();
     for (let i = 0; i < 6; i++) {
-      const buttons = page.locator('.bango-form .bango-node .bango-node .bango-node .bango-x');
+      const buttons = enumeration.locator('.bango-item .bango-x');
       if (!(await buttons.count())) break;
       await buttons.first().click();
       if (await page.locator('.bango-form-error').count()) break;
@@ -266,4 +268,54 @@ test('the examples can be restored, and anything added since is gone', async ({ 
   page.once('dialog', dialog => void dialog.accept());
   await page.getByRole('button', { name: 'Reset examples' }).click();
   await expect(page.locator('.card h3')).toHaveText(PROJECTS);
+});
+
+test.describe('the views a metamodel brings', () => {
+  const nodes = (page: Page) => page.locator('.view-area .bango-cnode');
+
+  test('the data model draws a class diagram that is edited with the diagram and the panel at its side', async ({ page }) => {
+    const errors = await start(page);
+    await openProject(page, 'fleet');
+    await tab(page, 'datamodel').click();
+    await view(page, 'Class diagram');
+    await expect(nodes(page)).toHaveCount(5);
+    await expect(page.locator('.view-area .bango-cnode[data-id="Status"]')).toContainText('«enum»');
+    await expect(page.locator('.view-area .bango-cnode[data-id="Asset"]')).toContainText('«abstract»');
+
+    // an entity is added from the toolbar, selected, and renamed in the panel
+    await page.locator('.bango-ctoolbar button', { hasText: '+ Entity' }).click();
+    await expect(nodes(page)).toHaveCount(6);
+    const inspector = page.locator('.bango-inspector');
+    await expect(inspector).toBeVisible();
+    await inspector.locator('.bango-field', { has: page.locator('label:text-is("name *")') }).locator('input').fill('Vessel');
+    await inspector.locator('.bango-field', { has: page.locator('label:text-is("name *")') }).locator('input').press('Enter');
+    await expect(page.locator('.view-area .bango-cnode[data-id="Vessel"]')).toBeVisible();
+
+    // the same instance, in text
+    await view(page, 'Text');
+    await expect.poll(() => editorText(page)).toContain('entity Vessel');
+    expect(errors).toEqual([]);
+  });
+
+  test('the sensors draw a sensor diagram with the entities and the map they use, and the view follows the text of the metamodel', async ({ page }) => {
+    const errors = await start(page);
+    await openProject(page, 'fleet');
+    await tab(page, 'sensors').click();
+    await view(page, 'Sensor diagram');
+    await expect(page.locator('.view-area .bango-cnode[data-id="sensor:Tide"]')).toContainText('every 600s');
+    await expect(page.locator('.view-area .bango-cnode[data-id="entity:Buoy"]')).toContainText('«entity»');
+    await expect(page.locator('.view-area .bango-cnode[data-id="map:buoys-map"]')).toContainText('«map»');
+    await expect(page.locator('.view-area .bango-cedge')).toHaveCount(6);
+    expect(errors).toEqual([]);
+  });
+
+  test('the visualizations are a file of the metamodel, and editing it changes the views of its instances', async ({ page }) => {
+    const errors = await start(page);
+    await page.locator('.topbar nav button', { hasText: 'Metamodels' }).click();
+    await page.locator('.mm-item', { has: page.locator('strong:text-is("datamodel")') }).click();
+    await view(page, 'Visualizations');
+    await expect(page.locator('.mm-editor .monaco-editor')).toBeVisible();
+    await expect(page.locator('.segmented button', { hasText: 'Visualizations •' })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
 });

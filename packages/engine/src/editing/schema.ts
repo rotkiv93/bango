@@ -40,7 +40,7 @@ function keywordsOf(el: G.AbstractElement): string[] | undefined {
  * A text the grammar accepts for a rule that is not a plain terminal (a data type rule such as `IntervalBound: '-'? (FLOAT | INT | 'Infinity')`):
  * the first choice of every alternative, and what is optional left out. A rule that has no such text yields undefined.
  */
-function sampleOf(el: G.AbstractElement | undefined, depth = 0): string | undefined {
+export function sampleOf(el: G.AbstractElement | undefined, depth = 0): string | undefined {
   if (!el || depth > 8) return undefined;
   if (el.cardinality === '?' || el.cardinality === '*') return '';
   if (G.isKeyword(el)) return el.value;

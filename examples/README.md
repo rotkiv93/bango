@@ -4,16 +4,15 @@
 
 Used by the tests, the playground (it is its starting workspace) and the plain example.
 
+The kind folders of `seed/` (`grammars`, `constraints`, `specs`, `imports`, `scopes`, `visualizations`, `cases`) are a **copy** of the LINEA `metamodels` repository (the source of those metamodels). Change them there and run `npm run sync:bango` in it; `npm run check:bango` says whether they are in step.
+
 ```
 seed/
-  grammars/
-    common.langium         shared terminals and data types (a library: no entry rule)
-    basic.*                the product's name, SRID, index, languages, package, database and features
-    datamodel.*            entities with property and relationship fields
-    gismodel.*             maps, layers and styles; a GeoJSON layer shows a data-model entity
-    sensors.*              the sensors with their measurements and dimensions; needs datamodel and gismodel
-    forms.*                data-entry forms over entities; needs datamodel
-    lists.*                tables of entities; needs datamodel
+  grammars/ constraints/ specs/ imports/ scopes/ visualizations/ cases/
+                           one folder per kind of file, each file named after its metamodel
+                           (grammars/datamodel.langium, constraints/datamodel.js, cases/datamodel.json, ...)
+                           metamodels: common (shared terminals and types, a library: no entry rule), basic, datamodel,
+                           gismodel, sensors, forms, lists, menus, security
   projects/
     <project>/
       project.json         { "metamodels": [...] }
@@ -22,7 +21,7 @@ seed/
     sensors_gresint.json   the JSON the gresint project must produce
 ```
 
-Next to each grammar, `<name>.constraints.js` holds its extra validation, `<name>.spec.js` its [JSON mapping](../docs/json-spec.md), `<name>.import.js` the [inverse of that mapping](../docs/writing-metamodels.md#4-the-import-mapping-optional) (JSON back into its instance) and `<name>.cases.json` its [test cases](../docs/writing-metamodels.md#6-testing-a-metamodel). `common` has none of them.
+For each grammar, `constraints/<name>.js` holds its extra validation, `specs/<name>.js` its [JSON mapping](../docs/json-spec.md), `imports/<name>.js` the [inverse of that mapping](../docs/writing-metamodels.md#4-the-import-mapping-optional) (JSON back into its instance) and `cases/<name>.json` its [test cases](../docs/writing-metamodels.md#6-testing-a-metamodel). `common` has none of them.
 
 ### The metamodels
 
@@ -65,7 +64,7 @@ The forms and lists JSON is not described by the sensor DSL or the given specifi
 
 ### Adding an example
 
-Put the grammar (and optional constraints, mappings and test cases) in `grammars/`, a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `parseSeed` in `@bango/engine/workspace` reads the layout, and `test-support/seed.ts` loads them for the tests.
+Put the grammar in `grammars/` (and the optional constraints, mappings and test cases in their own folders), a folder with a `project.json` and one `<metamodel>.instance` per metamodel in `projects/`. The playground picks them up at the next build, and `parseSeed` in `@bango/engine/workspace` reads the layout, and `test-support/seed.ts` loads them for the tests.
 
 ## `plain/`: the library without a bundler
 

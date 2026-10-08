@@ -6,7 +6,7 @@ export { EngineRestartedError, ScriptTimeoutError, type ConnectOptions, type Res
 
 const METHODS = [
   'setGrammar', 'removeGrammar', 'setConstraints', 'setSpec', 'setImport', 'setScope', 'compose', 'bundleText', 'getGrammarAst', 'listMetamodels', 'checkSelection', 'getTypings', 'runCases',
-  'getInstance', 'getInstances', 'getComposition', 'setText', 'setInstances', 'createInstance', 'removeInstance', 'applyEdit',
+  'getInstance', 'getInstances', 'getComposition', 'setText', 'setInstances', 'createInstance', 'removeInstance', 'setContributed', 'getContributed', 'applyEdit',
   'getFormSchema', 'toJson', 'toProjectJson', 'getRefCandidates', 'importJson', 'complete', 'hover', 'definition', 'references', 'symbols', 'rename', 'quickFixes', 'applyQuickFix', 'undo', 'redo', 'build'
 ] as const;
 

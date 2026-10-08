@@ -2,14 +2,25 @@
 // Merge it with the specs of the other metamodels to get the whole document.
 /** @type {Spec} */
 const spec = function (model, { refName }) {
+  // what a bucket of a range says: `default`, `from` .. `to`, or one value
+  const category = b => {
+    if (b.default) return { value: 'DEFAULT', label: b.label };
+    if (b.min !== undefined) return { from: b.min, to: b.max, label: b.label };
+    return { value: b.value, label: b.label };
+  };
+
   const dimension = d => {
     if (d.$type === 'SpatialDimension') return { id: d.name, type: 'SPATIAL', entities: d.entities.map(refName) };
-    return { id: d.name, type: 'CATEGORICAL', field: refName(d.field) };
+    const out = { id: d.name, type: 'CATEGORICAL', field: refName(d.field) };
+    if (d.range?.ref) out.categories = d.range.ref.buckets.map(category);
+    return out;
   };
 
   const measurement = m => {
     const out = { name: m.name, type: m.dataType };
     if (m.units !== undefined) out.units = m.units;
+    if (m.icon !== undefined) out.icon = m.icon;
+    if (m.range) out.range = refName(m.range);
     return out;
   };
 

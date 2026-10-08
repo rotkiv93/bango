@@ -104,6 +104,8 @@ describe('form edits', () => {
     const path = [{ feature: 'entities', index: 0 }];
     const added = await bango.applyEdit('datamodel', { kind: 'add', path, feature: 'fields', type: 'PropertyField' });
     expect(added.text).toContain('property newPropertyField');
+    // its type is the first the grammar allows, not a name nothing declares
+    expect(added.text).toContain('property newPropertyField: Boolean');
     expect(errors(added.problems)).toEqual([]);
 
     const removed = await bango.applyEdit('datamodel', { kind: 'remove', path: [...path, { feature: 'fields', index: 3 }] });

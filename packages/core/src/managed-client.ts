@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import type { BangoApi, EngineEvent, InstanceState, JsonValue, Unsubscribe } from './types.js';
+import type { BangoApi, ContributedInstance, EngineEvent, InstanceState, JsonValue, Unsubscribe } from './types.js';
 
 export type ScriptKind = 'constraints' | 'spec' | 'import' | 'scope';
 
@@ -85,6 +85,8 @@ export class ManagedClient {
   /** the last composition asked for (`null`: every metamodel); undefined before the first */
   private selection: string[] | null | undefined;
   private texts = new Map<string, string>();
+  /** The read-only instances offered from outside the project, as last set. */
+  private contributed: ContributedInstance[] = [];
   private quarantine = new Map<string, ScriptRef>();
   private listeners = new Map<Listener, { unsubscribe?: () => void }>();
   private restartListeners = new Set<(info: RestartInfo) => void>();
@@ -197,6 +199,7 @@ export class ManagedClient {
     for (const [name, text] of this.grammars) await this.direct('setGrammar', [name, text], this.probeMs);
     for (const script of scripts) await this.direct(`set${script.kind[0].toUpperCase()}${script.kind.slice(1)}`, [script.metamodel, script.code], this.probeMs);
     if (this.selection !== undefined) await this.direct('compose', this.selection ? [this.selection] : [], this.probeMs);
+    if (this.contributed.length) await this.direct('setContributed', [this.contributed], this.probeMs);
     if (this.texts.size) await this.direct('setInstances', [Object.fromEntries(this.texts)], this.probeMs);
     for (const [listener, entry] of this.listeners) await this.attach(listener, entry, (m, a) => this.direct(m, a, this.probeMs));
   }
@@ -212,6 +215,7 @@ export class ManagedClient {
     };
     try {
       await step('compose', this.selection ? [this.selection] : []);
+      if (this.contributed.length) await step('setContributed', [this.contributed]);
       if (this.texts.size) await step('setInstances', [Object.fromEntries(this.texts)]);
       const json = await step<JsonValue>('toProjectJson', []);
       if (json !== undefined) await step('importJson', [json]);
@@ -237,6 +241,7 @@ export class ManagedClient {
     else if (method === 'setText') this.texts.set(args[0] as string, args[1] as string);
     else if (method === 'setInstances') this.texts = new Map(Object.entries(args[0] as Record<string, string>));
     else if (method === 'removeInstance') this.texts.delete(args[0] as string);
+    else if (method === 'setContributed') this.contributed = args[0] as ContributedInstance[];
   }
 
   /** What a result teaches about the instance texts (an edit, an undo, a rename that reached other instances). */

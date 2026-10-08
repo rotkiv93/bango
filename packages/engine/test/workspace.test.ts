@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { MessageChannel } from 'node:worker_threads';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 // @ts-expect-error the adapter ships as a separate ESM file without a package export entry
 import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mjs';
 import { connectBango } from '@bango/core/client';
@@ -292,6 +292,29 @@ describe('workspace controller: saving', () => {
     // what the user had is kept
     expect(workspace.grammars.mine).toContain('Mine');
     expect(controller.state.catalog.some(g => g.name === 'mine')).toBe(true);
+  });
+
+  it('a workspace saved before visualizations existed gets them from the examples', async () => {
+    const old = workspaceFromSeed(loadSeed()) as Partial<WorkspaceData>;
+    delete old.visualizations;
+    const { controller } = await ready({ storage: new MemoryStorage(old as WorkspaceData) });
+    expect(Object.keys(controller.state.workspace.visualizations).sort()).toEqual(['datamodel', 'sensors']);
+  });
+
+  it('keeps the visualizations of a metamodel without sending them to the engine, and the nodes of a project where they were left', async () => {
+    const storage = new MemoryStorage();
+    const { controller, bango } = await ready({ storage });
+    await controller.openProject('shop');
+    const sent = ['setConstraints', 'setSpec', 'setImport', 'setScope', 'setGrammar'].map(m => [m, vi.spyOn(bango as Bango, m as 'setSpec')] as const);
+    controller.editVisualizations('datamodel', 'return [];');
+    controller.setLayout('datamodel', 'viz:class-diagram', { Road: { x: 10, y: 20 } });
+    await controller.flush();
+    await new Promise(r => setTimeout(r, 50));
+    for (const [method, spy] of sent) expect(spy, method).not.toHaveBeenCalled();
+    expect(storage.saved!.visualizations.datamodel).toBe('return [];');
+    expect(storage.saved!.projects.shop.layouts).toEqual({ datamodel: { 'viz:class-diagram': { Road: { x: 10, y: 20 } } } });
+    // the layout belongs to the project: another one has none
+    expect(storage.saved!.projects.city.layouts).toBeUndefined();
   });
 
   it('reset goes back to the examples', async () => {

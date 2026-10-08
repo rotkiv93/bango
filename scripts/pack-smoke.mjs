@@ -7,12 +7,12 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const packages = ['core', 'composer', 'engine', 'renderer'];
+const packages = ['core', 'composer', 'engine', 'renderer', 'studio'];
 const work = mkdtempSync(join(tmpdir(), 'bango-pack-'));
 const run = (command, cwd) => execSync(command, { cwd, stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8' });
 
 /** Entry points that need a browser (a DOM, a worker global, Monaco): checked for their files, not imported in Node. */
-const browserOnly = new Set(['@bango/renderer', '@bango/renderer/text', '@bango/renderer/bundle', '@bango/engine/bundle/worker']);
+const browserOnly = new Set(['@bango/renderer', '@bango/renderer/text', '@bango/renderer/bundle', '@bango/studio/bundle', '@bango/engine/bundle/worker']);
 
 let failed = 0;
 const fail = message => { failed++; console.error(`FAIL ${message}`); };
@@ -84,6 +84,7 @@ try {
     import { connectBango } from '@bango/core/client';
     import { ModelComposer, type Composition } from '@bango/composer';
     import type { EditOp, Problem, BangoApi } from '@bango/core';
+    import { MetamodelStudio, type StudioInput, type MetamodelFiles } from '@bango/studio';
     const op: EditOp = { kind: 'set', path: [], feature: 'name', value: 'x' };
     const bango: BangoApi = new Bango();
     const controller = new WorkspaceController(bango, { storage: new MemoryStorage() });
@@ -92,7 +93,9 @@ try {
     const composer = new ModelComposer();
     const composition: Promise<Composition> = composer.compose(['a']);
     const problems: Problem[] = state.instances.flatMap(i => i.problems);
-    void [op, states, composition, problems, connectBango];
+    const files: MetamodelFiles = { grammar: 'grammar X' };
+    const studio: typeof MetamodelStudio = MetamodelStudio;
+    void [op, states, composition, problems, connectBango, files, studio, null as unknown as StudioInput];
   `);
   writeFileSync(join(project, 'tsconfig.json'), JSON.stringify({
     compilerOptions: { target: 'ES2022', module: 'ESNext', moduleResolution: 'bundler', strict: true, noEmit: true, skipLibCheck: true, types: [], lib: ['ES2022', 'DOM', 'WebWorker'] },

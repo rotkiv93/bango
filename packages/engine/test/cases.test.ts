@@ -14,7 +14,7 @@ describe('metamodel test cases', () => {
   it('every case shipped with the metamodels passes', async () => {
     const { bango, seed } = await bangoWithSeed();
     const names = Object.keys(seed.cases);
-    expect(names.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security']);
+    expect(names.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors']);
     for (const name of names) {
       const results = await bango.runCases(name, seed.cases[name]);
       expect(results.length).toBe(seed.cases[name].length);

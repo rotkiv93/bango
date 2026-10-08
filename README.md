@@ -9,7 +9,7 @@ An instance turns into JSON, and the pieces of all the metamodels of a project m
 ```bash
 npm install
 npm run dev        # the playground
-npm test           # 250+ tests: composer, engine (also across a worker boundary), renderers
+npm test           # 530+ tests: composer, engine (also across a worker boundary), renderers
 ```
 
 ## In code
@@ -43,7 +43,8 @@ await bango.toProjectJson();       // the project's JSON specification
 | [`@bango/core`](packages/core/README.md) | the plain data types, the JSON helpers and the worker client that every other package shares; no Langium |
 | [`@bango/composer`](packages/composer/README.md) | composes grammars into languages; checks that a selection fits together; compiles constraints and JSON mappings |
 | [`@bango/engine`](packages/engine/README.md) | parses, validates and edits **one instance per metamodel**; builds the final model; JSON; runs in the page or in a worker. Its `workspace` entry (no Langium) holds projects, scripts, saving: everything an editor needs that is not drawing |
-| [`@bango/renderer`](packages/renderer/README.md) | framework-agnostic views: text (Monaco), form, diagram, AST, JSON; a custom element |
+| [`@bango/renderer`](packages/renderer/README.md) | framework-agnostic views: text (Monaco), form, diagram, AST, JSON; a custom element; and the views a metamodel brings itself (a class diagram, a sensor diagram) |
+| [`@bango/studio`](packages/studio/README.md) | a workbench to write one metamodel: grammar and script editors, tests, composed grammar, AST and a live preview. Given files, tells what changed; keeps nothing |
 
 ```
 grammars ──▶ composer ──▶ Composition ──▶ engine ──▶ InstanceState ──▶ renderer
@@ -59,6 +60,7 @@ Each module only depends on the one before it, and the renderer only on the plai
 |---|---|
 | [Architecture](docs/architecture.md) | how the modules fit together, and why |
 | [Writing metamodels](docs/writing-metamodels.md) | grammar, constraints and JSON mapping |
+| [Embedding bango](docs/embedding.md) | putting the views and the metamodel studio in an application |
 | [The JSON specification](docs/json-spec.md) | mapping, merging, the generic format, options |
 | [Deploying to GitHub Pages](docs/deploy-github-pages.md) | publishing the playground |
 | [The playground](apps/playground/README.md) | the app: pages, how it uses the library |

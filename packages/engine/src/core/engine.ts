@@ -3,6 +3,8 @@ import type { Composition, CompositionInfo } from '@bango/composer';
 import type {
   BuildResult,
   CompletionDto,
+  ContributedInstance,
+  ContributedState,
   DefinitionDto,
   EditOp,
   EngineApi,
@@ -99,6 +101,18 @@ export class ModelEngine implements EngineApi {
     });
   }
 
+  setContributed(instances: ContributedInstance[]): Promise<ContributedState[]> {
+    return this.queue.run(async () => {
+      await this.store.setContributed(instances);
+      this.events.emit({ type: 'instances' });
+      return this.store.contributedStates();
+    });
+  }
+
+  getContributed(): Promise<ContributedState[]> {
+    return this.queue.run(() => this.store.contributedStates());
+  }
+
   // ---------------------------------------------------------------- forms
 
   getFormSchema(metamodel: string): Promise<FormSchema | undefined> {
@@ -186,6 +200,8 @@ export class ModelEngine implements EngineApi {
       const { lang, doc } = await this.store.docFor(metamodel, text);
       const { edits, error } = await features.renameEdits(lang, doc, line, column, newName);
       if (error) return { edits: [], applied: [], error };
+      const readOnly = edits.find(e => e.origin);
+      if (readOnly) return { edits: [], applied: [], error: `The symbol is declared or used in an instance offered by '${readOnly.origin}', which is read-only` };
       // The asking instance is left to its editor (it holds the live text); every other instance changes here, in one rebuild.
       const changes = new Map<string, string>();
       for (const other of new Set(edits.map(e => e.metamodel))) {
@@ -241,7 +257,7 @@ export class ModelEngine implements EngineApi {
       }
       let merged: JsonValue = {};
       try { merged = projectJson(this.store, {}); } catch (e) { errors.push((e as Error).message); }
-      return buildModel(project, composition, states, { specs, merged, errors });
+      return buildModel(project, composition, states, { specs, merged, errors }, this.store.contributedStates());
     });
   }
 

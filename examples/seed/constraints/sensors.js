@@ -10,6 +10,24 @@ const constraints = {
     for (const { item } of duplicates([...model.sensors, ...model.groups], n => n.name)) {
       accept('error', `duplicate sensor or group '${item.name}'`, { node: item, property: 'name' });
     }
+    for (const { item } of duplicates(model.ranges, r => r.name)) {
+      accept('error', `duplicate range '${item.name}'`, { node: item, property: 'name' });
+    }
+  },
+
+  SensorRange(range, accept) {
+    // a range says what each value is called, so a value is named once and `default` is for everything else
+    for (const { item, index } of duplicates(range.buckets.filter(b => b.default), () => 'default')) {
+      accept('error', 'a range has one default label', { node: range, property: 'buckets', index: range.buckets.indexOf(item) });
+    }
+    for (const { item } of duplicates(range.buckets.filter(b => b.value !== undefined), b => b.value)) {
+      accept('error', `value '${item.value}' is labelled twice`, { node: range, property: 'buckets', index: range.buckets.indexOf(item) });
+    }
+    range.buckets.forEach((b, index) => {
+      if (b.min !== undefined && b.max !== undefined && b.min > b.max) {
+        accept('error', `${b.min} to ${b.max} is empty: the first number is more than the second`, { node: range, property: 'buckets', index });
+      }
+    });
   },
 
   SensorDef(sensor, accept) {
@@ -30,7 +48,7 @@ const constraints = {
       if (!p) {
         accept('error', `measurement '${m.name}' is not a property of fact table '${factTable.name}'`, { node: sensor, property: 'measureData', index });
       } else if (p.class !== m.dataType) {
-        accept('error', `measurement '${m.name}' is ${m.dataType}, but '${factTable.name}.${m.name}' is ${p.class}`, { node: sensor, property: 'measureData', index });
+        accept('error', `measurement '${m.name}' is ${m.dataType}, but '${factTable.name}.${m.name}' is ${p.class ?? p.enumType?.$refText}`, { node: sensor, property: 'measureData', index });
       }
     });
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { InstanceState } from '@bango/core';
-import type { ViewKind } from '@bango/renderer';
+import { visualizationViews, type ViewKind } from '@bango/renderer';
 import { InstanceView } from './InstanceView.js';
 import { ImportDialog } from './ImportDialog.js';
 import { MetamodelPicker, SelectionVerdict, useSelectionCheck } from './MetamodelPicker.js';
@@ -146,7 +146,10 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
   const blocked = s.composition?.problems.find(p => p.metamodel === metamodel);
   const g = s.catalog.find(x => x.name === metamodel);
   // beside the text, a view of the same instance; the text itself cannot be its own neighbour
-  const side: ViewKind = s.instanceView === 'text' ? 'form' : s.instanceView;
+  // the views the metamodel brings come after the usual ones; if the one on screen is gone (its file changed), fall back to the text
+  const views = [...VIEWS, ...visualizationViews(s.workspace.visualizations[metamodel]).map(v => ({ value: v.id as ViewKind, label: v.label, title: v.error ?? v.description ?? v.label }))];
+  const current: ViewKind = views.some(v => v.value === s.instanceView) ? s.instanceView : 'text';
+  const side: ViewKind = current === 'text' ? 'form' : current;
 
   // Ctrl+Z / Ctrl+Shift+Z (or Ctrl+Y) outside the text editors, which have their own history
   const { undo, redo } = s;
@@ -186,7 +189,7 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
             <button className="icon" disabled={!inst.canUndo} title="Undo the last change (Ctrl+Z)" aria-label="Undo" onClick={() => void s.undo(metamodel)}>↶</button>
             <button className="icon" disabled={!inst.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo" onClick={() => void s.redo(metamodel)}>↷</button>
           </span>
-          <Segmented<ViewKind> value={s.split && s.instanceView === 'text' ? 'form' : s.instanceView} items={VIEWS} onChange={s.setInstanceView} />
+          <Segmented<ViewKind> value={s.split && current === 'text' ? 'form' : current} items={views} onChange={s.setInstanceView} />
           <label className="toggle" title="Show the text next to the view">
             <input type="checkbox" checked={s.split} onChange={e => s.setSplit(e.target.checked)} /> Split with text
           </label>
@@ -199,7 +202,7 @@ function MetamodelWorkspace({ metamodel }: { metamodel: string }) {
             <div className="pane"><InstanceView key={`${metamodel}-side`} metamodel={metamodel} view={side} acceptReveal={false} /></div>
           </>
         ) : (
-          <InstanceView key={metamodel} metamodel={metamodel} view={s.instanceView} />
+          <InstanceView key={metamodel} metamodel={metamodel} view={current} />
         )}
       </div>
       <div className="footer">

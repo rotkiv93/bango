@@ -35,7 +35,27 @@ if (workspace) {
   check(workspace.length < 60 * 1024, `engine/workspace.js is ${kb(workspace.length)} (budget 60 KB)`);
 }
 
-// 3. the playground: the page's code has no Langium, the worker's has
+// 3. the studio: one self-contained module that brings neither Monaco, nor the renderer, nor the engine (the page passes them in)
+const studio = read(join(root, 'packages/studio/dist/bundle/studio.js'));
+if (studio) {
+  check(studio.length < 60 * 1024, `studio/bundle/studio.js is ${kb(studio.length)} (budget 60 KB)`);
+  check(!/createLangiumGrammarServices|LangiumDocumentFactory|DefaultScopeProvider/.test(studio), 'studio/bundle/studio.js has no Langium');
+  const imports = importsOf(studio);
+  check(imports.length === 0, `studio/bundle/studio.js imports nothing (${imports.join(', ') || 'nothing'})`);
+  check(!/class\s+\w*\s*extends\s+\w*Renderer|registerRenderer/.test(studio), 'studio/bundle/studio.js has no second copy of the renderer');
+}
+
+// 3b. the renderer: views and the toolkit of the visualizations a metamodel brings, with no parser and no import but the optional layout engine
+const renderer = read(join(root, 'packages/renderer/dist/bundle/renderer.js'));
+if (renderer) {
+  check(renderer.length < 200 * 1024, `renderer/bundle/renderer.js is ${kb(renderer.length)} (budget 200 KB)`);
+  check(!/createLangiumGrammarServices|LangiumDocumentFactory|DefaultScopeProvider/.test(renderer), 'renderer/bundle/renderer.js has no Langium');
+  const imports = importsOf(renderer);
+  check(imports.every(i => /^elkjs(\/|$)/.test(i)), `renderer/bundle/renderer.js imports at most elkjs (${imports.join(', ') || 'nothing'})`);
+  check(/Canvas/.test(renderer) && /VisualizationStore/.test(renderer), 'renderer/bundle/renderer.js has the visualizations toolkit');
+}
+
+// 4. the playground: the page's code has no Langium, the worker's has
 const assets = join(root, 'apps/playground/dist/assets');
 if (existsSync(assets)) {
   const files = readdirSync(assets).filter(f => f.endsWith('.js'));

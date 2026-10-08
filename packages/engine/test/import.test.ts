@@ -84,7 +84,7 @@ describe('importing a project from its JSON', () => {
       return (await bango.importJson(seed.expected.gresint as never)).errors.join();
     };
     expect(await run("return function (json, { n }) { return n('Nope', {}); };")).toMatch(/there is no node type 'Nope'/);
-    expect(await run("return function (json, { n }) { return n('Model', { entites: [] }); };")).toMatch(/'Model' has no feature 'entites' \(it has name, entities\)/);
+    expect(await run("return function (json, { n }) { return n('Model', { entites: [] }); };")).toMatch(/'Model' has no feature 'entites' \(it has name, entities, enums\)/);
     expect(await run("return function (json, { n }) { return n('Model', { entities: 'x' }); };")).toMatch(/expected n\('Type'/);
     expect(await run("return function (json, { n }) { return n('Model', { name: ['a'] }); };")).toMatch(/takes one value, not a list/);
     expect(await run("return 42;")).toBe('');

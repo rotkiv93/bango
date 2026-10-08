@@ -1,7 +1,7 @@
 import { WorkspaceController } from '@bango/engine/workspace';
 import type { StateCreator } from 'zustand';
 import { seedWorkspace } from '../seed.js';
-import { bango } from './bango.js';
+import { bango, layouts, visualizations } from './bango.js';
 import { IdbStorage } from './persistence.js';
 import type { State, WorkspaceSlice } from './types.js';
 
@@ -17,7 +17,19 @@ const controller = new WorkspaceController(bango, {
  * (which tab, which page, a toast when something failed).
  */
 export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> = (set, get) => {
-  controller.subscribe(state => set(state));
+  controller.subscribe(state => {
+    visualizations.load(state.workspace.visualizations);
+    set(state);
+  });
+  visualizations.load(controller.state.workspace.visualizations);
+  // the nodes of a diagram are saved with the open project
+  layouts.use({
+    get: (metamodel, view) => {
+      const { workspace, activeProject } = controller.state;
+      return (activeProject && workspace.projects[activeProject]?.layouts?.[metamodel]?.[view]) || {};
+    },
+    set: (metamodel, view, positions) => controller.setLayout(metamodel, view, positions)
+  });
 
   /** Which metamodel the Metamodels page shows: keep the current one if it still exists, else the first that is not a library. */
   const settleGrammar = () => {
@@ -89,6 +101,7 @@ export const createWorkspaceSlice: StateCreator<State, [], [], WorkspaceSlice> =
     editSpec: (metamodel, text) => controller.editScript('spec', metamodel, text),
     editImport: (metamodel, text) => controller.editScript('import', metamodel, text),
     editScope: (metamodel, text) => controller.editScript('scope', metamodel, text),
+    editVisualizations: (metamodel, text) => controller.editVisualizations(metamodel, text),
     ensureScript: (kind, metamodel) => controller.ensureScript(kind, metamodel),
     reenableScript: (kind, metamodel) => controller.reenableScript(kind, metamodel),
     setCases: (metamodel, cases) => controller.setCases(metamodel, cases),

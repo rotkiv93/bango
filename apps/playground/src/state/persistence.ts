@@ -2,8 +2,9 @@ import type { WorkspaceData, WorkspaceStorage } from '@bango/engine/workspace';
 import { get as idbGet, set as idbSet } from 'idb-keyval';
 import type { Theme } from './types.js';
 
-// v5: the examples are now basic, datamodel, gismodel, sensors, forms and lists, so older saved workspaces would not parse
-const STORAGE_KEY = 'bango-workspace-v5';
+// v6: metamodels bring visualizations (a class diagram, a sensor diagram), and the data model has enumerations and inheritance, so the
+// examples are not what an older saved workspace has
+const STORAGE_KEY = 'bango-workspace-v6';
 const THEME_KEY = 'bango-theme';
 
 /** The workspace in the browser's IndexedDB. When storage is unavailable the playground still works, it just forgets. */

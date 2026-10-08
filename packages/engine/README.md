@@ -59,6 +59,7 @@ Instances are keyed by **metamodel name**. A project has at most one per metamod
 | `setInstances(texts)` | replace all instances at once (opening a project): one rebuild |
 | `createInstance(metamodel)` | start from the smallest valid root, e.g. `datamodel`; returns the existing one if there is one |
 | `removeInstance(metamodel)` | |
+| `setContributed(instances)`, `getContributed()` | read-only instances from outside the project (`{ origin, metamodel, text }`, e.g. what a module offers): parsed, validated and indexed with the project's instances, so these can refer to what they declare, but never edited (rename refuses to touch them), never part of the project's JSON, and reported in `build()` when invalid. `getContributed()` gives each one's `ast` too (when it could be read), to draw it. A name declared by both a contributed instance and another is a problem on the other. `RefCandidate`, `DefinitionDto` and `LocationDto` carry `origin` for them |
 | `getInstance(metamodel)`, `getInstances()` | `InstanceState`: `{ metamodel, text, ast?, problems, stale, available, canUndo?, canRedo? }` |
 | `getComposition()` | the loaded `CompositionInfo` |
 
