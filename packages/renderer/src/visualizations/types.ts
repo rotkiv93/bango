@@ -34,7 +34,7 @@ export interface VisualizationState extends InstanceState {
 }
 
 /** An `InstanceRenderer` that draws offered instances too. */
-export interface VisualizationRenderer extends Omit<InstanceRenderer, 'update'> {
+interface VisualizationRenderer extends Omit<InstanceRenderer, 'update'> {
   update(state: VisualizationState): void | Promise<void>;
 }
 
