@@ -27,6 +27,7 @@
     "lint": "oxlint packages apps test-support scripts e2e",
     "knip": "knip --no-config-hints",
     "pack:smoke": "node scripts/pack-smoke.mjs",
+    "check:metamodels": "node scripts/check-metamodels.mjs",
     "check:bundles": "node scripts/check-bundles.mjs",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:bundles && npm run pack:smoke"
   },

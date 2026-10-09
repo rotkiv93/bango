@@ -4,7 +4,7 @@
 
 Used by the tests, the playground (it is its starting workspace) and the plain example.
 
-The kind folders of `seed/` (`grammars`, `constraints`, `specs`, `imports`, `scopes`, `visualizations`, `cases`) are a **copy** of the LINEA `metamodels` repository (the source of those metamodels). Change them there and run `npm run sync:bango` in it; `npm run check:bango` says whether they are in step.
+The kind folders of `seed/` (`grammars`, `constraints`, `specs`, `imports`, `scopes`, `visualizations`, `cases`) are a **copy** of the LINEA `metamodels` repository (the source of those metamodels). Change them there and run `npm run check:metamodels -- ../metamodels --sync`; without `--sync` (`--seed`) it says whether they are in step, and without either it only checks the folder is well formed.
 
 ```
 seed/
