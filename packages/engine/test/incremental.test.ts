@@ -83,8 +83,8 @@ describe('what incremental rebuild leaves alone', () => {
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.setText('security', (await fast.getInstance('security')).text + ' ');
-    // security needs datamodel, forms and lists, but nothing needs security: only its own document was made again
-    for (const m of ['datamodel', 'forms', 'lists']) expect(store.docs.get(m), m).toBe(before.get(m));
+    // security needs datamodel and browser, but nothing needs security: only its own document was made again
+    for (const m of ['datamodel', 'browser']) expect(store.docs.get(m), m).toBe(before.get(m));
     expect(store.docs.get('security')).not.toBe(before.get('security'));
   });
 
@@ -92,11 +92,10 @@ describe('what incremental rebuild leaves alone', () => {
     const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
-    await fast.setText('forms', (await fast.getInstance('forms')).text + ' ');
-    // forms is needed by security; datamodel and lists are not
+    await fast.setText('browser', (await fast.getInstance('browser')).text + ' ');
+    // the browser is needed by security; the data model is not
     expect(store.docs.get('datamodel')).toBe(before.get('datamodel'));
-    expect(store.docs.get('lists')).toBe(before.get('lists'));
-    expect(store.docs.get('forms')).not.toBe(before.get('forms'));
+    expect(store.docs.get('browser')).not.toBe(before.get('browser'));
     expect(store.docs.get('security')).not.toBe(before.get('security'));
   });
 
@@ -105,14 +104,14 @@ describe('what incremental rebuild leaves alone', () => {
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
     await fast.setText('datamodel', (await fast.getInstance('datamodel')).text + ' ');
-    for (const m of ['datamodel', 'forms', 'lists', 'security']) expect(store.docs.get(m), m).not.toBe(before.get(m));
+    for (const m of ['datamodel', 'browser', 'security']) expect(store.docs.get(m), m).not.toBe(before.get(m));
   });
 
   it('the same text again makes nothing again', async () => {
     const { fast } = await pair('security-office');
     const store = (fast.engine as unknown as { store: { docs: Map<string, object> } }).store;
     const before = new Map(store.docs);
-    for (const m of ['datamodel', 'forms', 'security']) await fast.setText(m, (await fast.getInstance(m)).text);
+    for (const m of ['datamodel', 'browser', 'security']) await fast.setText(m, (await fast.getInstance(m)).text);
     for (const [m, doc] of before) expect(store.docs.get(m), m).toBe(doc);
   });
 

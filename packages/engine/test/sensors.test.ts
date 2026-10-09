@@ -41,7 +41,7 @@ describe('sensors metamodel', () => {
       expect(entity('Buoy')).toMatchObject({ superclass: 'Asset', traceable: true });
       expect(entity('Port').superclass).toBe('Asset');
       expect(entity('Asset').properties.find((p: any) => p.name === 'name')).toMatchObject({ class: 'String', required: true, min: 2, max: 60 });
-      expect(entity('Buoy').properties.find((p: any) => p.name === 'serial')).toMatchObject({ patternType: 'Personalizado', pattern: '[A-Z]{2}[0-9]{4}', unique: true });
+      expect(entity('Buoy').properties.find((p: any) => p.name === 'serial')).toMatchObject({ patternType: 'customPattern', pattern: '[A-Z]{2}[0-9]{4}', unique: true });
       expect(entity('BuoyReading').properties.find((p: any) => p.name === 'status').class).toBe('Status');
 
       const sensor = data.dataWarehouse.sensors[0];
@@ -151,7 +151,7 @@ describe('sensors metamodel', () => {
   it('adding a sensor from the form picks real entities, a real map and a real layer', async () => {
     const { bango } = await openProject('gresint');
     const s = await bango.applyEdit('sensors', { kind: 'add', path: [], feature: 'sensors', type: 'SensorDef' });
-    expect(s.text).toMatch(/sensor newSensorDef time 0 geometry Point\s+entity \S+ factTable \S+\s+map stationobservation-map layer \S+/);
+    expect(s.text).toMatch(/sensor newSensorDef time 0\s+entity \S+ factTable \S+\s+map stationobservation-map layer \S+/);
     // only the constraints can complain (the new sensor measures nothing real), never the syntax or a reference
     expect(errors(s.problems).join('\n')).not.toMatch(/Expecting|Could not resolve/);
   });
@@ -184,9 +184,7 @@ describe('map viewer constraints', () => {
   const cases: [string, string, string, RegExp][] = [
     ['a layer that draws a field the entity does not have', 'entity ZoneDimension\n', 'entity ZoneDimension field outline\n', /Could not resolve reference to PropertyField named 'outline'/],
     ['a layer that draws a field that is not a geometry', 'entity ZoneDimension\n', 'entity ZoneDimension field name\n', /'ZoneDimension.name' is a String, not a geometry/],
-    ['a default style that is not available', 'defaultStyle grayPolygon\n', 'defaultStyle redPolygon\n', /defaultStyle 'redPolygon' must be one of availableStyles/],
     ['a layer on a map without a style', 'use ZoneDimension style grayPolygon order 2', 'use ZoneDimension order 2', /layer 'ZoneDimension' draws data: choose a style for it/],
-    ['a style the layer does not offer', 'use ZoneDimension style grayPolygon order 2', 'use ZoneDimension style redPolygon order 2', /style 'redPolygon' is not one of the available styles of layer 'ZoneDimension'/],
     ['an interval that goes backwards', 'from 20 to 40 style orangePoint', 'from 40 to 20 style orangePoint', /interval goes backwards: 40 to 20/]
   ];
   it.each(cases)('reports %s', async (_what, from, to, pattern) => {
@@ -194,6 +192,18 @@ describe('map viewer constraints', () => {
     expect(project.instances.gismodel).toContain(from);
     const s = await bango.setText('gismodel', project.instances.gismodel.replace(from, to));
     expect(errors(s.problems).join('\n')).toMatch(pattern);
+  });
+
+  // the platform's products have layers like these, so they are a warning, not an error
+  it.each([
+    ['a default style that is not available', 'defaultStyle grayPolygon\n', 'defaultStyle redPolygon\n', /defaultStyle 'redPolygon' must be one of availableStyles/],
+    ['a style the layer does not offer', 'use ZoneDimension style grayPolygon order 2', 'use ZoneDimension style redPolygon order 2', /style 'redPolygon' is not one of the available styles of layer 'ZoneDimension'/]
+  ])('warns about %s', async (_what, from, to, pattern) => {
+    const { bango, project } = await openProject('gresint');
+    expect(project.instances.gismodel).toContain(from);
+    const s = await bango.setText('gismodel', project.instances.gismodel.replace(from, to));
+    expect(errors(s.problems)).toEqual([]);
+    expect(warnings(s.problems).join('\n')).toMatch(pattern);
   });
 
   it('warns about a repeated order and a second base layer', async () => {

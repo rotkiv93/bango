@@ -20,11 +20,11 @@ describe('security: a reference to a type that three metamodels contribute to', 
     const { bango, seed } = await openProject('security-everything');
     const all = seed.projects['security-everything'];
     const permutations = [
-      ['datamodel', 'forms', 'lists', 'security', 'gismodel'],
-      ['gismodel', 'security', 'lists', 'forms', 'datamodel'],
-      ['security', 'gismodel', 'sensors', 'basic', 'datamodel', 'forms', 'lists'],
-      ['basic', 'datamodel', 'gismodel', 'sensors', 'forms', 'lists', 'security', 'menus'],
-      ['menus', 'security', 'lists', 'forms', 'gismodel', 'datamodel', 'basic', 'sensors']
+      ['datamodel', 'browser', 'security', 'gismodel'],
+      ['gismodel', 'security', 'browser', 'datamodel'],
+      ['security', 'gismodel', 'sensors', 'basic', 'datamodel', 'browser'],
+      ['basic', 'datamodel', 'gismodel', 'sensors', 'browser', 'security', 'menus'],
+      ['menus', 'security', 'browser', 'gismodel', 'datamodel', 'basic', 'sensors']
     ];
     for (const names of permutations) {
       await bango.compose(names);
@@ -50,15 +50,14 @@ describe('security: a reference to a type that three metamodels contribute to', 
     await bango.setText('datamodel', without);
     const broken = async (m: string) => errors((await bango.getInstance(m)).problems).filter(e => /Customer/.test(e)).length;
     expect(await broken('datamodel')).toBe(0);
-    expect(await broken('forms')).toBeGreaterThan(0);      // CustomerForm entity Customer
-    expect(await broken('lists')).toBeGreaterThan(0);      // Customers entity Customer
+    expect(await broken('browser')).toBeGreaterThan(0);    // CustomerForm and Customers: entity Customer
     expect(await broken('security')).toBeGreaterThan(0);   // grants on Customer, CustomerForm, Customers
   });
 
   it('an entity and a form with the same name: the reference resolves to one of them, always the same', async () => {
     const { bango, project } = await openProject('security-office');
-    const clash = project.instances.forms.replace('form InvoiceForm entity Invoice', 'form InvoiceForm entity Invoice\n\nform Invoice entity Customer');
-    await bango.setText('forms', clash);
+    const clash = project.instances.browser.replace('form InvoiceForm entity Invoice', 'form Invoice entity Customer\n\nform InvoiceForm entity Invoice');
+    await bango.setText('browser', clash);
     const kinds = new Set<string>();
     for (let i = 0; i < 3; i++) {
       await bango.setText('security', project.instances.security + 'grant viewer read on Invoice\n');
@@ -69,17 +68,16 @@ describe('security: a reference to a type that three metamodels contribute to', 
   });
 });
 
-describe('menus: recursion, and a screen that is a form, a list or a map', () => {
-  it('opens screens from three metamodels, nested', async () => {
+describe('menus: recursion, and the screens of the platform', () => {
+  it('opens screens, nested, and says who sees each', async () => {
     const { bango } = await openProject('portal');
     expect(errors((await bango.getInstance('menus')).problems)).toEqual([]);
     const menus = get((await bango.toJson('menus'))!, 'data', 'menus') as Json[];
-    expect(menus.map(m => m.name)).toEqual(['main', 'sidebar']);
-    const main = menus[0].items as Json[];
-    expect(main[0]).toMatchObject({ name: 'data', label: 'Data' });
-    expect((main[0].items as Json[]).map(i => `${i.target}:${i.type}`)).toEqual(['Roads:list', 'RoadForm:form']);
-    expect(main[1]).toMatchObject({ name: 'overview', type: 'map', target: 'main' });
-    expect(menus[1].position).toBe('side');
+    expect(menus.map(m => m.id)).toEqual(['top', 'left']);
+    const top = menus[0].elements as Json[];
+    expect(top[0]).toMatchObject({ id: 'Data', type: 'MENU', access: { admin: true, logged: true } });
+    expect((top[0].elements as Json[]).map(i => `${(i.view as Json).component}:${(i.view as Json).view}`)).toEqual(['LIST:Roads', 'FORM:RoadForm']);
+    expect(top[1]).toEqual({ id: 'overview', type: 'VIEW', view: { component: 'MAP', view: 'mapViewer' } });
   });
 
   it('fills the data.menus slot that basic leaves empty, and nothing else of the gresint document changes', async () => {
@@ -91,11 +89,11 @@ describe('menus: recursion, and a screen that is a form, a list or a map', () =>
       expect(get(json, ...path), path.join('.')).toEqual(get(expected, ...path));
     }
     // the new parts: forms, lists, security
-    expect((get(json, 'data', 'forms') as Json[]).map(f => f.name)).toEqual(['StationForm', 'ZoneForm']);
-    expect((get(json, 'data', 'lists') as Json[]).map(l => l.name)).toEqual(['Stations', 'Zones']);
+    expect((get(json, 'data', 'forms') as Json[]).map(f => f.id)).toEqual(['StationForm', 'ZoneForm']);
+    expect((get(json, 'data', 'lists') as Json[]).map(l => l.id)).toEqual(['Stations', 'Zones']);
     expect(Object.keys(get(json, 'data', 'security') as Json)).toEqual(['roles', 'users', 'permissions']);
-    // key order of the document stays the one the basic mapping lays out; security, which no slot is left for, comes last
-    expect(Object.keys(get(json, 'data') as Json)).toEqual(['basicData', 'dataModel', 'dataWarehouse', 'forms', 'lists', 'menus', 'mapViewer', 'statics', 'security']);
+    // key order of the document stays the one the basic mapping lays out; what has no slot (security, the sensors, the map) comes after
+    expect(Object.keys(get(json, 'data') as Json)).toEqual(['basicData', 'dataModel', 'gui', 'forms', 'lists', 'menus', 'security', 'dataWarehouse', 'mapViewer']);
   });
 
   it('a project without menus or security keeps the original document, empty slots included', async () => {
@@ -103,20 +101,21 @@ describe('menus: recursion, and a screen that is a form, a list or a map', () =>
     expect(await bango.toProjectJson()).toEqual(seed.expected.gresint);
   });
 
-  it('a menu item that opens an entity or a missing screen is an error', async () => {
-    const { bango, project } = await openProject('portal');
-    const bad = project.instances.menus.replace('item edit opens RoadForm', 'item edit opens Road');
-    expect(errors((await bango.setText('menus', bad)).problems).join()).toMatch(/Could not resolve reference to Screen named 'Road'/);
-    // deleting the map the menus open
-    await bango.setText('menus', project.instances.menus);
-    const noMap = project.instances.gismodel.replace(/map main[\s\S]*$/, '');
-    await bango.setText('gismodel', noMap);
-    expect(errors((await bango.getInstance('menus')).problems).filter(e => /'main'/.test(e)).length).toBe(2);
+  it('a menu needs nothing but itself: a view names the screen of the platform it opens', async () => {
+    const { bango } = await openProject('menus-only');
+    const state = await bango.setText('menus', 'menus\nmenu top {\n  menuview a openscreen LIST "Roads" accessBy byAdmin byLogged\n  menuview b openscreen STATIC "Home" accessBy byAnonymous\n}\n');
+    expect(errors(state.problems)).toEqual([]);
+    const menus = get((await bango.toJson('menus'))!, 'data', 'menus') as Json[];
+    expect(menus[0].elements).toEqual([
+      { id: 'a', type: 'VIEW', view: { component: 'LIST', view: 'Roads' }, access: { admin: true, logged: true } },
+      { id: 'b', type: 'VIEW', view: { component: 'STATIC', view: 'Home' }, access: { anonymous: true } }
+    ]);
+    expect((await bango.build('menus-only')).ok).toBe(true);
   });
 
   it('a deeply nested menu is printed and read back', async () => {
     const { bango } = await openProject('portal');
-    const deep = 'menus portal\nmenu main {\n  item a {\n    item b {\n      item c {\n        item d {\n          item e opens Roads\n        }\n      }\n    }\n  }\n}\n';
+    const deep = 'menus\nmenu main {\n  menugroup a {\n    menugroup b {\n      menugroup c {\n        menugroup d {\n          menuview e openscreen LIST "Roads"\n        }\n      }\n    }\n  }\n}\n';
     const state = await bango.setText('menus', deep);
     expect(warnings(state.problems).length).toBe(2);
     const json = await bango.toProjectJson();
@@ -145,25 +144,24 @@ describe('the new projects', () => {
     expect(again.texts).toEqual(result.texts);
   });
 
-  it.each(['security-only', 'menus-only'])('%s is rejected, saying what to add', async name => {
-    const { bango } = await openProject(name);
-    const built = await bango.build(name);
+  it('security-only is rejected, saying what to add', async () => {
+    const { bango } = await openProject('security-only');
+    const built = await bango.build('security-only');
     expect(built.ok).toBe(false);
     expect(built.errors.join('\n')).toMatch(/needs 'datamodel'/);
-    const check = await bango.checkSelection([name.replace('-only', '')]);
+    const check = await bango.checkSelection(['security']);
     expect(check.ok).toBe(false);
-    expect(check.suggested.length).toBeGreaterThan(3);
+    expect(check.suggested.sort()).toEqual(['browser', 'datamodel', 'security']);
   });
-
-  it('security needs the data model, the forms and the lists; menus the forms, the lists and the GIS model', async () => {
+  it('security needs the data model and the browser; menus need nothing but the shared words', async () => {
     const bango = new Bango();
     const seed = loadSeed({ fixtures: true });
     for (const [n, t] of Object.entries(seed.grammars)) await bango.setGrammar(n, t);
     const grammars = await bango.listMetamodels();
     const requires = (name: string) => grammars.find(g => g.name === name)!.requires.sort();
-    expect(requires('security')).toEqual(['datamodel', 'forms', 'lists']);
-    expect(requires('menus')).toEqual(['datamodel', 'forms', 'gismodel', 'lists']);
-    expect((await bango.checkSelection(['security'])).suggested.sort()).toEqual(['datamodel', 'forms', 'lists', 'security']);
-    expect((await bango.checkSelection(['menus', 'security'])).suggested.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security']);
+    expect(requires('security')).toEqual(['browser', 'datamodel']);
+    expect(requires('menus')).toEqual([]);
+    expect((await bango.checkSelection(['security'])).suggested.sort()).toEqual(['browser', 'datamodel', 'security']);
+    expect((await bango.checkSelection(['menus', 'security'])).suggested.sort()).toEqual(['browser', 'datamodel', 'menus', 'security']);
   });
 });

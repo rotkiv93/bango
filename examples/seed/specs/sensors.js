@@ -32,11 +32,13 @@ const spec = function (model, { refName }) {
     time: s.time,
     isMoving: !!s.moving,
     factTableEntity: refName(s.factTable),
-    geom: s.geom,
+    ...(s.geom !== undefined ? { geom: s.geom } : {}),
     measureData: s.measureData.map(measurement),
     dimensions: s.dimensions.map(dimension)
   });
 
+  // a product without sensors has no data warehouse in its specification
+  if (!model.sensors.length && !model.groups.length) return { data: {} };
   return {
     data: {
       dataWarehouse: {

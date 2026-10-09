@@ -73,7 +73,7 @@ describe('typings for scripts', () => {
 
   it('a scope is typed by the reference features of the grammar: a misspelled feature or a wrong node is an error', async () => {
     const { composer } = composerWith();
-    const dts = await composer.typings('forms');
+    const dts = await composer.typings('browser');
     const ok = check(dts, `/** @type {Scope} */\nconst s = { FormField: { property: f => f.$container?.$type === 'FormDef' ? [] : undefined } };\nreturn s;`);
     expect(ok).toBe('');
     expect(check(dts, `/** @type {Scope} */\nconst s = { FormField: { propertee: f => [] } };\nreturn s;`)).toMatch(/propertee/);

@@ -1,0 +1,22 @@
+browser
+
+form StationForm entity StationObservationEntity allowCreate allowEdit allowRemove {
+  field id viewed
+  field name viewed edited
+  field zonedimension_id viewed edited
+}
+
+form ZoneForm entity ZoneDimension allowCreate allowEdit allowRemove {
+  field id viewed
+  field name viewed edited
+}
+
+list Stations entity StationObservationEntity opensForm StationForm sorting {
+  column name
+  column zonedimension_id
+}
+
+list Zones entity ZoneDimension opensForm ZoneForm sorting {
+  column id
+  column name
+}

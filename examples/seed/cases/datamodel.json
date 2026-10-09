@@ -156,5 +156,41 @@
       "errors": [],
       "warnings": []
     }
+  },
+  {
+    "name": "a field can be called owner or url",
+    "with": {},
+    "text": "datamodel\nentity Car {\n  property id: Long autoinc required pk unique\n  property url: String\n  relation owner -> Person inverse cars owner\n}\nentity Person {\n  property id: Long autoinc required pk unique\n  relation cars -> Car inverse owner multiple\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "names can have accents",
+    "with": {},
+    "text": "datamodel\nentity Páxina {\n  property id: Long autoinc required pk unique\n  property título: String\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a tree owns its relationship from both sides",
+    "with": {},
+    "text": "datamodel\nentity Segment {\n  property id: Long autoinc required pk unique\n  relation parent -> Segment inverse children owner\n  relation children -> Segment inverse parent owner multiple\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a pattern is IP, URL or Email",
+    "with": {},
+    "text": "datamodel\nentity Contact {\n  property id: Long autoinc required pk unique\n  property email: String pattern Email\n  property home: String pattern URL\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
   }
 ]

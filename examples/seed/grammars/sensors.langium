@@ -21,7 +21,7 @@ RangeBucket: (default?='default' | min=SignedNumber 'to' max=SignedNumber | valu
 // A sensor measures `measurements` into its `factTable` entity, one row per observation of an `entity`
 SensorDef: (moving?='moving')? 'sensor' name=ID
   'time' time=INT
-  'geometry' geom=('Point' | 'MultiPoint' | 'Polygon' | 'MultiPolygon' | 'LineString' | 'MultiLineString')
+  ('geometry' geom=('Point' | 'MultiPoint' | 'Polygon' | 'MultiPolygon' | 'LineString' | 'MultiLineString'))?
   'entity' entity=[Entity:ID]
   'factTable' factTable=[Entity:ID]
   'map' defaultMap=[MapDef:ID]

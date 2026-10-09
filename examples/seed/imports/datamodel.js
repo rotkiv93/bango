@@ -4,13 +4,16 @@ const BASIC = new Set([
   'Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'Geometry', 'GCAddress', 'IGGallery'
 ]);
 
+// the patterns of the platform, as the model writes them
+const PATTERNS = { ipPattern: 'IP', urlPattern: 'URL', emailPattern: 'Email' };
+
 /** @type {Import} */
 const importer = function (json, { n }) {
   const property = p => {
     // numeric keys that generate themselves are written `Long (autoinc)`
     const autoinc = /^(.*) \(autoinc\)$/.exec(p.class);
     const type = autoinc ? autoinc[1] : p.class;
-    const custom = p.patternType === 'Personalizado';
+    const custom = p.patternType === 'customPattern';
     return n('PropertyField', {
       name: p.name,
       // a basic type, or else the name of an enumeration
@@ -20,10 +23,10 @@ const importer = function (json, { n }) {
       required: p.required,
       pk: p.pk,
       unique: p.unique,
-      patternType: custom ? undefined : p.patternType,
+      patternType: custom || !p.patternType ? undefined : (PATTERNS[p.patternType] ?? p.patternType),
       pattern: custom ? p.pattern : undefined,
-      min: p.min,
-      max: p.max
+      min: p.min ?? undefined,
+      max: p.max ?? undefined
     });
   };
 
@@ -33,9 +36,11 @@ const importer = function (json, { n }) {
   // only a relationship says who owns it
   const field = p => ('owner' in p ? relationship(p) : property(p));
 
-  const dataModel = json.data.dataModel;
+  const dataModel = json.data.dataModel ?? {};
+  const entities = dataModel.entities ?? [];
+
   return n('Model', {
-    entities: dataModel.entities.map(e =>
+    entities: entities.map(e =>
       n('Entity', {
         name: e.name,
         displayString: e.displayString,

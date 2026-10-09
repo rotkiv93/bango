@@ -142,23 +142,23 @@ describe('workspace controller: metamodels and scripts', () => {
     const { controller, bango } = await ready();
     const { grammars } = controller.state.workspace;
     controller.editGrammar('datamodel', grammars.datamodel.replace('// Data model:', '// Data model, edited:'));
-    controller.editGrammar('forms', grammars.forms.replace('// Forms:', '// Forms, edited:'));
-    controller.editGrammar('lists', grammars.lists.replace('// Lists:', '// Lists, edited:'));
+    controller.editGrammar('browser', grammars.browser.replace('// Lists and forms:', '// Lists and forms, edited:'));
+    controller.editGrammar('gismodel', grammars.gismodel.replace('// GIS model:', '// GIS model, edited:'));
     await controller.flush();
     const described = Object.fromEntries((await bango.listMetamodels()).map(g => [g.name, g.description ?? '']));
     expect(described.datamodel).toMatch(/^Data model, edited:/);
-    expect(described.forms).toMatch(/^Forms, edited:/);
-    expect(described.lists).toMatch(/^Lists, edited:/);
-    expect(controller.state.catalog.find(g => g.name === 'forms')!.description).toMatch(/^Forms, edited:/);
+    expect(described.browser).toMatch(/^Lists and forms, edited:/);
+    expect(described.gismodel).toMatch(/^GIS model, edited:/);
+    expect(controller.state.catalog.find(g => g.name === 'browser')!.description).toMatch(/^Lists and forms, edited:/);
   });
 
   it('repeated edits of one file send only the last text', async () => {
     const { controller, bango } = await ready();
     const sent: string[] = [];
     const original = bango.setGrammar.bind(bango);
-    bango.setGrammar = async (name: string, text: string) => { if (name === 'lists') sent.push(text); return original(name, text); };
-    const base = controller.state.workspace.grammars.lists;
-    for (const word of ['one', 'two', 'three']) controller.editGrammar('lists', base.replace('// Lists:', `// ${word}:`));
+    bango.setGrammar = async (name: string, text: string) => { if (name === 'gismodel') sent.push(text); return original(name, text); };
+    const base = controller.state.workspace.grammars.gismodel;
+    for (const word of ['one', 'two', 'three']) controller.editGrammar('gismodel', base.replace('// GIS model:', `// ${word}:`));
     await controller.flush();
     expect(sent).toHaveLength(1);
     expect(sent[0]).toContain('// three:');
@@ -264,16 +264,16 @@ describe('workspace controller: saving', () => {
     const storage = new MemoryStorage();
     const first = await ready({ storage });
     await first.controller.openProject('shop');
-    first.controller.editGrammar('lists', first.controller.state.workspace.grammars.lists + '\n// mine\n');
-    first.controller.setCases('forms', []);
+    first.controller.editGrammar('gismodel', first.controller.state.workspace.grammars.gismodel + '\n// mine\n');
+    first.controller.setCases('browser', []);
     await first.bango.setText('datamodel', 'datamodel saved\n');
     await first.controller.flush();
-    expect(storage.saved!.grammars.lists).toContain('// mine');
+    expect(storage.saved!.grammars.gismodel).toContain('// mine');
     expect(storage.saved!.projects.shop.instances.datamodel).toBe('datamodel saved\n');
 
     const second = await ready({ storage });
-    expect(second.controller.state.workspace.grammars.lists).toContain('// mine');
-    expect(second.controller.state.workspace.cases.forms).toEqual([]);
+    expect(second.controller.state.workspace.grammars.gismodel).toContain('// mine');
+    expect(second.controller.state.workspace.cases.browser).toEqual([]);
     await second.controller.openProject('shop');
     expect(second.controller.state.instances[0].text).toBe('datamodel saved\n');
   });
@@ -286,7 +286,7 @@ describe('workspace controller: saving', () => {
     const { controller } = await ready({ storage: new MemoryStorage(old as WorkspaceData) });
     const { workspace } = controller.state;
     expect(Object.keys(workspace.imports).sort()).toEqual(METAMODELS);
-    expect(Object.keys(workspace.scopes).sort()).toEqual(['forms', 'gismodel', 'lists', 'sensors']);
+    expect(Object.keys(workspace.scopes).sort()).toEqual(['browser', 'gismodel', 'sensors']);
     expect(Object.keys(workspace.cases).length).toBeGreaterThan(0);
     expect(workspace.specs).toEqual({});
     // what the user had is kept
@@ -319,12 +319,12 @@ describe('workspace controller: saving', () => {
 
   it('reset goes back to the examples', async () => {
     const { controller } = await ready();
-    controller.editGrammar('lists', 'garbage');
+    controller.editGrammar('menus', 'garbage');
     await controller.flush();
-    expect(controller.state.catalog.find(g => g.name === 'lists')!.problems.length).toBeGreaterThan(0);
+    expect(controller.state.catalog.find(g => g.name === 'menus')!.problems.length).toBeGreaterThan(0);
     await controller.reset();
-    expect(controller.state.workspace.grammars.lists).toContain('grammar Lists');
-    expect(controller.state.catalog.find(g => g.name === 'lists')!.problems.filter(p => p.severity === 'error')).toEqual([]);
+    expect(controller.state.workspace.grammars.menus).toContain('grammar Menus');
+    expect(controller.state.catalog.find(g => g.name === 'menus')!.problems.filter(p => p.severity === 'error')).toEqual([]);
     expect(controller.state.activeProject).toBeUndefined();
   });
 
@@ -332,14 +332,14 @@ describe('workspace controller: saving', () => {
     const seed = loadSeed();
     let examples = workspaceFromSeed(seed);
     const { controller, bango } = await ready({ seed: () => examples });
-    expect((await bango.listMetamodels()).some(g => g.name === 'lists')).toBe(true);
+    expect((await bango.listMetamodels()).some(g => g.name === 'menus')).toBe(true);
     // the examples change (another version of the app): resetting drops what is gone, and the scripts that went with it
     examples = workspaceFromSeed(seed);
-    delete examples.grammars.lists;
-    delete examples.cases.lists;
+    delete examples.grammars.menus;
+    delete examples.cases.menus;
     await controller.reset();
-    expect((await bango.listMetamodels()).some(g => g.name === 'lists')).toBe(false);
-    expect(controller.state.catalog.some(g => g.name === 'lists')).toBe(false);
+    expect((await bango.listMetamodels()).some(g => g.name === 'menus')).toBe(false);
+    expect(controller.state.catalog.some(g => g.name === 'menus')).toBe(false);
   });
 });
 
@@ -360,7 +360,7 @@ describe('workspace controller: observing', () => {
     const { controller, storage } = await ready();
     await controller.flush();
     storage.saved = undefined;
-    controller.editGrammar('lists', 'x');
+    controller.editGrammar('menus', 'x');
     controller.dispose();
     await new Promise(r => setTimeout(r, 60));
     expect(storage.saved).toBeUndefined();
@@ -419,12 +419,12 @@ describe('workspace controller through the worker boundary', () => {
       await controller.openProject('city');
       expect(controller.state.instances.map(i => i.metamodel).sort()).toEqual(['datamodel', 'gismodel']);
       expect(await controller.createProject('maps', ['gismodel'])).toMatchObject({ ok: false });
-      controller.editGrammar('lists', controller.state.workspace.grammars.lists.replace('// Lists:', '// Lists over the wire:'));
-      controller.editGrammar('forms', controller.state.workspace.grammars.forms.replace('// Forms:', '// Forms over the wire:'));
+      controller.editGrammar('gismodel', controller.state.workspace.grammars.gismodel.replace('// GIS model:', '// GIS model over the wire:'));
+      controller.editGrammar('browser', controller.state.workspace.grammars.browser.replace('// Lists and forms:', '// Lists and forms over the wire:'));
       await controller.flush();
       const described = Object.fromEntries((await client.listMetamodels()).map(g => [g.name, g.description ?? '']));
-      expect(described.lists).toMatch(/over the wire/);
-      expect(described.forms).toMatch(/over the wire/);
+      expect(described.gismodel).toMatch(/over the wire/);
+      expect(described.browser).toMatch(/over the wire/);
       await controller.openProject('gresint');
       await controller.buildProject();
       expect(controller.state.build!.result.ok).toBe(true);

@@ -134,7 +134,8 @@ const constraints = {
     if (other.bidirectional !== field.name) {
       accept('error', `'${target.name}.${other.name}' should name '${field.name}' as its inverse`, { node: field, property: 'bidirectional' });
     }
-    if (!!other.owner === !!field.owner) {
+    // a relationship of an entity with itself (a tree: `parent` and `children`) is owned from both sides
+    if (!!other.owner === !!field.owner && target !== field.$container) {
       accept('error', `exactly one side of '${field.name}' and '${target.name}.${other.name}' must be the owner`, { node: field, property: 'name' });
     }
   }

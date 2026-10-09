@@ -20,13 +20,17 @@ Field: PropertyField | RelationshipField;
 // `autoinc` makes a numeric key generate itself.
 // `pattern` limits a String to an IP, an URL, an Email (datamodel.constraints.js) or to a regular expression in quotes;
 // `min` and `max` limit its length or a number's value
-PropertyField: 'property' name=ID ':' (class=BasicType | enumType=[EnumDef:ID])
+PropertyField: 'property' name=FieldName ':' (class=BasicType | enumType=[EnumDef:ID])
   (autoinc?='autoinc')? (required?='required')? (pk?='pk')? (unique?='unique')?
   ('pattern' (patternType=ID | pattern=STRING))? ('min' min=SignedNumber)? ('max' max=SignedNumber)?;
+
+// A field may be called as a word that is reserved here or in another metamodel (a relationship says whether it is the `owner`; a sensor has `units`, a layer a `url`...):
+// those are the ones the products in use have. Anything else reserved cannot be a field name.
+FieldName returns string: ID | 'owner' | 'field' | 'geometry' | 'login' | 'password' | 'schema' | 'sensors' | 'units' | 'url';
 
 BasicType returns string: 'Boolean' | 'Integer' | 'Long' | 'Float' | 'Double' | 'String' | 'Text' | 'Date' | 'DateTime' | 'LocalDate'
   | 'Point' | 'MultiPoint' | 'LineString' | 'MultiLineString' | 'Polygon' | 'MultiPolygon' | 'Geometry' | 'GCAddress' | 'IGGallery';
 
 // `inverse` names the field of the target that points back; exactly one side of a pair is the `owner`
-RelationshipField: 'relation' name=ID '->' target=[Entity:ID] ('inverse' bidirectional=ID)?
+RelationshipField: 'relation' name=FieldName '->' target=[Entity:ID] ('inverse' bidirectional=FieldName)?
   (owner?='owner')? (multiple?='multiple')? (required?='required')?;

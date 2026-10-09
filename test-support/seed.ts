@@ -27,7 +27,7 @@ export function loadSeed(options: { fixtures?: boolean } = {}): Seed {
 }
 
 /** The metamodels that ship in `examples/seed/grammars` (the ones with an entry rule), sorted. Update it when one is added. */
-export const METAMODELS = ['basic', 'datamodel', 'forms', 'gismodel', 'lists', 'menus', 'sensors', 'statics'];
+export const METAMODELS = ['basic', 'browser', 'datamodel', 'gismodel', 'gui', 'menus', 'sensors', 'statics'];
 
 /** The projects the playground offers as examples, sorted. */
 export const EXAMPLE_PROJECTS = ['catalog', 'city', 'everything', 'fleet', 'gresint', 'office', 'portal', 'shop'];

@@ -5,7 +5,7 @@ import nodeEndpoint from '../../../node_modules/comlink/dist/esm/node-adapter.mj
 import { EngineRestartedError, ScriptTimeoutError, connectBango, type BangoConnection, type RestartInfo } from '@bango/core/client';
 import { serveBango } from '../src/worker/index.js';
 import { WorkspaceController, workspaceFromSeed } from '../src/workspace/index.js';
-import { errors, feedSeed } from '../../../test-support/harness.js';
+import { errors, feedSeed, warnings } from '../../../test-support/harness.js';
 import { loadSeed } from '../../../test-support/seed.js';
 
 /**
@@ -120,7 +120,7 @@ describe('a connection made from a function that makes the worker', () => {
     for (const s of after) expect(errors(s.problems), s.metamodel).toEqual([]);
     // the other scripts are on (the GIS model's rule about styles) and the culprit is off (the data model's rule about duplicates)
     const gis = seed.projects.city.instances.gismodel.replace('availableStyles thin', 'availableStyles thin2').replace('geojsonstyle thin', 'geojsonstyle thin2 fillColor "#fff" strokeColor "#000" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0\ngeojsonstyle thin');
-    expect(errors((await client.setText('gismodel', gis)).problems).join()).toMatch(/defaultStyle 'thin' must be one of availableStyles/);
+    expect(warnings((await client.setText('gismodel', gis)).problems).join()).toMatch(/defaultStyle 'thin' must be one of availableStyles/);
     const dup = seed.projects.city.instances.datamodel.replace('property lanes: Integer', 'property name: String');
     expect(errors((await client.setText('datamodel', dup)).problems).join()).not.toMatch(/duplicate field/);
   });

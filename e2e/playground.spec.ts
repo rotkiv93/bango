@@ -75,7 +75,7 @@ test.describe('metamodels and their scripts', () => {
   test('every metamodel that ships has test cases, and they pass', async ({ page }) => {
     await start(page);
     await page.locator('.topbar nav button', { hasText: 'Metamodels' }).click();
-    for (const name of ['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'statics']) {
+    for (const name of ['basic', 'browser', 'datamodel', 'gismodel', 'gui', 'menus', 'sensors', 'statics']) {
       await page.locator('.mm-item', { has: page.locator(`strong:text-is("${name}")`) }).click();
       await view(page, 'Tests');
       const summary = page.locator('.tests-head strong');
@@ -185,7 +185,7 @@ test.describe('editing across metamodels', () => {
     await openProject(page, 'office');
 
     // the form of Customer offers the fields of Customer
-    await tab(page, 'forms').click();
+    await tab(page, 'browser').click();
     await view(page, 'Form');
     const fieldBox = page.locator('.bango-form .bango-node', { has: page.locator(':scope > legend b:text-is("FormField")') }).first();
     await expect(fieldBox.locator('select option', { hasText: 'email' })).toHaveCount(1);
@@ -200,7 +200,7 @@ test.describe('editing across metamodels', () => {
     await page.keyboard.type('amount');
     await page.keyboard.press('Enter');
     await expect.poll(() => editorText(page)).toContain('property amount');
-    await tab(page, 'lists').click();
+    await tab(page, 'browser').click();
     await view(page, 'Text');
     await expect.poll(() => editorText(page)).toContain('column amount');
     await expect(page.locator('.workspace .toolbar .status.ok')).toBeVisible();

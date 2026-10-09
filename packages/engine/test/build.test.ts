@@ -103,9 +103,9 @@ describe('project build', () => {
     ['everything', true],
     ['gismodel-only', false],
     ['sensors-only', false],
-    ['forms-only', false],
+    ['browser-only', false],
     ['security-only', false],
-    ['menus-only', false]
+    ['menus-only', true]
   ])('shipped example %s builds: %s', async (name, ok) => {
     const { bango } = await openProject(name);
     const result = await bango.build(name);

@@ -37,12 +37,13 @@ describe('the product specification (gresint)', () => {
     const { bango } = await openProject('gresint');
     const basic = (await bango.toJson('basic')) as Obj;
     expect(Object.keys(basic)).toEqual(['features', 'data']);
-    expect(Object.keys(basic.data as Obj)).toEqual(['basicData', 'dataModel', 'dataWarehouse', 'forms', 'lists', 'menus', 'mapViewer', 'statics']);
-    // the slots of the other metamodels are empty: they are theirs to fill
+    expect(Object.keys(basic.data as Obj)).toEqual(['basicData', 'dataModel', 'gui', 'forms', 'lists', 'menus']);
+    // the slots of the other metamodels are empty: they are theirs to fill (what a product may not have, a map or sensors, has no slot)
     expect((basic.data as Obj).dataModel).toEqual({});
-    expect((basic.data as Obj).dataWarehouse).toEqual({});
-    expect((basic.data as Obj).mapViewer).toEqual({});
     expect((basic.data as Obj).forms).toEqual([]);
+    expect((basic.data as Obj).lists).toEqual([]);
+    // the header of the interface shows the name of the product
+    expect((basic.data as Obj).gui).toEqual({ settings: { header: { type: 'Text', text: 'gresint' } } });
     expect(((basic.data as Obj).basicData as Obj).name).toBe('gresint');
   });
 
@@ -98,9 +99,11 @@ describe('the product specification (gresint)', () => {
     const spec = ((await bango.toJson('basic')) as { data: { basicData: Obj } }).data.basicData;
     expect(spec).toEqual({
       name: 'MyApp',
+      index: { component: 'STATIC', view: 'welcome' },
       languages: ['en', 'es', 'gl'],
       packageInfo: { artifact: 'myapp', group: 'es.udc.lbd.gisspl' },
-      SRID: '4326'
+      SRID: '4326',
+      database: {}
     });
     expect(((await bango.toJson('basic')) as Obj).features).toEqual([]);
   });
@@ -117,79 +120,81 @@ describe('the product specification (gresint)', () => {
   });
 });
 
-describe('forms and lists', () => {
-  it('forms and lists fill their slots of the document', async () => {
+describe('lists and forms', () => {
+  it('the browser fills the slots of the document: the forms and the lists the way the platform reads them', async () => {
     const { bango } = await openProject('catalog');
     const spec = (await bango.toProjectJson()) as { data: Obj };
     const forms = spec.data.forms as Obj[];
     expect(forms[0]).toEqual({
-      name: 'ProductForm', label: 'Product', entity: 'Product',
-      fields: [
-        { name: 'name', label: 'Name', readOnly: false },
-        { name: 'price', label: 'price', readOnly: false },
-        { name: 'inStock', label: 'In stock', readOnly: true },
-        { name: 'category', label: 'category', readOnly: false }
+      id: 'ProductForm', entity: 'Product', creatable: true, editable: true, removable: true, confirmation: false,
+      properties: [
+        { property: 'id', viewing: true, editing: false, owner: 'Product' },
+        { property: 'name', viewing: true, editing: true, owner: 'Product' },
+        { property: 'price', viewing: true, editing: true, owner: 'Product' },
+        { property: 'inStock', viewing: true, editing: true, owner: 'Product' },
+        { property: 'category', viewing: true, editing: true, owner: 'Product' }
       ]
     });
-    // a form without a block of fields shows every field of its entity: it says nothing about them
-    expect(forms[1]).toEqual({ name: 'CategoryForm', label: 'CategoryForm', entity: 'Category' });
 
     const lists = spec.data.lists as Obj[];
     expect(lists[0]).toEqual({
-      name: 'Products', label: 'Products', entity: 'Product', pageSize: 20, sortBy: 'name', descending: false,
-      columns: [{ name: 'name', label: 'name' }, { name: 'price', label: 'Price (EUR)' }, { name: 'category', label: 'category' }]
+      id: 'Products', entity: 'Product', form: 'ProductForm', removeLink: false, sorting: true, searching: false, filtering: false,
+      properties: [
+        { property: 'name', form: 'ProductForm', owner: 'Product' },
+        { property: 'price', form: 'ProductForm', owner: 'Product' },
+        { property: 'category', form: 'ProductForm', owner: 'Product' }
+      ]
     });
-    expect(lists[1]).toEqual({ name: 'Categories', label: 'Categories', entity: 'Category', sortBy: 'name', descending: true });
   });
 
   it('together with basic they fill the empty arrays of its skeleton instead of replacing them', async () => {
     const { bango } = await openProject('catalog');
-    await bango.compose(['basic', 'datamodel', 'forms', 'lists']);
+    await bango.compose(['basic', 'datamodel', 'browser']);
     await bango.setText('basic', 'basic catalog');
     const spec = (await bango.toProjectJson()) as { data: Obj };
-    expect(Object.keys(spec.data)).toEqual(['basicData', 'dataModel', 'dataWarehouse', 'forms', 'lists', 'menus', 'mapViewer', 'statics']);
-    expect((spec.data.forms as Obj[]).map(f => f.name)).toEqual(['ProductForm', 'CategoryForm']);
-    expect((spec.data.lists as Obj[]).map(l => l.name)).toEqual(['Products', 'Categories']);
+    expect(Object.keys(spec.data)).toEqual(['basicData', 'dataModel', 'gui', 'forms', 'lists', 'menus']);
+    expect((spec.data.forms as Obj[]).map(f => f.id)).toEqual(['ProductForm', 'CategoryForm']);
+    expect((spec.data.lists as Obj[]).map(l => l.id)).toEqual(['Products', 'Categories']);
     expect(spec.data.menus).toEqual([]);
-    // the slots of metamodels that are not in the project stay empty
-    expect(spec.data.dataWarehouse).toEqual({});
-    expect(spec.data.mapViewer).toEqual({});
+    // what a product does not have, a map or sensors, is not in the document
+    expect(spec.data.dataWarehouse).toBeUndefined();
+    expect(spec.data.mapViewer).toBeUndefined();
   });
 
   it('they need the data model, and are not part of a product that does not use them', async () => {
-    const { bango } = await openProject('forms-only');
-    const s = await bango.getInstance('forms');
+    const { bango } = await openProject('browser-only');
+    const s = await bango.getInstance('browser');
     expect(s.available).toBe(false);
-    expect(errors(s.problems).join()).toMatch(/'forms' needs 'datamodel'/);
+    expect(errors(s.problems).join()).toMatch(/'browser' needs 'datamodel'/);
 
     const city = await openProject('city');
-    expect(await city.bango.toJson('forms')).toBeUndefined();
+    expect(await city.bango.toJson('browser')).toBeUndefined();
     expect(Object.keys(((await city.bango.toProjectJson()) as Obj).data as Obj).sort()).toEqual(['dataModel', 'mapViewer']);
   });
 
-  const cases: [string, 'forms' | 'lists', string, string, RegExp][] = [
-    ['a form with a field the entity does not have', 'forms', '  field price\n', '  field cost\n', /Could not resolve reference to Field named 'cost'/],
-    ['a field listed twice', 'forms', '  field price\n', '  field price\n  field price\n', /field 'price' is listed twice/],
-    ['a form defined twice', 'forms', 'form CategoryForm entity Category', 'form ProductForm entity Category', /duplicate form 'ProductForm'/],
-    ['a form of an entity that does not exist', 'forms', 'form CategoryForm entity Category', 'form CategoryForm entity Nothing', /Entity named 'Nothing'/],
-    ['a column the entity does not have', 'lists', '  column price label', '  column cost label', /Could not resolve reference to Field named 'cost'/],
-    ['a list sorted by something the entity does not have', 'lists', 'sortBy name {', 'sortBy rank {', /Could not resolve reference to Field named 'rank'/],
-    ['a page size of zero', 'lists', 'pageSize 20', 'pageSize 0', /pageSize must be at least 1/],
-    ['a list defined twice', 'lists', 'list Categories entity', 'list Products entity', /duplicate list 'Products'/]
+  const cases: [string, string, string, RegExp][] = [
+    ['a form with a field the entity does not have', '  field price viewed edited\n', '  field cost viewed edited\n', /Could not resolve reference to Field named 'cost'/],
+    ['a field listed twice', '  field price viewed edited\n', '  field price viewed edited\n  field price\n', /field 'price' is listed twice/],
+    ['a form defined twice', 'form CategoryForm entity Category', 'form ProductForm entity Category', /duplicate form 'ProductForm'/],
+    ['a form of an entity that does not exist', 'form CategoryForm entity Category', 'form CategoryForm entity Nothing', /Entity named 'Nothing'/],
+    ['a column the entity does not have', '  column price\n', '  column cost\n', /Could not resolve reference to Field named 'cost'/],
+    ['a list that opens the form of another entity', 'list Categories entity Category opensForm CategoryForm', 'list Categories entity Category opensForm ProductForm', /form 'ProductForm' is a form of 'Product', not of 'Category'/],
+    ['a list that opens a form that does not exist', 'list Categories entity Category opensForm CategoryForm', 'list Categories entity Category opensForm Nothing', /FormDef named 'Nothing'/],
+    ['a list defined twice', 'list Categories entity', 'list Products entity', /duplicate list 'Products'/]
   ];
-  it.each(cases)('reports %s', async (_what, metamodel, from, to, pattern) => {
+  it.each(cases)('reports %s', async (_what, from, to, pattern) => {
     const { bango, project } = await openProject('catalog');
-    expect(project.instances[metamodel]).toContain(from);
-    const s = await bango.setText(metamodel, project.instances[metamodel].replace(from, to));
+    expect(project.instances.browser).toContain(from);
+    const s = await bango.setText('browser', project.instances.browser.replace(from, to));
     expect(errors(s.problems).join('\n')).toMatch(pattern);
   });
 
   it('the form view of a form: entities are references, the flags are checkboxes', async () => {
     const { bango } = await openProject('catalog');
-    const schema = (await bango.getFormSchema('forms'))!;
+    const schema = (await bango.getFormSchema('browser'))!;
     expect(schema.types.FormDef.fields.find(f => f.name === 'entity')).toMatchObject({ kind: 'ref', refType: 'Entity', required: true });
-    expect(schema.types.FormField.fields.find(f => f.name === 'readOnly')).toMatchObject({ kind: 'boolean' });
-    const added = await bango.applyEdit('forms', { kind: 'add', path: [], feature: 'forms', type: 'FormDef' });
+    expect(schema.types.FormField.fields.find(f => f.name === 'viewed')).toMatchObject({ kind: 'boolean' });
+    const added = await bango.applyEdit('browser', { kind: 'add', path: [], feature: 'forms', type: 'FormDef' });
     expect(added.text).toMatch(/form newFormDef entity (Category|Product)/);
     expect(errors(added.problems)).toEqual([]);
   });

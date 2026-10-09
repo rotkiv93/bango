@@ -6,20 +6,33 @@ const spec = {
   // merged first: its key order becomes the order of the merged document
   root: true,
   map(model) {
+    // a name written in quotes comes with them
+    const name = /^["']/.test(model.name) ? model.name.slice(1, -1).replace(/\\(.)/g, '$1') : model.name;
     const basicData = {
-      name: model.name,
+      name,
+      // where the platform's first screen is: it is always the welcome page
+      index: { component: 'STATIC', view: 'welcome' },
       languages: model.languages.length ? [...model.languages] : ['en', 'es', 'gl'],
       // what the platform's templates read: `packageInfo.artifact`
       packageInfo: {
-        artifact: model.artifactId ?? model.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        artifact: model.artifactId ?? name.toLowerCase().replace(/[^a-z0-9]/g, ''),
         group: model.groupId ?? 'es.udc.lbd.gisspl'
       },
       SRID: String(model.srid ?? 4326)
     };
     if (model.version !== undefined) basicData.version = model.version;
-    if (model.dbHost !== undefined) {
-      basicData.database = { host: model.dbHost, database: model.dbName, username: model.dbUser, password: model.dbPassword };
-      if (model.dbPort !== undefined) basicData.database.port = model.dbPort;
+    const database = {};
+    if (model.dbHost !== undefined) database.host = model.dbHost;
+    if (model.dbPort !== undefined) database.port = model.dbPort;
+    if (model.dbName !== undefined) database.database = model.dbName;
+    if (model.dbUser !== undefined) database.username = model.dbUser;
+    if (model.dbPassword !== undefined) database.password = model.dbPassword;
+    basicData.database = database;
+    if (model.elasticUris !== undefined || model.elasticUser !== undefined || model.elasticPassword !== undefined) {
+      basicData.elastic = {};
+      if (model.elasticUris !== undefined) basicData.elastic.uris = model.elasticUris;
+      if (model.elasticUser !== undefined) basicData.elastic.username = model.elasticUser;
+      if (model.elasticPassword !== undefined) basicData.elastic.password = model.elasticPassword;
     }
     if (model.extras.length) basicData.extra = Object.fromEntries(model.extras.map(e => [e.key, e.value]));
 
@@ -28,12 +41,10 @@ const spec = {
       data: {
         basicData,
         dataModel: {},        // datamodel
-        dataWarehouse: {},    // sensors
+        gui: { settings: { header: { type: 'Text', text: name } } },   // gui (and the header, which is the name)
         forms: [],            // forms
         lists: [],            // lists
-        menus: [],            // menus
-        mapViewer: {},        // gismodel
-        statics: []           // statics
+        menus: []             // menus
       }
     };
   }

@@ -1,6 +1,0 @@
-forms
-
-form RoadForm label "Road" entity Road {
-  field name
-  field lanes
-}

@@ -1,0 +1,11 @@
+browser
+
+form RoadForm entity Road allowCreate allowEdit allowRemove {
+  field name viewed edited
+  field lanes viewed edited
+}
+
+list Roads entity Road opensForm RoadForm sorting {
+  column name
+  column lanes
+}

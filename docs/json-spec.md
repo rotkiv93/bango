@@ -17,18 +17,20 @@ Each metamodel owns **a part** of the project's document and says how to produce
 
 | Metamodel | Owns |
 |---|---|
-| `basic` | `features`, `data.basicData`, and the skeleton of the document (the empty `data.menus` and `data.statics`, and a slot for each of the others) |
+| `basic` | `features`, `data.basicData`, the header of `data.gui`, and the skeleton of the document (the empty `data.forms`, `data.lists` and `data.menus`, and a slot for the data model) |
 | `datamodel` | `data.dataModel` |
 | `gismodel` | `data.mapViewer` |
 | `sensors` | `data.dataWarehouse` |
-| `forms` | `data.forms` |
-| `lists` | `data.lists` |
+| `browser` | `data.forms` and `data.lists` |
+| `menus` | `data.menus` |
+| `gui` | `data.gui` (design, font and colours) |
+| `statics` | `data.statics` |
 
 ```ts
 await bango.toJson('datamodel');   // { data: { dataModel: { entities: [...], enums: [] } } }
 await bango.toJson('gismodel');    // { data: { mapViewer: { maps: [...], layers: [...], styles: [...] } } }
 await bango.toJson('sensors');     // { data: { dataWarehouse: { sensors: [...], sensorGroups: [...] } } }
-await bango.toJson('basic');       // { features: [...], data: { basicData: {...}, dataModel: {}, dataWarehouse: {}, forms: [], ... } }
+await bango.toJson('basic');       // { features: [...], data: { basicData: {...}, dataModel: {}, gui: {...}, forms: [], lists: [], menus: [] } }
 ```
 
 Writing the mapping is described in [Writing metamodels](writing-metamodels.md#3-the-json-mapping).
@@ -66,12 +68,10 @@ return {
       data: {
         basicData: { ... },
         dataModel: {},        // datamodel
-        dataWarehouse: {},    // sensors
-        forms: [],            // forms
-        lists: [],            // lists
-        menus: [],
-        mapViewer: {},        // gismodel
-        statics: []
+        gui: { settings: { header: { type: 'Text', text: name } } },   // gui fills the rest
+        forms: [],            // browser
+        lists: [],            // browser
+        menus: []             // menus
       }
     };
   }
@@ -80,7 +80,7 @@ return {
 
 An empty object merges with anything and an empty array concatenates, so the slots cost nothing, and the merged text comes out in the order the specification expects. Without a root, the metamodels that need the most others are merged first.
 
-The slots of metamodels that are *not* in the project stay empty (`dataWarehouse: {}`), and a project without `basic` has no skeleton at all: its document has only what the other metamodels contribute.
+What a product may simply not have (a map, sensors, static pages) has no slot: a metamodel that has nothing to say leaves its key out of the document (an empty `gismodel` instance, `sensors` or `statics` contributes nothing, and `declared` says the map configuration is there, empty). A project without `basic` has no skeleton at all: its document has only what the other metamodels contribute.
 
 ## The generic format
 

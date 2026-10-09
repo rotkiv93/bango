@@ -1,1 +1,1 @@
-{"metamodels": ["datamodel", "forms", "lists", "security"], "playground": false}
+{"metamodels": ["datamodel", "browser", "security"], "playground": false}

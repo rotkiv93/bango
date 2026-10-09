@@ -37,8 +37,8 @@ describe('every selection of the shipped metamodels', () => {
   it('the oracle reads the dependencies the documentation promises', () => {
     expect(requirements(graph, 'basic')).toEqual([]);
     expect(requirements(graph, 'sensors')).toEqual(['datamodel', 'gismodel']);
-    expect(requirements(graph, 'security')).toEqual(['datamodel', 'forms', 'lists']);
-    expect(requirements(graph, 'menus')).toEqual(['datamodel', 'forms', 'gismodel', 'lists']);
+    expect(requirements(graph, 'security')).toEqual(['browser', 'datamodel']);
+    expect(requirements(graph, 'menus')).toEqual([]);
   });
 
   it('check() agrees with the import graph on all 255 selections, and what it suggests is itself valid', async () => {
@@ -116,11 +116,11 @@ describe('the order of a selection never matters', () => {
 describe('composing again and again', () => {
   it('the same selection gives the same composition each time, and an unrelated edit does not change it', async () => {
     const { composer } = composerWith();
-    const first = await composer.compose(['datamodel', 'forms', 'security', 'lists']);
-    const second = await composer.compose(['security', 'lists', 'forms', 'datamodel']);
+    const first = await composer.compose(['datamodel', 'browser', 'security']);
+    const second = await composer.compose(['security', 'browser', 'datamodel']);
     expect(second.info().languages.map(l => l.name).sort()).toEqual(first.info().languages.map(l => l.name).sort());
     composer.setGrammar('unrelated', "grammar Unrelated\nimport 'common'\nentry U: 'u' name=ID;\n");
-    const third = await composer.compose(['datamodel', 'forms', 'security', 'lists']);
+    const third = await composer.compose(['datamodel', 'browser', 'security']);
     expect(third.info().languages.map(l => l.name).sort()).toEqual(first.info().languages.map(l => l.name).sort());
     expect(third.renames).toEqual([]);
     void (composer satisfies ModelComposer);

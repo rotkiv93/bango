@@ -61,10 +61,10 @@ describe('instances over the limit', () => {
 describe('grammars over the limit', () => {
   it('are not read, and the metamodel is unavailable with the reason', async () => {
     const seed = loadSeed();
-    const bango = new Bango({ maxGrammarChars: 800 });
+    const bango = new Bango({ maxGrammarChars: 1500 });
     await bango.setGrammar('common', seed.grammars.common);
     await bango.setGrammar('huge', seed.grammars.sensors);
-    expect(seed.grammars.sensors.length).toBeGreaterThan(800);
+    expect(seed.grammars.sensors.length).toBeGreaterThan(1500);
     const huge = (await bango.listMetamodels()).find(g => g.name === 'huge')!;
     expect(huge.problems.map(p => p.message).join()).toMatch(/over the limit of 0\.0 million: it was not read/);
     expect(huge.extension).toBeUndefined();
@@ -91,7 +91,7 @@ describe('grammars over the limit', () => {
 describe('input that is hard for a parser', () => {
   it('a nesting too deep for the parser is a problem of that instance, not a failed call', async () => {
     const { bango } = await openProject('portal');
-    const nested = (depth: number) => 'menus portal\nmenu main {\n' + Array.from({ length: depth }, (_, i) => `item n${i} {`).join('\n') + '\nitem leaf opens Roads\n' + '}\n'.repeat(depth) + '}\n';
+    const nested = (depth: number) => 'menus\nmenu main {\n' + Array.from({ length: depth }, (_, i) => `menugroup n${i} {`).join('\n') + '\nmenuview leaf openscreen LIST "Roads"\n' + '}\n'.repeat(depth) + '}\n';
 
     // far deeper than any menu: the parser runs out of stack. The call answers, and says what happened
     const state = await bango.setText('menus', nested(20_000));
@@ -102,8 +102,8 @@ describe('input that is hard for a parser', () => {
 
     // everything else is intact, and the instance is readable again as soon as the text is
     expect((await bango.getInstance('datamodel')).ast).toBeDefined();
-    expect(errors((await bango.getInstance('forms')).problems)).toEqual([]);
-    const fine = await bango.setText('menus', 'menus portal\nmenu main {\n  item a opens Roads\n}\n');
+    expect(errors((await bango.getInstance('browser')).problems)).toEqual([]);
+    const fine = await bango.setText('menus', 'menus\nmenu main {\n  menuview a openscreen LIST "Roads"\n}\n');
     expect(fine.ast).toBeDefined();
     expect(errors(fine.problems)).toEqual([]);
     expect((await bango.build('portal')).ok).toBe(true);
@@ -112,7 +112,7 @@ describe('input that is hard for a parser', () => {
   it('a deep but sane nesting is read', async () => {
     const { bango } = await openProject('portal');
     const depth = 40;
-    const text = 'menus portal\nmenu main {\n' + Array.from({ length: depth }, (_, i) => `item n${i} {`).join('\n') + '\nitem leaf opens Roads\n' + '}\n'.repeat(depth) + '}\n';
+    const text = 'menus\nmenu main {\n' + Array.from({ length: depth }, (_, i) => `menugroup n${i} {`).join('\n') + '\nmenuview leaf openscreen LIST "Roads"\n' + '}\n'.repeat(depth) + '}\n';
     const state = await bango.setText('menus', text);
     expect(state.ast).toBeDefined();
     expect(state.problems.filter(p => /levels deep/.test(p.message)).length).toBeGreaterThan(0);
@@ -124,7 +124,8 @@ describe('input that is hard for a parser', () => {
     expect(errors((await bango.setText('datamodel', many)).problems)).toEqual([]);
     const oneLine = 'datamodel big ' + Array.from({ length: 500 }, (_, i) => `entity L${i} { property p: String pk }`).join(' ');
     expect(errors((await bango.setText('datamodel', oneLine)).problems)).toEqual([]);
-    const odd = 'datamodel d\nentity Ünïcode { property p: String pk }\n';
+    // accented Latin letters are fine in a name; other scripts are not (yet)
+    const odd = 'datamodel d\nentity Ωmega { property p: String pk }\n';
     expect((await bango.setText('datamodel', odd)).problems.length).toBeGreaterThan(0);
     const tabs = 'datamodel d\r\nentity A {\r\n\tproperty p: String pk\r\n}\r\n';
     expect(errors((await bango.setText('datamodel', tabs)).problems)).toEqual([]);

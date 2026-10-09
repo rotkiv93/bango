@@ -216,7 +216,7 @@ describe('form view', () => {
   });
 
   it('offers a field only what is visible from the form it is in: the fields of that form\'s entity', async () => {
-    const { el, bango } = await show('office', 'forms', 'form');
+    const { el, bango } = await show('office', 'browser', 'form');
     const forms = [...el.querySelectorAll('.bango-node')].filter(n => n.querySelector(':scope > legend b')?.textContent === 'FormDef') as HTMLElement[];
     const fieldSelects = (form: HTMLElement) =>
       [...form.querySelectorAll('.bango-node')].filter(n => n.querySelector(':scope > legend b')?.textContent === 'FormField').map(n => n.querySelector('select') as HTMLSelectElement);
@@ -229,7 +229,7 @@ describe('form view', () => {
     const select = fieldSelects(forms[0])[0];
     select.value = 'invoices';
     select.dispatchEvent(new Event('change'));
-    await vi.waitFor(async () => expect((await bango.getInstance('forms')).text).toContain('field invoices'));
+    await vi.waitFor(async () => expect((await bango.getInstance('browser')).text).toContain('field invoices'));
   });
 
   it('editing a value rewrites the text through the engine', async () => {

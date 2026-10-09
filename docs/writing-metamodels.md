@@ -170,7 +170,7 @@ Constraints, scopes, JSON mappings and import mappings run in the engine (in a w
 By default a reference `entity=[Entity:ID]` can point at any top-level node of that type, anywhere in the project. That is not enough when the target belongs to something else: the fields of a form are the fields of **its** entity, not of every entity. Langium's answer is the `ScopeProvider`; in Bango it is `<name>.scope.js`: for a reference feature of a node type, the nodes that are visible from where it is written.
 
 ```js
-// forms.scope.js  (the grammar says: FormField: 'field' property=[Field:ID] ...)
+// browser.scope.js  (the grammar says: FormField: 'field' property=[Field:FieldName] ...)
 /** @type {Scope} */
 const scope = {
   FormField: {
@@ -186,7 +186,7 @@ return scope;
 - **A broken entity breaks its fields**: when the reference a scope depends on does not resolve (`entity Nope`), the fields that are looked up through it do not resolve either. That is Langium's normal cascade, and the messages say which references were lost.
 - Keys can name a supertype (`Dimension`), and apply to its subtypes. The file is typed (`/** @type {Scope} */`): only the reference features of the grammar are accepted, and `node` is typed with its container.
 - It is **Langium**: the engine installs a `ScopeProvider` that asks these functions and falls back to `DefaultScopeProvider`. `MetamodelScopeProvider` (in `@bango/engine`'s sources) works in plain Langium services too; a test builds one without the Bango engine.
-- From code: `bango.setScope(name, code)`; `bango.getRefCandidates('Field', { metamodel: 'forms', path, feature: 'property' })` answers with what is visible at that place (without the context: every node of the type), and the form schema marks such fields with `scoped: true`.
+- From code: `bango.setScope(name, code)`; `bango.getRefCandidates('Field', { metamodel: 'browser', path, feature: 'property' })` answers with what is visible at that place (without the context: every node of the type), and the form schema marks such fields with `scoped: true`.
 
 ## When two metamodels use the same type name
 

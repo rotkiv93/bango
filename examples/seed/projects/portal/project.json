@@ -1,1 +1,1 @@
-{"metamodels": ["datamodel", "forms", "lists", "gismodel", "menus"]}
+{ "metamodels": ["datamodel", "browser", "gismodel", "menus"] }

@@ -22,8 +22,8 @@ export function generateProject({ entities = 500, formEvery = 2, listEvery = 5, 
   const lists: string[] = [];
   const grants: string[] = [];
   for (let i = 0; i < entities; i++) {
-    if (i % formEvery === 0) forms.push(`form F${i} label "Form ${i}" entity E${i} {\n  field name\n  field value\n  field note\n}`);
-    if (i % listEvery === 0) lists.push(`list L${i} entity E${i} sortBy name {\n  column name\n  column value label "Value ${i}"\n}`);
+    if (i % formEvery === 0) forms.push(`form F${i} entity E${i} allowEdit {\n  field name viewed edited\n  field value viewed edited\n  field note viewed edited\n}`);
+    if (i % listEvery === 0) lists.push(`list L${i} entity E${i} sorting {\n  column name\n  column value\n}`);
     if (i % grantEvery === 0) grants.push(`grant role${i % roles} read on E${i}`);
     if (i % formEvery === 0 && i % grantEvery === 0) grants.push(`grant role${i % roles} write on F${i}`);
     if (i % listEvery === 0 && i % grantEvery === 0) grants.push(`grant role${i % roles} read on L${i}`);
@@ -32,11 +32,10 @@ export function generateProject({ entities = 500, formEvery = 2, listEvery = 5, 
   const users = Array.from({ length: Math.max(1, roles * 2) }, (_, u) => `user user${u} roles role${u % roles}`);
 
   return {
-    selection: ['datamodel', 'forms', 'lists', 'security'],
+    selection: ['datamodel', 'browser', 'security'],
     instances: {
       datamodel: `datamodel big\n\n${Array.from({ length: entities }, (_, i) => entity(i)).join('\n\n')}\n`,
-      forms: `forms\n\n${forms.join('\n\n')}\n`,
-      lists: `lists\n\n${lists.join('\n\n')}\n`,
+      browser: `browser\n\n${[...forms, ...lists].join('\n\n')}\n`,
       security: `security big\n\n${[...roleLines, ...users, ...grants].join('\n')}\n`
     }
   };

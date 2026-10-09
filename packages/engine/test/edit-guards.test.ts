@@ -46,16 +46,15 @@ describe('removing what the grammar requires', () => {
 
   it('removing the only child of a node takes what surrounds it, so no empty braces are left behind', async () => {
     const { bango } = await openProject('portal');
-    const text = 'menus portal\nmenu main {\n  item group {\n    item only opens Roads\n  }\n  item other opens main\n}\n';
-    await bango.setText('menus', text);
-    const state = await bango.applyEdit('menus', { kind: 'remove', path: [{ feature: 'menus', index: 0 }, { feature: 'items', index: 0 }, { feature: 'children', index: 0 }] });
+    const text = 'browser\nform roadForm entity Road {\n  field name viewed\n}\nform otherForm entity Parcel\n';
+    await bango.setText('browser', text);
+    const state = await bango.applyEdit('browser', { kind: 'remove', path: [{ feature: 'forms', index: 0 }], feature: 'fields', index: 0 });
     expect(syntax(state.problems)).toEqual([]);
     expect(state.text).not.toMatch(/\{\s*\}/);
-    expect(state.text).toContain('item group');
-    expect(state.text).toContain('item other opens main');
-    // the item that lost its child is now an item that does nothing, which is a warning, not a syntax error
+    expect(state.text).toContain('form roadForm');
+    expect(state.text).toContain('form otherForm entity Parcel');
+    // the form that lost its field is now a form that shows nothing, which is not an error
     expect(errors(state.problems)).toEqual([]);
-    expect(state.problems.some(p => /opens nothing/.test(p.message))).toBe(true);
   });
 
   it('the refusal can be undone-proof: history has not recorded an edit that did not happen', async () => {
@@ -99,10 +98,10 @@ describe('a new node starts from text the grammar accepts', () => {
     const { bango } = await openProject('portal');
     const adds: [string, Parameters<typeof bango.applyEdit>[1]][] = [
       ['datamodel', { kind: 'add', path: [], feature: 'entities', type: 'Entity' }],
-      ['forms', { kind: 'add', path: [{ feature: 'forms', index: 0 }], feature: 'fields', type: 'FormField' }],
+      ['browser', { kind: 'add', path: [{ feature: 'forms', index: 0 }], feature: 'fields', type: 'FormField' }],
       ['gismodel', { kind: 'add', path: [], feature: 'maps', type: 'MapDef' }],
       ['menus', { kind: 'add', path: [{ feature: 'menus', index: 0 }], feature: 'items', type: 'MenuItem' }],
-      ['lists', { kind: 'add', path: [], feature: 'lists', type: 'ListDef' }]
+      ['browser', { kind: 'add', path: [], feature: 'lists', type: 'ListDef' }]
     ];
     for (const [metamodel, op] of adds) {
       const state = await bango.applyEdit(metamodel, op);

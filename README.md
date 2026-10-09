@@ -64,7 +64,7 @@ Each module only depends on the one before it, and the renderer only on the plai
 | [The JSON specification](docs/json-spec.md) | mapping, merging, the generic format, options |
 | [Deploying to GitHub Pages](docs/deploy-github-pages.md) | publishing the playground |
 | [The playground](apps/playground/README.md) | the app: pages, how it uses the library |
-| [The examples](examples/README.md) | the shipped metamodels (basic, data model, GIS model, sensors, forms, lists) and projects, and a page without a bundler |
+| [The examples](examples/README.md) | the shipped metamodels (basic, data model, GIS model, sensors, lists and forms, menus, interface, static pages) and projects, and a page without a bundler |
 
 ## Repository layout
 

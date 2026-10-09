@@ -14,7 +14,7 @@ describe('metamodel test cases', () => {
   it('every case shipped with the metamodels passes', async () => {
     const { bango, seed } = await bangoWithSeed();
     const names = Object.keys(seed.cases);
-    expect(names.sort()).toEqual(['datamodel', 'forms', 'gismodel', 'lists', 'menus', 'security', 'sensors', 'statics']);
+    expect(names.sort()).toEqual(['basic', 'browser', 'datamodel', 'gismodel', 'gui', 'menus', 'security', 'sensors', 'statics']);
     for (const name of names) {
       const results = await bango.runCases(name, seed.cases[name]);
       expect(results.length).toBe(seed.cases[name].length);
@@ -76,7 +76,7 @@ describe('metamodel test cases', () => {
     const { bango, project } = await openProject('city');
     const before = await bango.getInstances();
     const info = await bango.getComposition();
-    await bango.runCases('forms', [{ name: 'x', with: { datamodel: 'datamodel d\nentity P {\n  property n: String pk\n}\n' }, text: 'forms\nform F entity P\n', expect: {} }]);
+    await bango.runCases('browser', [{ name: 'x', with: { datamodel: 'datamodel d\nentity P {\n  property n: String pk\n}\n' }, text: 'browser\nform F entity P\n', expect: {} }]);
     expect(await bango.getInstances()).toEqual(before);
     expect(await bango.getComposition()).toEqual(info);
     expect((await bango.getInstance('gismodel')).text).toBe(project.instances.gismodel);

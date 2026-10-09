@@ -84,7 +84,15 @@
   "data": {
     "basicData": {
       "name": "gresint",
-      "languages": ["en", "es", "gl"],
+      "index": {
+        "component": "STATIC",
+        "view": "welcome"
+      },
+      "languages": [
+        "en",
+        "es",
+        "gl"
+      ],
       "packageInfo": {
         "artifact": "gresint",
         "group": "es.udc.lbd.gisspl"
@@ -206,6 +214,17 @@
       ],
       "enums": []
     },
+    "gui": {
+      "settings": {
+        "header": {
+          "type": "Text",
+          "text": "gresint"
+        }
+      }
+    },
+    "forms": [],
+    "lists": [],
+    "menus": [],
     "dataWarehouse": {
       "sensors": [
         {
@@ -231,7 +250,9 @@
             {
               "id": "ZoneDimension",
               "type": "SPATIAL",
-              "entities": ["ZoneDimension"]
+              "entities": [
+                "ZoneDimension"
+              ]
             },
             {
               "id": "SensorType",
@@ -243,9 +264,6 @@
       ],
       "sensorGroups": []
     },
-    "forms": [],
-    "lists": [],
-    "menus": [],
     "mapViewer": {
       "maps": [
         {
@@ -283,26 +301,28 @@
       ],
       "layers": [
         {
-          "name": "base",
           "type": "tilelayer",
+          "name": "base",
           "label": "base",
           "url": "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         },
         {
           "name": "stationobservation-layer",
-          "type": "geojson",
           "label": "StationObservationEntity",
           "entityName": "StationObservationEntity-geometry",
-          "editable": false,
+          "type": "geojson",
           "defaultStyle": "grayPoint",
-          "availableStyles": ["grayPoint", "value", "quality"]
+          "availableStyles": [
+            "grayPoint",
+            "value",
+            "quality"
+          ]
         },
         {
           "name": "ZoneDimension",
-          "type": "geojson",
           "label": "ZoneDimension",
           "entityName": "ZoneDimension-geometry",
-          "editable": false,
+          "type": "geojson",
           "defaultStyle": "grayPolygon",
           "availableStyles": [
             "grayPolygon",
@@ -479,7 +499,6 @@
           "defaultStyle": "grayPolygon"
         }
       ]
-    },
-    "statics": []
+    }
   }
 }

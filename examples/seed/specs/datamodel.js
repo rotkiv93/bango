@@ -6,15 +6,18 @@ const spec = function (model) {
   const typeName = field => field.class ?? field.enumType?.ref?.name ?? field.enumType?.$refText;
   const className = field => (field.autoinc ? `${typeName(field)} (autoinc)` : typeName(field));
 
+  // what the platform calls each of the patterns a String can be limited to
+  const PATTERNS = { IP: 'ipPattern', URL: 'urlPattern', Email: 'emailPattern' };
+
   const property = field => {
     const out = { name: field.name, class: className(field) };
     if (field.pk) out.pk = true;
     if (field.required) out.required = true;
     if (field.unique) out.unique = true;
-    // a regular expression of one's own is a "Personalizado" pattern
-    if (field.patternType !== undefined) out.patternType = field.patternType;
+    if (field.patternType !== undefined) out.patternType = PATTERNS[field.patternType] ?? field.patternType;
+    // a regular expression of one's own is a custom pattern
     if (field.pattern !== undefined) {
-      out.patternType = 'Personalizado';
+      out.patternType = 'customPattern';
       out.pattern = field.pattern;
     }
     if (field.min !== undefined) out.min = field.min;
@@ -30,14 +33,14 @@ const spec = function (model) {
     return out;
   };
 
+  const own = entity => entity.fields.map(field => (field.$type === 'PropertyField' ? property(field) : relationship(field)));
+
+  // an entity has the properties it declares: the platform follows `superclass` to find what it inherits
   return {
     data: {
       dataModel: {
         entities: model.entities.map(entity => {
-          const out = {
-            name: entity.name,
-            properties: entity.fields.map(field => (field.$type === 'PropertyField' ? property(field) : relationship(field)))
-          };
+          const out = { name: entity.name, properties: own(entity) };
           if (entity.displayString !== undefined) out.displayString = entity.displayString;
           if (entity.superclass) out.superclass = entity.superclass.ref?.name ?? entity.superclass.$refText;
           if (entity.abstract) out.abstract = true;

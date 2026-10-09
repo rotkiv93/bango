@@ -1,13 +1,13 @@
-menus portal
+menus
 
-menu main position top {
-  item data label "Data" {
-    item roads label "Roads" opens Roads
-    item edit opens RoadForm
+menu top {
+  menugroup Data accessBy byAdmin byLogged {
+    menuview Roads openscreen LIST "Roads"
+    menuview edit openscreen FORM "RoadForm"
   }
-  item overview opens main
+  menuview overview openscreen MAP "mapViewer"
 }
 
-menu sidebar position side {
-  item places opens main
+menu left {
+  menuview places openscreen MAP "mapViewer"
 }

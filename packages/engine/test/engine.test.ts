@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '../src/index.js';
 import { COMBO_GRAMMAR, COMBO_INSTANCE } from '../../../test-support/combo.js';
-import { errors, openProject } from '../../../test-support/harness.js';
+import { errors, openProject, warnings } from '../../../test-support/harness.js';
 
 describe('instances', () => {
   it.each(['shop', 'city', 'catalog', 'gresint'])('the %s example validates', async name => {
@@ -138,10 +138,10 @@ describe('editor support', () => {
 describe('constraints', () => {
   const style2 = 'geojsonstyle wide fillColor "#fff" strokeColor "#000" fillOpacity 1.0 strokeOpacity 1.0 radius 1.0\n';
 
-  it('defaultStyle must be one of availableStyles', async () => {
+  it('defaultStyle should be one of availableStyles (a warning: real products have layers that are not)', async () => {
     const { bango, project } = await openProject('city');
     const text = project.instances.gismodel.replace('defaultStyle thin', 'defaultStyle wide') + style2;
-    expect(errors((await bango.setText('gismodel', text)).problems).join()).toMatch(/must be one of availableStyles/);
+    expect(warnings((await bango.setText('gismodel', text)).problems).join()).toMatch(/must be one of availableStyles/);
   });
 
   it('duplicate fields are reported, also through the composite metamodel', async () => {

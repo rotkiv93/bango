@@ -12,14 +12,14 @@ geojsonlayer Port label "Port"
   defaultStyle grayPolygon
   availableStyles grayPolygon
 
-wmslayer ports-wms label "Ports (WMS)" url "http://localhost:9001/geoserver/wms" layers "ports", "docks"
+wmslayer ports-wms label "Ports (WMS)" url "http://localhost:9001/geoserver/wms" layers "ports", "docks" defaultStyle portsStyle availableStyles portsStyle
 
 geojsonstyle grayPoint fillColor "#808080" strokeColor "#808080" fillOpacity 1 strokeOpacity 1 radius 3
 geojsonstyle greenPoint fillColor "#008000" strokeColor "#008000" fillOpacity 1 strokeOpacity 1 radius 3
 geojsonstyle redPoint fillColor "#FF0000" strokeColor "#FF0000" fillOpacity 1 strokeOpacity 1 radius 3
 geojsonstyle grayPolygon fillColor "#808080" strokeColor "#808080" fillOpacity 0.5 strokeOpacity 1 radius 3
 
-wmsstyle portsStyle id "ports" sld "ports.sld" layer ports-wms
+wmsstyle portsStyle geometryType POLYGON fillColor "#ff641a" strokeColor "#101010" fillOpacity 0.7 strokeOpacity 1
 
 intervalstyle level property "data.level"
   from -Infinity to 2 style greenPoint

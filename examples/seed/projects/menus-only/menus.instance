@@ -1,4 +1,5 @@
-menus alone
+menus
+
 menu main {
-  item one
+  menuview one openscreen MAP "m"
 }

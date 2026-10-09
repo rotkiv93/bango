@@ -15,7 +15,7 @@ describe('grammars changing under a running project', () => {
     const textsBefore = await texts(bango);
     const jsonBefore = await bango.toProjectJson();
 
-    for (const victim of ['security', 'menus', 'forms', 'gismodel', 'datamodel']) {
+    for (const victim of ['security', 'menus', 'browser', 'gismodel', 'datamodel']) {
       await bango.setGrammar(victim, seed.grammars[victim] + '\nthis is not a grammar rule }}}\n');
       const broken = await bango.compose(names);
       // it does not throw, and says which grammar is wrong
@@ -110,13 +110,13 @@ describe('grammars changing under a running project', () => {
 
   it('a JSON mapping that throws fails that metamodel only, with its name', async () => {
     const { bango, seed } = await openProject('security-office');
-    await bango.setSpec('forms', "return function () { throw new Error('forms mapping exploded'); };");
+    await bango.setSpec('browser', "return function () { throw new Error('browser mapping exploded'); };");
     await bango.compose(seed.projects['security-office'].metamodels);
-    await expect(bango.toProjectJson()).rejects.toThrow(/JSON mapping of 'forms' failed: forms mapping exploded/);
+    await expect(bango.toProjectJson()).rejects.toThrow(/JSON mapping of 'browser' failed: browser mapping exploded/);
     expect(await bango.toJson('datamodel')).toBeDefined();
     const build = await bango.build('security-office');
     expect(build.ok).toBe(false);
-    expect(build.errors.join()).toMatch(/forms/);
+    expect(build.errors.join()).toMatch(/browser/);
   });
 });
 
@@ -178,10 +178,10 @@ describe('calls that overlap', () => {
     const script = (bango: Bango) => [
       () => bango.compose(['datamodel']),
       () => bango.setText('datamodel', office.instances.datamodel),
-      () => bango.compose(['datamodel', 'forms']),
-      () => bango.setText('forms', office.instances.forms),
-      () => bango.compose(['datamodel', 'forms', 'lists']),
-      () => bango.setText('lists', office.instances.lists),
+      () => bango.compose(['datamodel']),
+      () => bango.setText('datamodel', office.instances.datamodel),
+      () => bango.compose(['datamodel', 'browser']),
+      () => bango.setText('browser', office.instances.browser),
       () => bango.setText('datamodel', office.instances.datamodel.replace('Customer display', 'Client display')),
       () => bango.compose(office.metamodels),
       () => bango.setText('security', office.instances.security),
@@ -206,11 +206,11 @@ describe('calls that overlap', () => {
   it('text set for a metamodel that is not in the project yet is kept, and checked once it joins', async () => {
     const { bango, project } = await openProject('security-office');
     await bango.compose(['datamodel']);
-    const early = await bango.getInstance('forms');
+    const early = await bango.getInstance('browser');
     expect(early.available).toBe(false);
-    expect(early.text).toBe(project.instances.forms);
-    await bango.compose(['datamodel', 'forms']);
-    const joined = await bango.getInstance('forms');
+    expect(early.text).toBe(project.instances.browser);
+    await bango.compose(['datamodel', 'browser']);
+    const joined = await bango.getInstance('browser');
     expect(joined.available).toBe(true);
     expect(errors(joined.problems)).toEqual([]);
   });

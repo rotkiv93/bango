@@ -1,8 +1,0 @@
-lists
-
-list Stations entity StationObservationEntity sortBy name {
-  column name
-  column zonedimension_id
-}
-
-list Zones entity ZoneDimension sortBy name

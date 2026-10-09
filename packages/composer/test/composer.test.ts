@@ -41,8 +41,7 @@ describe('ModelComposer', () => {
     expect(requires('datamodel')).toEqual([]);
     expect(requires('gismodel')).toEqual(['datamodel']);
     expect(requires('basic')).toEqual([]);
-    expect(requires('forms')).toEqual(['datamodel']);
-    expect(requires('lists')).toEqual(['datamodel']);
+    expect(requires('browser')).toEqual(['datamodel']);
     expect(requires('gismodel')).toEqual(['datamodel']);
     expect(requires('sensors')).toEqual(['datamodel', 'gismodel']);
   });

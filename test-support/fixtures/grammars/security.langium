@@ -1,13 +1,12 @@
 grammar Security
 import './common'
 import './datamodel'
-import './forms'
-import './lists'
+import './browser'
 
-// Security: users, roles and what each role may do with entities, forms and lists. Needs the data model, the forms and the lists.
+// Security: users, roles and what each role may do with entities, forms and lists. Needs the data model and the forms and lists of the browser.
 //
 // A permission points at a "resource", which is an entity, a form or a list: three types from three different metamodels behind one
-// reference. Forms and lists both import the data model, so it reaches this grammar along three paths.
+// reference. The browser imports the data model, so it reaches this grammar along two paths.
 entry SecurityModel: 'security' name=ID?
   (roles+=Role | users+=User | grants+=Grant)*;
 

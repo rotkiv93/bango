@@ -45,7 +45,7 @@ describe('a big project', () => {
     const setAll = await timed(() => bango.setInstances(project.instances), 3);
     let n = 0;
     const leaf = await timed(() => bango.setText('security', project.instances.security + ' '.repeat(++n)));
-    const middle = await timed(() => bango.setText('forms', project.instances.forms + ' '.repeat(++n)));
+    const middle = await timed(() => bango.setText('browser', project.instances.browser + ' '.repeat(++n)));
     const root = await timed(() => bango.setText('datamodel', project.instances.datamodel + ' '.repeat(++n)));
     const form = await timed(() => bango.applyEdit('security', { kind: 'set', path: [{ feature: 'roles', index: 1 }], feature: 'name', value: 'renamed' + ++n }));
     const json = await timed(() => bango.toProjectJson());

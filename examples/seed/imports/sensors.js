@@ -1,8 +1,9 @@
 // Import mapping: the inverse of sensors.spec.js. Builds the sensors from `data.dataWarehouse`.
 /** @type {Import} */
 const importer = function (json, { n }) {
-  const dw = json.data.dataWarehouse;
-  const sensors = dw.sensors;
+  // a product without sensors has an empty (or no) data warehouse
+  const dw = json.data.dataWarehouse ?? {};
+  const sensors = dw.sensors ?? [];
 
   // The JSON has no ranges, only the categories of each categorical dimension and the name of the range of each measurement. Dimensions
   // with the same categories share a range, named after the first of them; a range only a measurement names has no labels.
@@ -55,7 +56,7 @@ const importer = function (json, { n }) {
   return n('SensorModel', {
     ranges: ranges.map(r => n('SensorRange', { name: r.name, buckets: r.categories.map(bucket) })),
     sensors: built,
-    groups: dw.sensorGroups.map(g => n('SensorGroup', { name: g.id, sensors: g.sensors }))
+    groups: (dw.sensorGroups ?? []).map(g => n('SensorGroup', { name: g.id, sensors: g.sensors }))
   });
 };
 

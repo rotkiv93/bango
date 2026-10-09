@@ -1,14 +1,14 @@
-menus gresint
+menus
 
-menu main position top {
-  item data label "Data" {
-    item stations opens Stations
-    item zones opens Zones
-    item editStation opens StationForm
+menu top {
+  menugroup data accessBy byAdmin byLogged {
+    menuview stations openscreen LIST "Stations"
+    menuview zones openscreen LIST "Zones"
+    menuview editStation openscreen FORM "StationForm"
   }
-  item overview opens stationobservation-map
+  menuview overview openscreen MAP "mapViewer"
 }
 
-menu sidebar position side {
-  item zoneEditor opens ZoneForm
+menu left {
+  menuview zoneEditor openscreen FORM "ZoneForm"
 }
