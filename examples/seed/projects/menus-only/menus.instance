@@ -1,0 +1,5 @@
+menus
+
+menu main {
+  menuview one openscreen MAP "m"
+}

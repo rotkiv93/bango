@@ -1,0 +1,25 @@
+browser
+
+form CustomerForm entity Customer allowCreate allowEdit allowRemove {
+  field id viewed
+  field name viewed edited
+  field email viewed edited
+}
+
+form InvoiceForm entity Invoice allowCreate allowEdit allowRemove {
+  field id viewed
+  field number viewed edited
+  field total viewed edited
+  field customer viewed edited
+}
+
+list Invoices entity Invoice opensForm InvoiceForm sorting {
+  column number
+  column total
+  column customer
+}
+
+list Customers entity Customer opensForm CustomerForm sorting {
+  column id
+  column name
+}

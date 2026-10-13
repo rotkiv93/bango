@@ -1,0 +1,69 @@
+// Extra rules the grammar cannot express. Return { AstTypeName(node, accept) { ... } }.
+// accept(severity, message, { node, property, index }) reports a problem on the node.
+const SPATIAL = ['Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon', 'Geometry'];
+const bound = text => (text === 'Infinity' ? Infinity : text === '-Infinity' ? -Infinity : Number(text));
+
+// the fields of an entity: its own and those of the entities it extends
+const fieldsOf = entity => {
+  const out = [];
+  for (let e = entity, seen = []; e && !seen.includes(e); e = e.superclass?.ref) {
+    seen.push(e);
+    out.push(...e.fields);
+  }
+  return out;
+};
+
+/** @type {Constraints} */
+const constraints = {
+  GeoJsonLayer(layer, accept) {
+    const available = layer.availableStyles.map(ref => ref.$refText);
+    // a warning: the products in use have layers whose default style is not on their list
+    if (layer.defaultStyle && !available.includes(layer.defaultStyle.$refText)) {
+      accept('warning', `defaultStyle '${layer.defaultStyle.$refText}' must be one of availableStyles`, { node: layer, property: 'defaultStyle' });
+    }
+
+    // the field the layer draws must exist in the entity and hold a geometry
+    // (a `field` that does not resolve is reported as such; without one, the layer draws `geometry`)
+    const entity = layer.entity?.ref;
+    if (!entity || (layer.field && !layer.field.ref)) return;
+    const field = layer.field ? layer.field.ref : fieldsOf(entity).filter(f => f.$type === 'PropertyField').find(f => f.name === 'geometry');
+    if (!field) {
+      accept('error', `entity '${entity.name}' has no property 'geometry' to draw`, { node: layer, property: 'entity' });
+    } else if (!SPATIAL.includes(field.class ?? '')) {
+      accept('error', `'${entity.name}.${field.name}' is a ${field.class ?? field.enumType?.$refText}, not a geometry`, { node: layer, property: layer.field ? 'field' : 'entity' });
+    }
+  },
+
+  MapDef(map, accept) {
+    for (const { item } of duplicates(map.layers, e => e.order)) {
+      accept('warning', `order ${item.order} is used twice in map '${map.name}'`, { node: item, property: 'order' });
+    }
+    if (map.layers.filter(e => e.baseLayer).length > 1) {
+      accept('warning', `map '${map.name}' has more than one base layer`, { node: map, property: 'name' });
+    }
+  },
+
+  MapInLayerAndStyle(entry, accept) {
+    const layer = entry.layer?.ref;
+    if (!layer) return;
+    const drawsData = layer.$type !== 'TileLayer';
+    if (drawsData && !entry.style) {
+      accept('error', `layer '${layer.name}' draws data: choose a style for it`, { node: entry, property: 'layer' });
+    }
+    // the style must be one the layer offers
+    if (entry.style && layer.$type === 'GeoJsonLayer') {
+      const available = layer.availableStyles.map(ref => ref.$refText);
+      if (!available.includes(entry.style.$refText)) {
+        accept('warning', `style '${entry.style.$refText}' is not one of the available styles of layer '${layer.name}'`, { node: entry, property: 'style' });
+      }
+    }
+  },
+
+  StyleInterval(interval, accept) {
+    if (bound(interval.min) > bound(interval.max)) {
+      accept('error', `interval goes backwards: ${interval.min} to ${interval.max}`, { node: interval, property: 'max' });
+    }
+  }
+};
+
+return constraints;

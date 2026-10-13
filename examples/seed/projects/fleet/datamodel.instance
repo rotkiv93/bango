@@ -1,0 +1,29 @@
+datamodel fleet
+
+enum Status { OK, DEGRADED, OFFLINE }
+
+abstract entity Asset display "$name" {
+  property id: Long autoinc required pk unique
+  property name: String required min 2 max 60
+}
+
+entity Port extends Asset {
+  property geometry: Polygon
+  relation buoys -> Buoy inverse port multiple
+}
+
+entity Buoy extends Asset traceable {
+  property geometry: Point
+  property serial: String unique pattern "[A-Z]{2}[0-9]{4}"
+  relation port -> Port inverse buoys owner
+  relation readings -> BuoyReading inverse buoy multiple
+}
+
+entity BuoyReading display "$id" {
+  property id: Long autoinc required pk unique
+  property date: DateTime required
+  property level: Double
+  property temperature: Float
+  property status: Status
+  relation buoy -> Buoy inverse readings owner
+}

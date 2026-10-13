@@ -1,0 +1,14 @@
+menus
+
+menu top {
+  menugroup data accessBy byAdmin byLogged {
+    menuview stations openscreen LIST "Stations"
+    menuview zones openscreen LIST "Zones"
+    menuview editStation openscreen FORM "StationForm"
+  }
+  menuview overview openscreen MAP "mapViewer"
+}
+
+menu left {
+  menuview zoneEditor openscreen FORM "ZoneForm"
+}

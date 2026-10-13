@@ -1,0 +1,62 @@
+[
+  {
+    "name": "a valid nested menu",
+    "with": {},
+    "text": "menus\nmenu top {\n  menugroup Lists accessBy byAdmin byLogged {\n    menuview \"Road List\" openscreen LIST \"Road List\"\n  }\n  menuview \"Map viewer\" openscreen MAP \"mapViewer\"\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "item names are unique in a menu, at any depth",
+    "with": {},
+    "text": "menus\nmenu main {\n  menuview a openscreen MAP \"m\"\n  menugroup g {\n    menuview a openscreen MAP \"m\"\n  }\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate item 'a' in menu 'main'"
+      ]
+    }
+  },
+  {
+    "name": "the same item name in two menus is fine",
+    "with": {},
+    "text": "menus\nmenu top {\n  menuview a openscreen MAP \"m\"\n}\nmenu left {\n  menuview a openscreen MAP \"m\"\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "menus nested deeper than three levels warn",
+    "with": {},
+    "text": "menus\nmenu top {\n  menugroup a {\n    menugroup b {\n      menugroup c {\n        menuview d openscreen MAP \"m\"\n      }\n    }\n  }\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": [
+        "is 4 levels deep"
+      ]
+    }
+  },
+  {
+    "name": "a group with nothing in it warns",
+    "with": {},
+    "text": "menus\nmenu top {\n  menugroup idle {\n  }\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": [
+        "group 'idle' has no items"
+      ]
+    }
+  },
+  {
+    "name": "a menu cannot be declared twice",
+    "with": {},
+    "text": "menus\nmenu top {\n  menuview a openscreen MAP \"m\"\n}\nmenu top {\n  menuview b openscreen MAP \"m\"\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate menu 'top'"
+      ]
+    }
+  }
+]

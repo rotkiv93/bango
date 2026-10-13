@@ -1,0 +1,49 @@
+# Publishes the packages to npm when a version tag is pushed (vX.Y.Z).
+# Nothing is published until the repository has an NPM_TOKEN secret (Settings -> Secrets and variables -> Actions).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      # a step's `if` cannot read secrets or its own `env`, so the token is looked at here
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:bundles
+      - run: npm run pack:smoke
+      - name: The tag matches the version of the packages
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          for p in core composer engine renderer; do
+            actual=$(node -p "require('./packages/$p/package.json').version")
+            if [ "$actual" != "$version" ]; then echo "packages/$p is $actual, the tag is $version"; exit 1; fi
+          done
+      - name: Publish
+        if: ${{ env.NPM_TOKEN != '' }}
+        run: |
+          for p in core composer engine renderer; do
+            npm publish -w @bango/$p --provenance --access public
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Nothing published
+        if: ${{ env.NPM_TOKEN == '' }}
+        run: echo "No NPM_TOKEN secret, so everything was checked and nothing was published."

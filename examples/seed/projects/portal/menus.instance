@@ -1,0 +1,13 @@
+menus
+
+menu top {
+  menugroup Data accessBy byAdmin byLogged {
+    menuview Roads openscreen LIST "Roads"
+    menuview edit openscreen FORM "RoadForm"
+  }
+  menuview overview openscreen MAP "mapViewer"
+}
+
+menu left {
+  menuview places openscreen MAP "mapViewer"
+}

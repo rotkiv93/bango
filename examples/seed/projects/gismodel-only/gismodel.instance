@@ -1,0 +1,6 @@
+gismodel
+geojsonstyle thin fillColor "#fff" strokeColor "#000" fillOpacity 0.5 strokeOpacity 1.0 radius 2.0
+geojsonlayer roads entity Road editable defaultStyle thin availableStyles thin
+map main center 40.4 -3.7 zoom 12 sortable {
+  use roads style thin selected order 1
+}

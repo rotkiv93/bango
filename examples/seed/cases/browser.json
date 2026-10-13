@@ -1,0 +1,157 @@
+[
+  {
+    "name": "a form over an entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowCreate allowEdit allowRemove confirmRemove {\n  field id viewed\n  field name viewed edited\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a field of a form must be a field of its entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform roads entity Road {\n  field colour viewed\n}\n",
+    "expect": {
+      "errors": [
+        "Could not resolve reference to Field named 'colour'"
+      ]
+    }
+  },
+  {
+    "name": "a form can show the fields its entity inherits",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform bridges entity Bridge {\n  field id viewed\n  field span viewed edited\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a field is listed once",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform roads entity Road {\n  field name viewed\n  field name edited\n}\n",
+    "expect": {
+      "errors": [
+        "field 'name' is listed twice"
+      ]
+    }
+  },
+  {
+    "name": "two forms cannot have the same name",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform roads entity Road\nform roads entity Bridge\n",
+    "expect": {
+      "errors": [
+        "duplicate form 'roads'"
+      ],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an entity has a form of its own",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform one entity Road\nform two entity Road\n",
+    "expect": {
+      "errors": [],
+      "warnings": [
+        "entity 'Road' already has a form"
+      ]
+    }
+  },
+  {
+    "name": "a list of an entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist \"Road List\" entity Road opensForm \"Road Form\" sorting searching {\n  column id\n  column name\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a list cannot show a field that does not exist",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road {\n  column colour\n}\n",
+    "expect": {
+      "errors": [
+        "Could not resolve reference to Field named 'colour'"
+      ]
+    }
+  },
+  {
+    "name": "a list opens the form of its entity",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road opensForm \"Bridge Form\"\n",
+    "expect": {
+      "errors": [
+        "is a form of 'Bridge', not of 'Road'"
+      ]
+    }
+  },
+  {
+    "name": "the form a list opens must exist",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road opensForm \"Nowhere Form\"\n",
+    "expect": {
+      "errors": [
+        "Nowhere Form"
+      ]
+    }
+  },
+  {
+    "name": "a remove link needs a form",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road removeLink\n",
+    "expect": {
+      "errors": [],
+      "warnings": [
+        "has a remove link but no form"
+      ]
+    }
+  },
+  {
+    "name": "a column can open another form",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road opensForm \"Road Form\" {\n  column name opensForm \"Road Form\"\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "two lists cannot have the same name",
+    "with": {
+      "datamodel": "datamodel d\nentity Road {\n  property id: Long autoinc required pk unique\n  property name: String\n}\nentity Bridge extends Road {\n  property span: Double\n}\n"
+    },
+    "text": "browser\nform \"Road Form\" entity Road allowEdit {\n  field id viewed\n  field name viewed edited\n}\nform \"Bridge Form\" entity Bridge allowEdit\nlist roads entity Road\nlist roads entity Bridge\n",
+    "expect": {
+      "errors": [
+        "duplicate list 'roads'"
+      ]
+    }
+  }
+]

@@ -1,0 +1,60 @@
+{
+  "name": "@bango/engine",
+  "version": "0.1.0",
+  "description": "Parses, validates and edits one instance per metamodel; runs in a page or in a worker",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotkiv93/bango.git",
+    "directory": "packages/engine"
+  },
+  "homepage": "https://github.com/rotkiv93/bango/tree/main/packages/engine#readme",
+  "bugs": {
+    "url": "https://github.com/rotkiv93/bango/issues"
+  },
+  "keywords": [
+    "bango",
+    "metamodel",
+    "langium",
+    "instances",
+    "worker"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker/index.d.ts",
+      "import": "./dist/worker.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./dist/workspace.js"
+    },
+    "./bundle": "./dist/bundle/bango.js",
+    "./bundle/worker": "./dist/bundle/bango.worker.js"
+  },
+  "dependencies": {
+    "@bango/composer": "^0.1.0",
+    "@bango/core": "^0.1.0",
+    "comlink": "^4.4.2"
+  },
+  "peerDependencies": {
+    "langium": "^4.4.0"
+  },
+  "scripts": {
+    "build": "vite build && vite build -c vite.bundle.config.ts && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

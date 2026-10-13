@@ -1,0 +1,43 @@
+gismodel
+
+tilelayer base label "base" url "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+
+geojsonlayer buoy-layer label "Buoy"
+  entity Buoy
+  defaultStyle grayPoint
+  availableStyles grayPoint, level, temperature
+
+geojsonlayer Port label "Port"
+  entity Port
+  defaultStyle grayPolygon
+  availableStyles grayPolygon
+
+wmslayer ports-wms label "Ports (WMS)" url "http://localhost:9001/geoserver/wms" layers "ports", "docks" defaultStyle portsStyle availableStyles portsStyle
+
+geojsonstyle grayPoint fillColor "#808080" strokeColor "#808080" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle greenPoint fillColor "#008000" strokeColor "#008000" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle redPoint fillColor "#FF0000" strokeColor "#FF0000" fillOpacity 1 strokeOpacity 1 radius 3
+geojsonstyle grayPolygon fillColor "#808080" strokeColor "#808080" fillOpacity 0.5 strokeOpacity 1 radius 3
+
+wmsstyle portsStyle geometryType POLYGON fillColor "#ff641a" strokeColor "#101010" fillOpacity 0.7 strokeOpacity 1
+
+intervalstyle level property "data.level"
+  from -Infinity to 2 style greenPoint
+  from 2 to Infinity style redPoint
+  defaultStyle grayPoint
+intervalstyle temperature property "data.temperature"
+  from -Infinity to 25 style greenPoint
+  from 25 to Infinity style redPoint
+  defaultStyle grayPoint
+
+map buoys-map label "Buoys" center 43.3 -8.4 zoom 10 {
+  use base baseLayer selected order 0
+  use buoy-layer style grayPoint selected order 1
+  use Port style grayPolygon order 2
+}
+
+// a map in another projection, zoomed between two levels, with a semi-transparent WMS layer
+map overview label "Overview" center 43.3 -8.4 zoom 6 zoomRange 4 13 crs "EPSG:25829" proj4 "+proj=utm +zone=29 +ellps=GRS80 +units=m +no_defs" origin -5120900 9998100 resolutions 4891.97, 2445.98 {
+  use base baseLayer selected order 0
+  use ports-wms style portsStyle opacity 0.5 order 1
+}

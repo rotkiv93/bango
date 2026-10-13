@@ -1,0 +1,76 @@
+import type { MetamodelCase } from '@bango/core';
+import type { WorkspaceData } from './data.js';
+
+// The layout of a folder of examples (`examples/seed` in this repository), in one place: the playground (files through
+// `import.meta.glob`) and the tests (files through `fs`) both list the files and hand them to `parseSeed`. A folder per kind of file,
+// each file named after its grammar (the metamodels repository has the same folders inside each metamodel):
+//
+//   grammars/<name>.langium            a metamodel (or a library grammar)
+//   constraints/<name>.js              its validation rules
+//   specs/<name>.js                    its JSON mapping
+//   imports/<name>.js                  the inverse of its JSON mapping: JSON back into its instance
+//   scopes/<name>.js                   which nodes each of its references can point at, from where it is written
+//   visualizations/<name>.js           the views of its instances that only it knows how to draw (a class diagram, ...); run by the page
+//   cases/<name>.json                  sample instances and what they must report (MetamodelCase[])
+//   projects/<project>/project.json    { "metamodels": [...], "playground": false? }
+//   projects/<project>/<metamodel>.instance
+
+export interface SeedProject {
+  name: string;
+  metamodels: string[];
+  /** metamodel name -> instance text (one document per metamodel) */
+  instances: Record<string, string>;
+  /** false for fixtures that show what the composer rejects: they are tests, not examples to offer */
+  playground: boolean;
+}
+
+export interface Seed {
+  grammars: Record<string, string>;
+  constraints: Record<string, string>;
+  specs: Record<string, string>;
+  imports: Record<string, string>;
+  scopes: Record<string, string>;
+  visualizations: Record<string, string>;
+  cases: Record<string, MetamodelCase[]>;
+  projects: Record<string, SeedProject>;
+}
+
+const SCRIPT_FOLDERS = ['constraints', 'specs', 'imports', 'scopes', 'visualizations'] as const;
+const isScriptFolder = (folder: string | undefined): folder is (typeof SCRIPT_FOLDERS)[number] => (SCRIPT_FOLDERS as readonly (string | undefined)[]).includes(folder);
+
+/** `files`: path relative to the examples folder (forward slashes) -> text. Files outside the layout are ignored. */
+export function parseSeed(files: Record<string, string>): Seed {
+  const seed: Seed = { grammars: {}, constraints: {}, specs: {}, imports: {}, scopes: {}, visualizations: {}, cases: {}, projects: {} };
+  const projectFiles = new Map<string, Record<string, string>>();
+
+  for (const [path, text] of Object.entries(files)) {
+    const parts = path.split('/');
+    const name = parts.length === 2 ? parts[1].replace(/\.[^.]+$/, '') : '';
+    if (parts[0] === 'grammars' && parts.length === 2) {
+      if (parts[1].endsWith('.langium')) seed.grammars[name] = text;
+    } else if (parts[0] === 'cases' && parts.length === 2) {
+      if (parts[1].endsWith('.json')) seed.cases[name] = JSON.parse(text);
+    } else if (parts.length === 2 && isScriptFolder(parts[0])) {
+      if (parts[1].endsWith('.js')) seed[parts[0]][name] = text;
+    } else if (parts[0] === 'projects' && parts.length === 3) {
+      projectFiles.set(parts[1], { ...projectFiles.get(parts[1]), [parts[2]]: text });
+    }
+  }
+
+  for (const [name, project] of projectFiles) {
+    const manifest = JSON.parse(project['project.json'] ?? '{}');
+    const instances: Record<string, string> = {};
+    for (const [file, text] of Object.entries(project)) if (file.endsWith('.instance')) instances[file.replace(/\.instance$/, '')] = text;
+    seed.projects[name] = { name, metamodels: manifest.metamodels ?? [], instances, playground: manifest.playground !== false };
+  }
+  return seed;
+}
+
+/** The workspace a first visit starts with: the examples. Fixtures that exist to be rejected are left out unless asked for. */
+export function workspaceFromSeed(seed: Seed, options: { fixtures?: boolean } = {}): WorkspaceData {
+  const projects: WorkspaceData['projects'] = {};
+  for (const p of Object.values(seed.projects)) {
+    if (p.playground || options.fixtures) projects[p.name] = { name: p.name, metamodels: p.metamodels, instances: p.instances };
+  }
+  return { grammars: seed.grammars, constraints: seed.constraints, specs: seed.specs, imports: seed.imports, scopes: seed.scopes, visualizations: seed.visualizations, cases: seed.cases, projects };
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@bango/composer",
+  "version": "0.1.0",
+  "description": "Composes Langium grammars (metamodels) into whole, project-scoped languages",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotkiv93/bango.git",
+    "directory": "packages/composer"
+  },
+  "homepage": "https://github.com/rotkiv93/bango/tree/main/packages/composer#readme",
+  "bugs": {
+    "url": "https://github.com/rotkiv93/bango/issues"
+  },
+  "keywords": [
+    "bango",
+    "metamodel",
+    "langium",
+    "grammar",
+    "composition"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "langium": "^4.4.0"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@bango/core": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,196 @@
+[
+  {
+    "name": "a valid entity",
+    "text": "datamodel shop\nentity Road {\n  property name: String required pk\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an entity without a primary key is a warning",
+    "text": "datamodel shop\nentity Road {\n  property name: String\n}\n",
+    "expect": {
+      "warnings": [
+        "should have exactly one pk property (found 0)"
+      ]
+    }
+  },
+  {
+    "name": "a field name cannot repeat",
+    "text": "datamodel shop\nentity Road {\n  property name: String pk\n  property name: String\n}\n",
+    "expect": {
+      "errors": [
+        "duplicate field 'name'"
+      ]
+    }
+  },
+  {
+    "name": "a relationship needs an entity that exists",
+    "text": "datamodel shop\nentity Road {\n  property name: String pk\n  relation road -> Nowhere\n}\n",
+    "expect": {
+      "errors": [
+        "Nowhere"
+      ]
+    }
+  },
+  {
+    "name": "the other side of a bidirectional relationship must exist",
+    "text": "datamodel shop\nentity A {\n  property id: Long pk\n  relation b -> B inverse a owner\n}\nentity B {\n  property id: Long pk\n}\n",
+    "expect": {
+      "errors": [
+        "'B' has no relationship 'a'"
+      ]
+    }
+  },
+  {
+    "name": "an enumeration is a type",
+    "text": "datamodel shop\nenum Color { RED, GREEN }\nentity Road {\n  property id: Long pk\n  property color: Color\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an enumeration cannot repeat a value",
+    "text": "datamodel shop\nenum Color { RED, GREEN, RED }\n",
+    "expect": {
+      "errors": [
+        "duplicate value 'RED'"
+      ]
+    }
+  },
+  {
+    "name": "an entity and an enumeration cannot share a name",
+    "text": "datamodel shop\nenum Road { A }\nentity Road {\n  property id: Long pk\n}\n",
+    "expect": {
+      "errors": [
+        "'Road' is declared twice"
+      ]
+    }
+  },
+  {
+    "name": "a subclass takes the key of its superclass",
+    "text": "datamodel shop\nabstract entity Vehicle {\n  property id: Long autoinc required pk unique\n  property plate: String\n}\nentity Car extends Vehicle {\n  property doors: Integer\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a subclass cannot repeat a field of its superclass",
+    "text": "datamodel shop\nentity Vehicle {\n  property id: Long pk\n  property plate: String\n}\nentity Car extends Vehicle {\n  property plate: String\n}\n",
+    "expect": {
+      "errors": [
+        "'plate' is already a field"
+      ]
+    }
+  },
+  {
+    "name": "a subclass with a key of its own is a warning",
+    "text": "datamodel shop\nentity Vehicle {\n  property id: Long pk\n}\nentity Car extends Vehicle {\n  property plate: String pk\n}\n",
+    "expect": {
+      "warnings": [
+        "so it already has a pk"
+      ]
+    }
+  },
+  {
+    "name": "entities cannot extend each other in a circle",
+    "text": "datamodel shop\nentity A extends B {\n  property id: Long pk\n}\nentity B extends A {\n  property other: String\n}\n",
+    "expect": {
+      "errors": [
+        "'A' extends itself, through 'B'",
+        "'B' extends itself, through 'A'"
+      ]
+    }
+  },
+  {
+    "name": "a name that is a reserved word is a warning",
+    "text": "datamodel shop\nentity Order {\n  property id: Long pk\n}\n",
+    "expect": {
+      "warnings": [
+        "'Order' is a reserved word"
+      ]
+    }
+  },
+  {
+    "name": "a text can be limited by a pattern and a length",
+    "text": "datamodel shop\nentity Road {\n  property id: Long pk\n  property mail: String pattern Email min 3 max 80\n  property code: String pattern \"[A-Z]{3}\"\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an unknown pattern is an error",
+    "text": "datamodel shop\nentity Road {\n  property id: Long pk\n  property mail: String pattern Phone\n}\n",
+    "expect": {
+      "errors": [
+        "'Phone' is not a pattern"
+      ]
+    }
+  },
+  {
+    "name": "a pattern only limits a text",
+    "text": "datamodel shop\nentity Road {\n  property id: Long pk\n  property lanes: Integer pattern Email\n}\n",
+    "expect": {
+      "errors": [
+        "a pattern only limits a String or a Text"
+      ]
+    }
+  },
+  {
+    "name": "min cannot be more than max",
+    "text": "datamodel shop\nentity Road {\n  property id: Long pk\n  property lanes: Integer min 5 max 2\n}\n",
+    "expect": {
+      "errors": [
+        "min 5 is more than max 2"
+      ]
+    }
+  },
+  {
+    "name": "an enumeration is used as a type by naming it",
+    "text": "datamodel shop\nenum Color { RED }\nentity Road {\n  property id: Long pk\n  property color: Color required\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a field can be called owner or url",
+    "with": {},
+    "text": "datamodel\nentity Car {\n  property id: Long autoinc required pk unique\n  property url: String\n  relation owner -> Person inverse cars owner\n}\nentity Person {\n  property id: Long autoinc required pk unique\n  relation cars -> Car inverse owner multiple\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "names can have accents",
+    "with": {},
+    "text": "datamodel\nentity Páxina {\n  property id: Long autoinc required pk unique\n  property título: String\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a tree owns its relationship from both sides",
+    "with": {},
+    "text": "datamodel\nentity Segment {\n  property id: Long autoinc required pk unique\n  relation parent -> Segment inverse children owner\n  relation children -> Segment inverse parent owner multiple\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a pattern is IP, URL or Email",
+    "with": {},
+    "text": "datamodel\nentity Contact {\n  property id: Long autoinc required pk unique\n  property email: String pattern Email\n  property home: String pattern URL\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  }
+]

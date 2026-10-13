@@ -1,93 +1,91 @@
-# bango
+# Bango
 
+Define **metamodels** as [Langium](https://langium.org) grammars, **compose** them into projects, and edit the **instances** as text, forms or diagrams. Metamodels can reference each other (a map layer must show a data-model entity), and everything is checked together: a project that picks a metamodel without what it needs is rejected, a reference to something that does not exist is an error, and so is a layer that shows the wrong entity.
 
+An instance turns into JSON, and the pieces of all the metamodels of a project merge into one specification.
 
-## Getting started
+**Try it:** the [playground](apps/playground/README.md) runs entirely in the browser, and deploys as a static site ([guide](docs/deploy-github-pages.md)).
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.lbd.udc.es/linea/bango.git
-git branch -M main
-git push -uf origin main
+```bash
+npm install
+npm run dev        # the playground
+npm test           # 530+ tests: composer, engine (also across a worker boundary), renderers
 ```
 
-## Integrate with your tools
+## In code
 
-* [Set up project integrations](https://gitlab.lbd.udc.es/linea/bango/-/settings/integrations)
+```ts
+import { Bango } from '@bango/engine';
+import { ModelRenderer } from '@bango/renderer';
 
-## Collaborate with your team
+const bango = new Bango();
+await bango.setGrammar('datamodel', datamodelGrammar);
+await bango.setGrammar('gismodel', gismodelGrammar);           // `import './datamodel'` inside it
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+(await bango.checkSelection(['gismodel'])).errors;
+// ["'gismodel' needs 'datamodel': add 'datamodel' to this project"]
 
-## Test and Deploy
+await bango.compose(['datamodel', 'gismodel']);
+await bango.setText('datamodel', 'datamodel shop\nentity Road { property geometry: LineString }');
+await bango.setText('gismodel', 'gismodel\ngeojsonlayer roads entity Road defaultStyle s availableStyles s ...');
 
-Use the built-in continuous integration in GitLab.
+const view = new ModelRenderer(bango);
+await view.mount(document.querySelector('#editor')!, 'datamodel', 'form');   // or 'text', 'diagram', 'json', 'ast'
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+await bango.build('shop');         // the final model, or the reasons it cannot be built
+await bango.toProjectJson();       // the project's JSON specification
+```
 
-***
+## The modules
 
-# Editing this README
+| Package | Role |
+|---|---|
+| [`@bango/core`](packages/core/README.md) | the plain data types, the JSON helpers and the worker client that every other package shares; no Langium |
+| [`@bango/composer`](packages/composer/README.md) | composes grammars into languages; checks that a selection fits together; compiles constraints and JSON mappings |
+| [`@bango/engine`](packages/engine/README.md) | parses, validates and edits **one instance per metamodel**; builds the final model; JSON; runs in the page or in a worker. Its `workspace` entry (no Langium) holds projects, scripts, saving: everything an editor needs that is not drawing |
+| [`@bango/renderer`](packages/renderer/README.md) | framework-agnostic views: text (Monaco), form, diagram, AST, JSON; a custom element; and the views a metamodel brings itself (a class diagram, a sensor diagram) |
+| [`@bango/studio`](packages/studio/README.md) | a workbench to write one metamodel: grammar and script editors, tests, composed grammar, AST and a live preview. Given files, tells what changed; keeps nothing |
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```
+grammars ──▶ composer ──▶ Composition ──▶ engine ──▶ InstanceState ──▶ renderer
+ (Langium)   compose()     languages,      setText()    text, AST,       text · form
+                           requirements    build()      problems, JSON   diagram · ast · json
+```
 
-## Suggestions for a good README
+Each module only depends on the one before it, and the renderer only on the plain data types of `@bango/core`, so views work the same against an engine in the page or in a worker. A page that only talks to a worker (`connectBango` from `@bango/core/client`) never loads Langium.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## Documentation
 
-## Name
-Choose a self-explaining name for your project.
+| | |
+|---|---|
+| [Architecture](docs/architecture.md) | how the modules fit together, and why |
+| [Writing metamodels](docs/writing-metamodels.md) | grammar, constraints and JSON mapping |
+| [Embedding bango](docs/embedding.md) | putting the views and the metamodel studio in an application |
+| [The JSON specification](docs/json-spec.md) | mapping, merging, the generic format, options |
+| [Deploying to GitHub Pages](docs/deploy-github-pages.md) | publishing the playground |
+| [The playground](apps/playground/README.md) | the app: pages, how it uses the library |
+| [The examples](examples/README.md) | the shipped metamodels (basic, data model, GIS model, sensors, lists and forms, menus, interface, static pages) and projects, and a page without a bundler |
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## Repository layout
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```
+packages/composer, engine, renderer   the library (each with its own README)
+apps/playground                       the web app
+examples/seed                         metamodels and projects that ship (tests, playground, plain example)
+examples/plain                        the library without a bundler
+docs                                  documentation, and the diagrams the first metamodels came from
+test-support                          helpers shared by the tests
+.github/workflows/pages.yml           tests, and publishes the playground to GitHub Pages
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Develop
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+npm test                # all tests (vitest)
+npm run typecheck       # every package
+npm run build:libs      # packages into dist/ (ESM, .d.ts, and self-contained browser bundles)
+npm run pages           # the playground as a static site, in apps/playground/dist
+npm run example         # serve examples/plain on http://localhost:8099
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Requires Node 22. The packages are consumed from source during development and tests (aliases in `vite.config.ts` and `tsconfig.base.json`); their `exports` point to `dist/` for published builds.

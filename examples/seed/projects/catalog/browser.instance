@@ -1,0 +1,25 @@
+browser
+
+form ProductForm entity Product allowCreate allowEdit allowRemove {
+  field id viewed
+  field name viewed edited
+  field price viewed edited
+  field inStock viewed edited
+  field category viewed edited
+}
+
+form CategoryForm entity Category allowCreate allowEdit allowRemove {
+  field id viewed
+  field name viewed edited
+}
+
+list Products entity Product opensForm ProductForm sorting {
+  column name
+  column price
+  column category
+}
+
+list Categories entity Category opensForm CategoryForm sorting {
+  column id
+  column name
+}

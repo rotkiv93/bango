@@ -1,0 +1,29 @@
+[
+  {
+    "name": "a product with only a name",
+    "with": {},
+    "text": "basic shop\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a name with spaces is written in quotes",
+    "with": {},
+    "text": "basic \"Sample product\" version \"0.1.0\"\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a database can leave most of its settings to the platform",
+    "with": {},
+    "text": "basic shop\ndatabase schema \"shop-db\"\nfeatures GEMA_SPL, DataManagement\nextra client_deploy_port \"1234\"\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  }
+]

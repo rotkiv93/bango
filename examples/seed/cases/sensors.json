@@ -1,0 +1,53 @@
+[
+  {
+    "name": "a range labels a default, an interval and a value",
+    "text": "sensors s\nrange Level {\n  default as \"other\"\n  0 to 10 as \"low\"\n  high as \"High value\"\n}\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a range with no labels is allowed",
+    "text": "sensors s\nrange Level {}\n",
+    "expect": {
+      "errors": []
+    }
+  },
+  {
+    "name": "a range has one default label",
+    "text": "sensors s\nrange Level {\n  default as \"a\"\n  default as \"b\"\n}\n",
+    "expect": {
+      "errors": [
+        "a range has one default label"
+      ]
+    }
+  },
+  {
+    "name": "a value is labelled once",
+    "text": "sensors s\nrange Level {\n  high as \"a\"\n  high as \"b\"\n}\n",
+    "expect": {
+      "errors": [
+        "value 'high' is labelled twice"
+      ]
+    }
+  },
+  {
+    "name": "an interval goes from the smaller number to the larger",
+    "text": "sensors s\nrange Level {\n  10 to 0 as \"low\"\n}\n",
+    "expect": {
+      "errors": [
+        "10 to 0 is empty"
+      ]
+    }
+  },
+  {
+    "name": "ranges have their own names",
+    "text": "sensors s\nrange Level {}\nrange Level {}\n",
+    "expect": {
+      "errors": [
+        "duplicate range 'Level'"
+      ]
+    }
+  }
+]

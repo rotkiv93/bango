@@ -1,0 +1,49 @@
+{
+  "name": "@bango/core",
+  "version": "0.1.0",
+  "description": "The plain data types, JSON helpers and worker client shared by every Bango package (no Langium)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rotkiv93/bango.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/rotkiv93/bango/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/rotkiv93/bango/issues"
+  },
+  "keywords": [
+    "bango",
+    "metamodel",
+    "langium",
+    "types"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
+    },
+    "./bundle/client": "./dist/bundle/client.js"
+  },
+  "dependencies": {
+    "comlink": "^4.4.2"
+  },
+  "scripts": {
+    "build": "vite build && vite build -c vite.bundle.config.ts && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

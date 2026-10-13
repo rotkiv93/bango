@@ -1,0 +1,30 @@
+[
+  {
+    "name": "a page with some HTML",
+    "text": "statics\npage Home html \"<article>Welcome</article>\"\npage About html \"<p>About us</p>\"\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "two pages cannot have the same name",
+    "text": "statics\npage Home html \"<p>a</p>\"\npage Home html \"<p>b</p>\"\n",
+    "expect": {
+      "errors": [
+        "duplicate page 'Home'"
+      ],
+      "warnings": []
+    }
+  },
+  {
+    "name": "a page without content is reported",
+    "text": "statics\npage Empty html \"\"\n",
+    "expect": {
+      "errors": [],
+      "warnings": [
+        "page 'Empty' has no content"
+      ]
+    }
+  }
+]

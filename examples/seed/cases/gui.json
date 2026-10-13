@@ -1,0 +1,20 @@
+[
+  {
+    "name": "an interface with the defaults",
+    "with": {},
+    "text": "gui\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  },
+  {
+    "name": "an interface with a design, a font and colours",
+    "with": {},
+    "text": "gui design \"5\" font \"Roboto\" \"16px\" colors \"#fff\", \"#000\"\n",
+    "expect": {
+      "errors": [],
+      "warnings": []
+    }
+  }
+]
