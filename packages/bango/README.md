@@ -41,4 +41,4 @@ The same code runs in the page or in a worker with the same async API; see the [
 
 ## Publishing
 
-From the repository: `npm run build` (the libraries, then this package), `npm run pack:smoke` (installs the tarball alone into an empty project and uses it), then `npm publish -w @lbdudc/bango`.
+From the repository: `npm run verify` (builds the libraries and this package, then installs the tarball alone into an empty project and uses it), then `npm publish -w @lbdudc/bango --access public`.
