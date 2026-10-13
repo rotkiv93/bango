@@ -1,6 +1,7 @@
 {
   "name": "@bango/studio",
   "version": "0.1.0",
+  "private": true,
   "description": "A framework-agnostic workbench to write a Bango metamodel: grammar and script editors, tests, composed grammar, AST and a live preview of an instance",
   "license": "MIT",
   "repository": {

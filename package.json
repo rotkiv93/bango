@@ -19,17 +19,18 @@
     "test": "vitest run",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p e2e",
     "build:libs": "npm run build -w @bango/core && npm run build -w @bango/composer && npm run build -w @bango/engine && npm run build -w @bango/renderer && npm run build -w @bango/studio",
-    "build": "npm run build:libs && npm run build -w @bango/playground",
+    "build": "npm run build:libs && npm run build:package && npm run build -w @bango/playground",
     "example": "node examples/serve.mjs",
     "pages": "npm run build -w @bango/playground",
     "pages:preview": "npm run preview -w @bango/playground",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "lint": "oxlint packages apps test-support scripts e2e",
     "knip": "knip --no-config-hints",
-    "pack:smoke": "node scripts/pack-smoke.mjs",
+    "pack:smoke": "node scripts/pack-smoke.mjs && node scripts/pack-smoke-package.mjs",
     "check:metamodels": "node scripts/check-metamodels.mjs",
     "check:bundles": "node scripts/check-bundles.mjs",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:bundles && npm run pack:smoke"
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:bundles && npm run pack:smoke",
+    "build:package": "npm run build -w @lbdudc/bango"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

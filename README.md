@@ -12,6 +12,19 @@ npm run dev        # the playground
 npm test           # 530+ tests: composer, engine (also across a worker boundary), renderers
 ```
 
+## Use it from another project
+
+```bash
+npm install @lbdudc/bango langium
+```
+
+```ts
+import { Bango } from '@lbdudc/bango';
+import { WorkspaceController } from '@lbdudc/bango/engine/workspace';
+```
+
+One package carries every part, one import path each: see [`packages/bango`](packages/bango/README.md). Inside this repository the parts are the `@bango/*` workspaces below.
+
 ## In code
 
 ```ts

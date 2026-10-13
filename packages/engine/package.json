@@ -1,6 +1,7 @@
 {
   "name": "@bango/engine",
   "version": "0.1.0",
+  "private": true,
   "description": "Parses, validates and edits one instance per metamodel; runs in a page or in a worker",
   "license": "MIT",
   "repository": {

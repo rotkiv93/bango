@@ -1,6 +1,7 @@
 {
   "name": "@bango/renderer",
   "version": "0.1.0",
+  "private": true,
   "description": "Framework-agnostic renderers (text, form, diagram, AST) for Bango model instances",
   "license": "MIT",
   "repository": {

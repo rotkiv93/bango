@@ -1,0 +1,51 @@
+{
+  "name": "@lbdudc/bango",
+  "version": "0.1.0",
+  "description": "Define metamodels as Langium grammars, compose them into projects, and edit instances as text, forms or diagrams",
+  "license": "MIT",
+  "author": "Laboratorio de Bases de Datos (LBD) - Universidade da Coruña",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.lbd.udc.es/linea/bango.git",
+    "directory": "packages/bango"
+  },
+  "homepage": "https://gitlab.lbd.udc.es/linea/bango",
+  "keywords": ["metamodel", "langium", "dsl", "model-driven", "software-product-line"],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/engine/index.js",
+  "types": "./dist/engine/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/engine/index.d.ts", "import": "./dist/engine/index.js" },
+    "./core": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
+    "./core/client": { "types": "./dist/core/client.d.ts", "import": "./dist/core/client.js" },
+    "./core/bundle/client": "./dist/core/bundle/client.js",
+    "./composer": { "types": "./dist/composer/index.d.ts", "import": "./dist/composer/index.js" },
+    "./engine/worker": { "types": "./dist/engine/worker/index.d.ts", "import": "./dist/engine/worker.js" },
+    "./engine/workspace": { "types": "./dist/engine/workspace/index.d.ts", "import": "./dist/engine/workspace.js" },
+    "./engine/bundle": "./dist/engine/bundle/bango.js",
+    "./engine/bundle/worker": "./dist/engine/bundle/bango.worker.js",
+    "./renderer": { "types": "./dist/renderer/index.d.ts", "import": "./dist/renderer/index.js" },
+    "./renderer/text": { "types": "./dist/renderer/views/text/index.d.ts", "import": "./dist/renderer/text.js" },
+    "./renderer/bundle": "./dist/renderer/bundle/renderer.js",
+    "./studio": { "types": "./dist/studio/index.d.ts", "import": "./dist/studio/index.js" },
+    "./studio/bundle": "./dist/studio/bundle/studio.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "comlink": "^4.4.2"
+  },
+  "peerDependencies": {
+    "langium": "^4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

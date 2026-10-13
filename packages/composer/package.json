@@ -1,6 +1,7 @@
 {
   "name": "@bango/composer",
   "version": "0.1.0",
+  "private": true,
   "description": "Composes Langium grammars (metamodels) into whole, project-scoped languages",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,7 @@
 {
   "name": "@bango/core",
   "version": "0.1.0",
+  "private": true,
   "description": "The plain data types, JSON helpers and worker client shared by every Bango package (no Langium)",
   "license": "MIT",
   "repository": {

@@ -38,7 +38,7 @@ The generic suites (all selections, reference integrity, rename round trips, ran
 
 ## Releasing
 
-Packages share a version. `npm version <patch|minor|major> --workspaces --include-workspace-root --no-git-tag-version`, commit, tag `vX.Y.Z`, push the tag. The `Release` workflow builds, tests, runs the pack smoke and publishes with provenance; it only publishes when the repository has an `NPM_TOKEN` secret.
+Packages share a version, and what is published is one package, `@lbdudc/bango` (`packages/bango`): `npm run build` assembles the five libraries into it, and the other packages are private. `npm version <patch|minor|major> --workspaces --include-workspace-root --no-git-tag-version`, commit, tag `vX.Y.Z`, push the tag. The `Release` workflow builds, tests, runs the pack smoke and publishes with provenance; it only publishes when the repository has an `NPM_TOKEN` secret.
 
 ## Conventions
 

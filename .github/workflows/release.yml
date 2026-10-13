@@ -1,4 +1,4 @@
-# Publishes the packages to npm when a version tag is pushed (vX.Y.Z).
+# Publishes @lbdudc/bango (the five libraries assembled into one package) to npm when a version tag is pushed (vX.Y.Z).
 # Nothing is published until the repository has an NPM_TOKEN secret (Settings -> Secrets and variables -> Actions).
 name: Release
 
@@ -32,16 +32,13 @@ jobs:
       - name: The tag matches the version of the packages
         run: |
           version="${GITHUB_REF_NAME#v}"
-          for p in core composer engine renderer; do
+          for p in core composer engine renderer studio bango; do
             actual=$(node -p "require('./packages/$p/package.json').version")
             if [ "$actual" != "$version" ]; then echo "packages/$p is $actual, the tag is $version"; exit 1; fi
           done
       - name: Publish
         if: ${{ env.NPM_TOKEN != '' }}
-        run: |
-          for p in core composer engine renderer; do
-            npm publish -w @bango/$p --provenance --access public
-          done
+        run: npm publish -w @lbdudc/bango --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Nothing published
